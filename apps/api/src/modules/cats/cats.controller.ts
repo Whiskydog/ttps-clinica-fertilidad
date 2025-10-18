@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post } from "@nestjs/common";
 import { CatsService } from "./cats.service";
 import { CatCreateDto, CatResponseDto } from "./dto";
 import { ZodSerializerDto } from "nestjs-zod";
-import { Cat } from "./cat.entity";
+import { Cat } from "./entities/cat.entity";
 
 @Controller('cats')
 export class CatsController {
