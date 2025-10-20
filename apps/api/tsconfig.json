@@ -2,6 +2,14 @@
   "extends": "@repo/typescript-config/nestjs.json",
   "compilerOptions": {
     "baseUrl": "./",
-    "outDir": "./dist"
-  }
+    "outDir": "./dist",
+    "paths": {
+      "@modules/*": [
+        "./src/modules/*"
+      ],
+      "@filters/*": [
+        "./src/filters/*"
+      ]
+    }
+  },
 }
