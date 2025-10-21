@@ -1,12 +1,12 @@
-'use client';
-
 export default function DoctorDashboard() {
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-bold mb-4">Dashboard de Doctor</h2>
-      <p className="text-gray-600">
-        Gestiona tus pacientes, citas y registros médicos aquí.
-      </p>
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+          Dashboard Médico
+        </h2>
+        <p className="text-gray-500">Contenido pendiente de implementación</p>
+      </div>
     </div>
   );
 }

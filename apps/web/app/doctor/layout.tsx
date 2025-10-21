@@ -1,38 +1,139 @@
 'use client';
 
+import Link from 'next/link';
+import { Button } from '@repo/ui/button';
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Activity,
+  Beaker,
+  BarChart3,
+  Settings,
+} from 'lucide-react';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from '@repo/ui/sidebar';
+
 export default function DoctorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'Doctor',
-    lastName: 'Doctor',
+    firstName: 'Juan',
+    lastName: 'Pérez',
+    specialty: 'Medicina Reproductiva',
   };
 
+  const handleLogout = () => {
+    console.log('Cerrar sesión');
+    // TODO: Implement logout logic
+  };
+
+  const menuItems = [
+    {
+      name: 'Dashboard',
+      path: '/doctor',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Mis Pacientes',
+      path: '/doctor/patients',
+      icon: Users,
+    },
+    {
+      name: 'Órdenes Médicas',
+      path: '/doctor/orders',
+      icon: FileText,
+    },
+    {
+      name: 'Seguimientos',
+      path: '/doctor/follow-ups',
+      icon: Activity,
+    },
+    {
+      name: 'Laboratorio',
+      path: '/doctor/laboratory',
+      icon: Beaker,
+    },
+    {
+      name: 'Estadísticas',
+      path: '/doctor/statistics',
+      icon: BarChart3,
+    },
+    {
+      name: 'Configuración',
+      path: '/doctor/settings',
+      icon: Settings,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Panel de Doctor
-          </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              Dr. {user?.firstName} {user?.lastName}
-            </span>
-            <button
-              onClick={() => {
-                console.log('Cerrar sesión');
-              }}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+    <SidebarProvider>
+      <Sidebar
+        variant="sidebar"
+        className="bg-green-800 border-green-700 md:w-64 w-[80vw]"
+        collapsible="icon"
+      >
+        <SidebarContent>
+          <SidebarMenu className="px-2 pt-4">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href={item.path}
+                      className="flex items-center gap-3 text-green-100 hover:text-white hover:bg-green-700"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+
+      <SidebarInset>
+        {/* Header */}
+        <header className="bg-green-600 text-white px-4 md:px-8 py-4 shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-4">
+            <SidebarTrigger className="text-white hover:bg-green-700" />
+            <h1 className="text-base md:text-xl font-bold">
+              CLÍNICA DE FERTILIDAD - DASHBOARD MÉDICO
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="text-right hidden md:block">
+              <p className="font-medium">
+                Dr. {user.firstName} {user.lastName}
+              </p>
+              <p className="text-sm text-green-100">{user.specialty}</p>
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="bg-transparent border-white text-white hover:bg-green-700 text-sm md:text-base"
             >
               Cerrar Sesión
-            </button>
+            </Button>
           </div>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
-    </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-4 md:p-8">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
