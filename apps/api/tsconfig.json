@@ -10,6 +10,9 @@
       "@modules/*": [
         "./src/modules/*"
       ],
+      "@auth/*": [
+        "./src/modules/auth/*"
+      ],
       "@users/*": [
         "./src/modules/users/*"
       ],

@@ -4,12 +4,14 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from '@modules/app/app.module';
 import { Logger } from '@nestjs/common';
+import cookieParser from "cookie-parser";
 
 const logger = new Logger('Bootstrap');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('/v1/api');
+  app.use(cookieParser());
   app.enableCors();
 
   const openApiDoc = SwaggerModule
