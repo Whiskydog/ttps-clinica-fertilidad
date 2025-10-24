@@ -4,6 +4,6 @@ import { User } from "./user.entity";
 
 @ChildEntity(RoleCode.DIRECTOR)
 export class Director extends User {
-  @Column()
+  @Column({ name: "license_number", unique: true })
   licenseNumber: string;
 }

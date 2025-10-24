@@ -4,6 +4,6 @@ import { User } from "./user.entity";
 
 @ChildEntity(RoleCode.LAB_TECHNICIAN)
 export class LabTechnician extends User {
-  @Column()
+  @Column({ name: "lab_area" })
   labArea: string;
 }

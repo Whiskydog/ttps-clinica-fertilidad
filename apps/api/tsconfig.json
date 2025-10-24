@@ -4,6 +4,9 @@
     "baseUrl": "./",
     "outDir": "./dist",
     "paths": {
+      "@config/*": [
+        "./src/config/*"
+      ],
       "@modules/*": [
         "./src/modules/*"
       ],

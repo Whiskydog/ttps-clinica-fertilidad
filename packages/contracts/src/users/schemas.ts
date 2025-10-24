@@ -18,13 +18,13 @@ export const PatientCreateSchema = z.object({
 export const PatientUpdateSchema = PatientCreateSchema.partial();
 
 export const PatientResponseSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.uuid(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
   email: z.email(),
   phone: z.string().min(7).max(15),
   dni: z.string().min(5).max(20),
-  dateOfBirth: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format",
-  }),
+  dateOfBirth: z.date(),
   occupation: z.string().min(1).max(100),
   biologicalSex: z.enum(BiologicalSex),
 });

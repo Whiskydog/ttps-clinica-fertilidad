@@ -4,10 +4,10 @@ import { BiologicalSex, RoleCode } from "@repo/contracts";
 
 @ChildEntity(RoleCode.PATIENT)
 export class Patient extends User {
-  @Column()
+  @Column({ unique: true })
   dni: string;
 
-  @Column()
+  @Column({ name: "date_of_birth" })
   dateOfBirth: Date;
 
   @Column()
@@ -17,6 +17,7 @@ export class Patient extends User {
     type: "enum",
     enum: BiologicalSex,
     enumName: "biological_sex_enum",
+    name: "biological_sex",
   })
   biologicalSex: BiologicalSex;
 }

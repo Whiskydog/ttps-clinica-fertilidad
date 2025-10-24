@@ -1,15 +1,14 @@
 import { BaseEntity } from "@common/entities/base.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, TableInheritance } from "typeorm";
-import { RoleCode } from "@repo/contracts";
+import { Column, Entity, JoinColumn, ManyToOne, TableInheritance } from "typeorm";
 import { Role } from "./role.entity";
 
 @Entity("users")
-@TableInheritance({ column: { type: "enum", enum: RoleCode, enumName: 'role_code_enum', name: "role" } })
+@TableInheritance({ column: { name: "role", enumName: "role_code_enum" } })
 export class User extends BaseEntity {
-  @Column()
+  @Column({ name: "first_name" })
   firstName: string;
 
-  @Column()
+  @Column({ name: "last_name" })
   lastName: string;
 
   @Column()
@@ -18,10 +17,10 @@ export class User extends BaseEntity {
   @Column()
   phone: string;
 
-  @Column()
+  @Column({ name: "password_hash" })
   passwordHash: string;
 
-  @Column({ default: true })
+  @Column({ name: "is_active", default: true })
   isActive: boolean;
 
   @ManyToOne(() => Role, { eager: true })

@@ -7,6 +7,6 @@ export class Doctor extends User {
   @Column()
   specialty: string;
 
-  @Column()
+  @Column({ name: "license_number", unique: true })
   licenseNumber: string;
 }
