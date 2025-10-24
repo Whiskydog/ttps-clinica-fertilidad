@@ -25,6 +25,6 @@ export class User extends BaseEntity {
   isActive: boolean;
 
   @ManyToOne(() => Role, { eager: true })
-  @JoinColumn({ name: "role_id" })
+  @JoinColumn({ name: "role", referencedColumnName: "code" })
   role: Role;
 }
