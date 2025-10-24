@@ -7,6 +7,9 @@
       "@modules/*": [
         "./src/modules/*"
       ],
+      "@common/*": [
+        "./src/common/*"
+      ],
       "@filters/*": [
         "./src/filters/*"
       ]

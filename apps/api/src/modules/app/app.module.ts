@@ -7,11 +7,13 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { CatsModule } from "@modules/cats/cats.module";
 import { ConfigModule } from "@modules/config/config.module";
+import { UsersModule } from "@modules/users/users.module";
 
 @Module({
   imports: [
     ConfigModule,
-    CatsModule
+    CatsModule,
+    UsersModule
   ],
   controllers: [AppController],
   providers: [
