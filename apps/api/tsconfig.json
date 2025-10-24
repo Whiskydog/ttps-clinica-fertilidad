@@ -4,8 +4,17 @@
     "baseUrl": "./",
     "outDir": "./dist",
     "paths": {
+      "@config/*": [
+        "./src/config/*"
+      ],
       "@modules/*": [
         "./src/modules/*"
+      ],
+      "@users/*": [
+        "./src/modules/users/*"
+      ],
+      "@common/*": [
+        "./src/common/*"
       ],
       "@filters/*": [
         "./src/filters/*"
