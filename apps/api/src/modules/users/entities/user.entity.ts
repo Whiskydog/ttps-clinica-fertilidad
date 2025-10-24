@@ -21,7 +21,7 @@ export class User extends BaseEntity {
   @Column()
   passwordHash: string;
 
-  @Column()
+  @Column({ default: true })
   isActive: boolean;
 
   @ManyToOne(() => Role, { eager: true })

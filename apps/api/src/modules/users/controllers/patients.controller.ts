@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
-import { PatientsService } from "@modules/users/services/patients.service";
-import { PatientCreateDto, PatientResponseDto } from "@modules/users/dto";
-import { Patient } from "@modules/users/entities/patient.entity";
+import { PatientsService } from "@users/services/patients.service";
+import { PatientCreateDto, PatientResponseDto } from "@users/dto";
+import { Patient } from "@users/entities/patient.entity";
 import { ZodSerializerDto } from "nestjs-zod";
 
 @Controller('patients')
