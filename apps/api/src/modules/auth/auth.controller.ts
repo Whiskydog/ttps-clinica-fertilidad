@@ -17,9 +17,7 @@ export class AuthController {
   async signIn(@CurrentUser() user: User, @Res({ passthrough: true }) response: Response) {
     const signInResult = await this.authService.signIn(user);
 
-    if ('accessToken' in signInResult) {
-      this.authService.setCookie(response, signInResult.accessToken);
-    }
+    this.authService.setCookie(response, signInResult.accessToken);
 
     return signInResult;
   }

@@ -5,14 +5,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@modules/app/app.module';
 import { Logger } from '@nestjs/common';
 import cookieParser from "cookie-parser";
+import { ConfigService } from "@nestjs/config";
 
 const logger = new Logger('Bootstrap');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
   app.setGlobalPrefix('/v1/api');
   app.use(cookieParser());
-  app.enableCors();
+  app.enableCors({
+    origin: configService.get('ALLOWED_ORIGIN') || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   const openApiDoc = SwaggerModule
     .createDocument(app, new DocumentBuilder()
@@ -22,7 +30,7 @@ async function bootstrap() {
       .build());
   SwaggerModule.setup('/v1/api/docs', app, cleanupOpenApiDoc(openApiDoc));
 
-  const port = process.env.PORT || 3001;
+  const port = configService.get('PORT') || 3001;
   await app.listen(port);
   logger.log(`Core API is running on http://localhost:${port}/v1/api`);
 }
