@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Users,
@@ -9,7 +9,7 @@ import {
   FileText,
   BarChart3,
   ClipboardList,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from '@repo/ui/sidebar';
+} from "@repo/ui/sidebar";
 
 export default function MedicalDirectorLayout({
   children,
@@ -27,45 +27,45 @@ export default function MedicalDirectorLayout({
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'Carlos',
-    lastName: 'Martínez',
-    title: 'Director Médico',
+    firstName: "Carlos",
+    lastName: "Martínez",
+    title: "Director Médico",
   };
 
   const handleLogout = () => {
-    console.log('Cerrar sesión');
+    console.log("Cerrar sesión");
     // TODO: Implement logout logic
   };
 
   const menuItems = [
     {
-      name: 'Dashboard',
-      path: '/medical-director',
+      name: "Dashboard",
+      path: "/medical-director",
       icon: LayoutDashboard,
     },
     {
-      name: 'Todos los Pacientes',
-      path: '/medical-director/all-patients',
+      name: "Todos los Pacientes",
+      path: "/medical-director/all-patients",
       icon: Users,
     },
     {
-      name: 'Búsqueda Global',
-      path: '/medical-director/search',
+      name: "Búsqueda Global",
+      path: "/medical-director/search",
       icon: Search,
     },
     {
-      name: 'Historias Clínicas',
-      path: '/medical-director/medical-records',
+      name: "Historias Clínicas",
+      path: "/medical-director/medical-records",
       icon: FileText,
     },
     {
-      name: 'Estadísticas',
-      path: '/medical-director/statistics',
+      name: "Estadísticas",
+      path: "/medical-director/statistics",
       icon: BarChart3,
     },
     {
-      name: 'Reportes',
-      path: '/medical-director/reports',
+      name: "Reportes",
+      path: "/medical-director/reports",
       icon: ClipboardList,
     },
   ];

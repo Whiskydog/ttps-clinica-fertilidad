@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -30,13 +30,15 @@ export default function Home() {
           <div className="p-6 bg-white rounded-lg shadow">
             <h3 className="font-semibold text-lg mb-2">Para Pacientes</h3>
             <p className="text-gray-600 text-sm">
-              Gestiona tus citas, consulta resultados y mantén tu historial médico actualizado
+              Gestiona tus citas, consulta resultados y mantén tu historial
+              médico actualizado
             </p>
           </div>
           <div className="p-6 bg-white rounded-lg shadow">
             <h3 className="font-semibold text-lg mb-2">Para Médicos</h3>
             <p className="text-gray-600 text-sm">
-              Acceso completo a historiales, gestión de tratamientos y seguimiento de pacientes
+              Acceso completo a historiales, gestión de tratamientos y
+              seguimiento de pacientes
             </p>
           </div>
           <div className="p-6 bg-white rounded-lg shadow">
