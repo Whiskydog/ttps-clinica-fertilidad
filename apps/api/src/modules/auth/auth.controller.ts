@@ -4,11 +4,13 @@ import { UserParam } from "@modules/users/decorators/user.decorator";
 import { User } from "@modules/users/entities/user.entity";
 import { AuthService } from "./auth.service";
 import type { Response } from "express";
+import { Public } from "./decorators/public.decorator";
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  @Public()
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('sign-in')
