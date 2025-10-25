@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BiologicalSex, RoleCode } from './enums';
+import { BiologicalSex } from './enums';
 
 export const PatientCreateSchema = z.object({
   firstName: z.string().min(1).max(100),
