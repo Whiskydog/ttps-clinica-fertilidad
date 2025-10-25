@@ -1,31 +1,29 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity } from '@common/entities/base.entity';
+import { Entity, Column } from 'typeorm';
 
 @Entity('audit_logs')
-export class AuditLog {
-  @PrimaryGeneratedColumn()
-  id: number;
+export class AuditLog extends BaseEntity {
+  @Column({ name: 'table_name' })
+  tableName: string;
 
-  @Column()
-  table_name: string;
+  @Column({ type: 'text', name: 'record_id' })
+  recordId: string;
 
-  @Column()
-  record_id: number;
+  @Column({ name: 'modified_field' })
+  modifiedField: string;
 
-  @Column()
-  modified_field: string;
+  @Column({ type: 'text', nullable: true, name: 'old_value' })
+  oldValue: string;
 
-  @Column({ type: 'text', nullable: true })
-  old_value: string;
+  @Column({ type: 'text', nullable: true, name: 'new_value' })
+  newValue: string;
 
-  @Column({ type: 'text', nullable: true })
-  new_value: string;
+  @Column({ type: 'bigint', nullable: true, name: 'modified_by_user_id' })
+  modifiedByUserId: number | null;
 
-  @Column({ type: 'uuid', nullable: true })
-  modified_by_user_id: string | null;
+  @Column({ name: 'user_role' })
+  userRole: string;
 
-  @Column()
-  user_role: string;
-
-  @Column({ type: 'timestamp' })
-  modification_timestamp: Date;
+  @Column({ type: 'timestamp', name: 'modification_timestamp' })
+  modificationTimestamp: Date;
 }

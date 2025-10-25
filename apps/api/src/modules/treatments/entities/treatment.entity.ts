@@ -1,10 +1,5 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { BaseEntity } from '@common/entities/base.entity';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { MedicalHistory } from '../../medical-history/entities/medical-history.entity';
 
 export enum InitialObjective {
@@ -22,43 +17,45 @@ export enum TreatmentStatus {
 }
 
 @Entity('treatments')
-export class Treatment {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Treatment extends BaseEntity {
   @ManyToOne(
     () => MedicalHistory,
     (medicalHistory) => medicalHistory.treatments,
   )
   @JoinColumn({ name: 'medical_history_id' })
-  medical_history: MedicalHistory;
+  medicalHistory: MedicalHistory;
 
-  @Column({ type: 'varchar', length: 50 })
   @Column({
     type: 'enum',
     enum: InitialObjective,
     enumName: 'initial_objective',
+    name: 'initial_objective',
   })
-  initial_objective: InitialObjective;
+  initialObjective: InitialObjective;
 
-  @Column({ type: 'date', nullable: true })
-  start_date: Date;
+  @Column({ type: 'date', nullable: true, name: 'start_date' })
+  startDate: Date;
 
-  @Column({ type: 'bigint', nullable: true })
-  initial_doctor_id: number;
+  @Column({ type: 'bigint', nullable: true, name: 'initial_doctor_id' })
+  initialDoctorId: number;
 
-  @Column({ type: 'varchar', length: 20 })
   @Column({
     type: 'enum',
     enum: TreatmentStatus,
     enumName: 'treatment_status',
     default: TreatmentStatus.vigente,
+    name: 'status',
   })
   status: TreatmentStatus;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  closure_reason: string;
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'closure_reason',
+  })
+  closureReason: string;
 
-  @Column({ type: 'date', nullable: true })
-  closure_date: Date;
+  @Column({ type: 'date', nullable: true, name: 'closure_date' })
+  closureDate: Date;
 }

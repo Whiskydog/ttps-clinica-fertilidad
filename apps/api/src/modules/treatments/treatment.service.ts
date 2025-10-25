@@ -29,26 +29,26 @@ export class TreatmentService {
         'closure_reason es obligatorio si status = closed',
       );
     }
-    const initial_objective = dto.initial_objective as InitialObjective;
-    if (!Object.values(InitialObjective).includes(initial_objective)) {
+    const initialObjective = dto.initial_objective as InitialObjective;
+    if (!Object.values(InitialObjective).includes(initialObjective)) {
       throw new ConflictException('initial_objective inválido');
     }
 
     const treatment = this.treatmentRepo.create({
-      initial_objective,
-      start_date: dto.start_date,
-      initial_doctor_id: dto.initial_doctor_id,
+      initialObjective,
+      startDate: dto.start_date,
+      initialDoctorId: dto.initial_doctor_id,
       status,
-      closure_reason: dto.closure_reason,
-      closure_date: dto.closure_date,
-      medical_history: medicalHistory,
+      closureReason: dto.closure_reason,
+      closureDate: dto.closure_date,
+      medicalHistory,
     });
     return this.treatmentRepo.save(treatment);
   }
 
   async findByMedicalHistoryId(medicalHistoryId: number) {
     return this.treatmentRepo.find({
-      where: { medical_history: { id: medicalHistoryId } },
+      where: { medicalHistory: { id: medicalHistoryId } },
     });
   }
 }

@@ -12,22 +12,22 @@ export class AuditService {
 
   async log(
     table: string,
-    recordId: number,
+    recordId: string | number,
     field: string,
     oldValue: any,
     newValue: any,
-    userId: string | null,
+    userId: number | null,
     userRole: string,
   ) {
     await this.auditRepo.save({
-      table_name: table,
-      record_id: recordId,
-      modified_field: field,
-      old_value: oldValue,
-      new_value: newValue,
-      modified_by_user_id: userId,
-      user_role: userRole,
-      modification_timestamp: new Date(),
+      tableName: table,
+      recordId: String(recordId),
+      modifiedField: field,
+      oldValue,
+      newValue,
+      modifiedByUserId: userId,
+      userRole,
+      modificationTimestamp: new Date(),
     });
   }
 }

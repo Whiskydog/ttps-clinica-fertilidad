@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { from, map, of, switchMap } from 'rxjs';
+import { from, map, switchMap } from 'rxjs';
 import { AppointmentsService } from './appointments.service';
 import { ConfirmAppointmentDto } from './dto/confirm-appointment.dto';
 import { MedicalHistoryService } from '@modules/medical-history/medical-history.service';
@@ -32,14 +32,8 @@ export class AppointmentsController {
       .reservarTurno(dto.id_paciente, dto.id_turno)
       .pipe(
         switchMap((reserva) =>
-          from(this.medicalHistory.findByPatientId(dto.id_paciente)).pipe(
-            switchMap((hcExisting) =>
-              hcExisting
-                ? of({ reserva, medical_history: hcExisting })
-                : from(
-                    this.medicalHistory.createForPatient(dto.id_paciente),
-                  ).pipe(map((hc) => ({ reserva, medical_history: hc }))),
-            ),
+          from(this.medicalHistory.createForPatient(dto.id_paciente)).pipe(
+            map((hc) => ({ reserva, medical_history: hc })),
           ),
         ),
       );
