@@ -10,6 +10,7 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { AppointmentsModule } from '@modules/appointments/appointments.module';
+import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AppointmentsModule } from '@modules/appointments/appointments.module';
     MedicalHistoryModule,
     TreatmentsModule,
     AppointmentsModule,
+    MedicalInsurancesModule,
   ],
   controllers: [],
   providers: [

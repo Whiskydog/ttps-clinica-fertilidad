@@ -1,6 +1,13 @@
 import { BiologicalSex, RoleCode } from '@repo/contracts';
-import { ChildEntity, Column } from 'typeorm';
+import {
+  ChildEntity,
+  Column,
+  JoinColumn,
+  ManyToOne,
+  RelationId,
+} from 'typeorm';
 import { User } from './user.entity';
+import { MedicalInsurance } from '@modules/medical-insurances/entities/medical-insurance.entity';
 @ChildEntity(RoleCode.PATIENT)
 export class Patient extends User {
   @Column({ unique: true })
@@ -20,8 +27,13 @@ export class Patient extends User {
   })
   biologicalSex: BiologicalSex;
 
-  @Column({ name: 'medical_insurance_id', type: 'bigint', nullable: true })
-  medicalInsuranceId: number | null;
+  @ManyToOne(() => MedicalInsurance, { nullable: true })
+  @JoinColumn({ name: 'medical_insurance_id' })
+  medicalInsurance?: MedicalInsurance | null;
+
+  // Expose FK id in responses without loading the relation
+  @RelationId((patient: Patient) => patient.medicalInsurance)
+  medicalInsuranceId?: number | null;
 
   @Column({
     name: 'coverage_member_id',

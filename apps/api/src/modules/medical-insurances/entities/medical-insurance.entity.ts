@@ -1,0 +1,8 @@
+import { BaseEntity } from '@common/entities/base.entity';
+import { Column, Entity } from 'typeorm';
+
+@Entity('medical_insurances')
+export class MedicalInsurance extends BaseEntity {
+  @Column({ type: 'varchar', length: 150 })
+  name: string;
+}

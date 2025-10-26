@@ -1,14 +1,9 @@
 import { z } from "zod";
+import { InitialObjective, TreatmentStatus } from "./enums";
 
-export const InitialObjectiveEnum = z.enum([
-  "gametos_propios",
-  "couple_female",
-  "method_ropa",
-  "woman_single",
-  "preservation_ovocytes_embryos",
-]);
+export const InitialObjectiveEnum = z.enum(InitialObjective);
 
-export const TreatmentStatusEnum = z.enum(["vigente", "closed", "completed"]);
+export const TreatmentStatusEnum = z.enum(TreatmentStatus);
 
 export const CreateTreatmentSchema = z
   .object({
@@ -18,7 +13,7 @@ export const CreateTreatmentSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
     initial_doctor_id: z.number().int().positive().optional(),
-    status: TreatmentStatusEnum.default("vigente"),
+    status: TreatmentStatusEnum.default(TreatmentStatus.vigente),
     closure_reason: z.string().max(255).optional(),
     closure_date: z
       .string()

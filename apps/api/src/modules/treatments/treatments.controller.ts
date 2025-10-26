@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
 import { CreateTreatmentDto } from './dto';
-import type { CreateTreatmentDtoType } from './dto';
 import { MedicalHistoryService } from '../medical-history/medical-history.service';
 
 @Controller('treatments')
@@ -22,7 +21,7 @@ export class TreatmentsController {
   @Post(':medicalHistoryId')
   async create(
     @Param('medicalHistoryId') medicalHistoryId: string,
-    @Body() dto: CreateTreatmentDto & CreateTreatmentDtoType,
+    @Body() dto: CreateTreatmentDto,
   ) {
     const id = Number(medicalHistoryId);
     const medicalHistory = await this.medicalHistoryService.findById(id);

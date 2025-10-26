@@ -1,20 +1,7 @@
 import { BaseEntity } from '@common/entities/base.entity';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { MedicalHistory } from '../../medical-history/entities/medical-history.entity';
-
-export enum InitialObjective {
-  gametos_propios = 'gametos_propios',
-  couple_female = 'couple_female',
-  method_ropa = 'method_ropa',
-  woman_single = 'woman_single',
-  preservation_ovocytes_embryos = 'preservation_ovocytes_embryos',
-}
-
-export enum TreatmentStatus {
-  vigente = 'vigente',
-  closed = 'closed',
-  completed = 'completed',
-}
+import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 
 @Entity('treatments')
 export class Treatment extends BaseEntity {

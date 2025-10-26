@@ -1,14 +1,10 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Treatment,
-  TreatmentStatus,
-  InitialObjective,
-} from './entities/treatment.entity';
+import { Treatment } from './entities/treatment.entity';
+import { TreatmentStatus, InitialObjective } from '@repo/contracts';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { CreateTreatmentDto } from './dto';
-import type { CreateTreatmentDtoType } from './dto';
 
 @Injectable()
 export class TreatmentService {
@@ -19,21 +15,15 @@ export class TreatmentService {
 
   async createTreatment(
     medicalHistory: MedicalHistory,
-    dto: CreateTreatmentDto & CreateTreatmentDtoType,
+    dto: CreateTreatmentDto,
   ) {
     const status = (dto.status as TreatmentStatus) ?? TreatmentStatus.vigente;
-    if (!Object.values(TreatmentStatus).includes(status)) {
-      throw new ConflictException('status inválido');
-    }
     if (status === TreatmentStatus.closed && !dto.closure_reason) {
       throw new ConflictException(
         'closure_reason es obligatorio si status = closed',
       );
     }
     const initialObjective = dto.initial_objective as InitialObjective;
-    if (!Object.values(InitialObjective).includes(initialObjective)) {
-      throw new ConflictException('initial_objective inválido');
-    }
 
     const treatment = this.treatmentRepo.create({
       initialObjective,

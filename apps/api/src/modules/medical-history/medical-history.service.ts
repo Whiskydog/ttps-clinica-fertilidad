@@ -15,7 +15,7 @@ export class MedicalHistoryService {
   ) {}
 
   async findByUserId(userId: number) {
-    const patient = await this.patientsService.findPatientByUserId(userId);
+    const patient = await this.patientsService.findPatientById(userId);
     if (!patient) return null;
     return this.medicalHistoryRepo.findOne({
       where: { patient: { id: patient.id } },
@@ -28,14 +28,19 @@ export class MedicalHistoryService {
   }
 
   async createForPatient(patientId: number) {
-    // Resuelve el paciente y crea la historia clínica; si no existe el paciente, falla.
-    if (!patientId) {
-      throw new ConflictException('Paciente no encontrado');
-    }
-
+    // Crear HC solo si el paciente existe y aún no tiene una HC asociada
     const patient = await this.patientsService.findPatientById(patientId);
     if (!patient) {
       throw new ConflictException('Paciente no encontrado');
+    }
+
+    const already = await this.medicalHistoryRepo.findOne({
+      where: { patient: { id: patient.id } },
+    });
+    if (already) {
+      throw new ConflictException(
+        'Ya existe una historia clínica para este paciente',
+      );
     }
 
     const hc = this.medicalHistoryRepo.create({ patient });
