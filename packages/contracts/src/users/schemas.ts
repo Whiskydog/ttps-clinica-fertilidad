@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { BiologicalSex } from "./enums";
 
 export const PatientCreateSchema = z.object({
@@ -6,14 +6,12 @@ export const PatientCreateSchema = z.object({
   lastName: z.string().min(1).max(100),
   email: z.email(),
   phone: z.string().min(7).max(15),
+  address: z.string().min(5).max(200).optional(),
   password: z.string().min(6).max(100),
   dni: z.string().min(5).max(20),
-  dateOfBirth: z
-    .string()
-    .refine((date) => !isNaN(Date.parse(date)), {
-      message: "Invalid date format",
-    })
-    .transform((date) => new Date(date)),
+  dateOfBirth: z.iso.date(),
+  medicalInsurance: z.string().min(1).max(100),
+  insuranceNumber: z.string().min(1).max(50),
   occupation: z.string().min(1).max(100),
   biologicalSex: z.enum(BiologicalSex),
 });
