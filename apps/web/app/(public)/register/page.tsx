@@ -1,40 +1,40 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
-import { Input } from '@repo/ui/input';
-import { Label } from '@repo/ui/label';
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/ui/select';
-import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group';
-import { ArrowLeft } from 'lucide-react';
+} from "@repo/ui/select";
+import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
+import { ArrowLeft } from "lucide-react";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
-    dni: '',
-    fechaNacimiento: '',
-    sexoBiologico: '',
-    ocupacion: '',
-    telefono: '',
-    email: '',
-    direccion: '',
-    obraSocial: '',
-    numeroSocio: '',
-    password: '',
-    confirmPassword: '',
+    nombre: "",
+    apellido: "",
+    dni: "",
+    fechaNacimiento: "",
+    sexoBiologico: "",
+    ocupacion: "",
+    telefono: "",
+    email: "",
+    direccion: "",
+    obraSocial: "",
+    numeroSocio: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Register attempt:', formData);
+    console.log("Register attempt:", formData);
   };
 
   const handleChange = (field: string, value: string) => {
@@ -78,7 +78,7 @@ export default function RegisterPage() {
                   id="nombre"
                   type="text"
                   value={formData.nombre}
-                  onChange={(e) => handleChange('nombre', e.target.value)}
+                  onChange={(e) => handleChange("nombre", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -92,7 +92,7 @@ export default function RegisterPage() {
                   id="apellido"
                   type="text"
                   value={formData.apellido}
-                  onChange={(e) => handleChange('apellido', e.target.value)}
+                  onChange={(e) => handleChange("apellido", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -108,7 +108,7 @@ export default function RegisterPage() {
                   id="dni"
                   type="text"
                   value={formData.dni}
-                  onChange={(e) => handleChange('dni', e.target.value)}
+                  onChange={(e) => handleChange("dni", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -123,7 +123,7 @@ export default function RegisterPage() {
                   type="text"
                   value={formData.fechaNacimiento}
                   onChange={(e) =>
-                    handleChange('fechaNacimiento', e.target.value)
+                    handleChange("fechaNacimiento", e.target.value)
                   }
                   required
                   placeholder="DD-MM-AAAA"
@@ -136,7 +136,7 @@ export default function RegisterPage() {
                 <RadioGroup
                   value={formData.sexoBiologico}
                   onValueChange={(value) =>
-                    handleChange('sexoBiologico', value)
+                    handleChange("sexoBiologico", value)
                   }
                   className="flex gap-4 pt-2"
                 >
@@ -170,7 +170,7 @@ export default function RegisterPage() {
                 id="ocupacion"
                 type="text"
                 value={formData.ocupacion}
-                onChange={(e) => handleChange('ocupacion', e.target.value)}
+                onChange={(e) => handleChange("ocupacion", e.target.value)}
                 className="bg-white border-gray-300 text-gray-900"
               />
             </div>
@@ -193,7 +193,7 @@ export default function RegisterPage() {
                   id="telefono"
                   type="tel"
                   value={formData.telefono}
-                  onChange={(e) => handleChange('telefono', e.target.value)}
+                  onChange={(e) => handleChange("telefono", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -207,7 +207,7 @@ export default function RegisterPage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  onChange={(e) => handleChange("email", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 id="direccion"
                 type="text"
                 value={formData.direccion}
-                onChange={(e) => handleChange('direccion', e.target.value)}
+                onChange={(e) => handleChange("direccion", e.target.value)}
                 className="bg-white border-gray-300 text-gray-900"
               />
             </div>
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                 </Label>
                 <Select
                   value={formData.obraSocial}
-                  onValueChange={(value) => handleChange('obraSocial', value)}
+                  onValueChange={(value) => handleChange("obraSocial", value)}
                 >
                   <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                     <SelectValue placeholder="Seleccione..." />
@@ -267,7 +267,7 @@ export default function RegisterPage() {
                   id="numeroSocio"
                   type="text"
                   value={formData.numeroSocio}
-                  onChange={(e) => handleChange('numeroSocio', e.target.value)}
+                  onChange={(e) => handleChange("numeroSocio", e.target.value)}
                   required
                   className="bg-white border-gray-300 text-gray-900"
                 />
@@ -292,7 +292,7 @@ export default function RegisterPage() {
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
+                  onChange={(e) => handleChange("password", e.target.value)}
                   required
                   minLength={8}
                   className="bg-white border-gray-300 text-gray-900"
@@ -308,7 +308,7 @@ export default function RegisterPage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) =>
-                    handleChange('confirmPassword', e.target.value)
+                    handleChange("confirmPassword", e.target.value)
                   }
                   required
                   minLength={8}

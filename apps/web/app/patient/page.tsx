@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 
 export default function PatientDashboard() {
   const currentTreatment = {
-    status: 'VIGENTE',
-    type: 'Fertilización con gametos propios',
-    doctor: 'Dr. Juan Pérez',
-    startDate: '01/09/2025',
-    nextAppointment: '25/09/2025 - 10:00hs',
+    status: "VIGENTE",
+    type: "Fertilización con gametos propios",
+    doctor: "Dr. Juan Pérez",
+    startDate: "01/09/2025",
+    nextAppointment: "25/09/2025 - 10:00hs",
   };
 
   const previousTreatments = [
     {
       id: 1,
-      name: 'Tratamiento #1 - CERRADO',
-      type: 'Fertilización con gametos propios',
-      doctor: 'Dr. Juan Pérez',
-      period: '01/2024 - 03/2024',
+      name: "Tratamiento #1 - CERRADO",
+      type: "Fertilización con gametos propios",
+      doctor: "Dr. Juan Pérez",
+      period: "01/2024 - 03/2024",
     },
   ];
 
@@ -37,23 +37,23 @@ export default function PatientDashboard() {
           <CardContent className="space-y-3">
             <div className="space-y-2">
               <p className="text-black">
-                <span className="font-semibold">Estado:</span>{' '}
+                <span className="font-semibold">Estado:</span>{" "}
                 {currentTreatment.status}
               </p>
               <p className="text-black">
-                <span className="font-semibold">Tipo:</span>{' '}
+                <span className="font-semibold">Tipo:</span>{" "}
                 {currentTreatment.type}
               </p>
               <p className="text-black">
-                <span className="font-semibold">Médico:</span>{' '}
+                <span className="font-semibold">Médico:</span>{" "}
                 {currentTreatment.doctor}
               </p>
               <p className="text-black">
-                <span className="font-semibold">Inicio:</span>{' '}
+                <span className="font-semibold">Inicio:</span>{" "}
                 {currentTreatment.startDate}
               </p>
               <p className="text-black">
-                <span className="font-semibold">Próxima cita:</span>{' '}
+                <span className="font-semibold">Próxima cita:</span>{" "}
                 {currentTreatment.nextAppointment}
               </p>
             </div>

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/button';
+import { Button } from "@repo/ui/button";
 
 export default function AdminLayout({
   children,
@@ -8,12 +8,12 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'Admin',
-    lastName: 'Sistema',
+    firstName: "Admin",
+    lastName: "Sistema",
   };
 
   const handleLogout = () => {
-    console.log('Cerrar sesión');
+    console.log("Cerrar sesión");
     // TODO: Implement logout logic
   };
 

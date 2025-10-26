@@ -1,12 +1,12 @@
-import * as React from 'react';
-import Link from 'next/link';
+import * as React from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Syringe,
   Egg,
   FlaskConical,
   Database,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,32 +15,32 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@repo/ui/sidebar';
+} from "@repo/ui/sidebar";
 
 const menuItems = [
   {
-    name: 'Resumen',
-    path: '/laboratory-technician',
+    name: "Resumen",
+    path: "/laboratory-technician",
     icon: LayoutDashboard,
   },
   {
-    name: 'Registro de Punciones',
-    path: '/laboratory-technician/punctures',
+    name: "Registro de Punciones",
+    path: "/laboratory-technician/punctures",
     icon: Syringe,
   },
   {
-    name: 'Ovocitos',
-    path: '/laboratory-technician/oocytes',
+    name: "Ovocitos",
+    path: "/laboratory-technician/oocytes",
     icon: Egg,
   },
   {
-    name: 'Fecundación / Embriones',
-    path: '/laboratory-technician/embryos',
+    name: "Fecundación / Embriones",
+    path: "/laboratory-technician/embryos",
     icon: FlaskConical,
   },
   {
-    name: 'Banco de Donantes',
-    path: '/laboratory-technician/donor-bank',
+    name: "Banco de Donantes",
+    path: "/laboratory-technician/donor-bank",
     icon: Database,
   },
 ];
