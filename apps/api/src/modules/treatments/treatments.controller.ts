@@ -1,13 +1,7 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
-import { CreateTreatmentDto } from './dto/create-treatment.dto';
+import { CreateTreatmentDto } from './dto';
+import type { CreateTreatmentDtoType } from './dto';
 import { MedicalHistoryService } from '../medical-history/medical-history.service';
 
 @Controller('treatments')
@@ -19,15 +13,15 @@ export class TreatmentsController {
 
   @Get(':medicalHistoryId')
   async getByMedicalHistory(
-    @Param('medicalHistoryId', ParseIntPipe) medicalHistoryId: number,
+    @Param('medicalHistoryId') medicalHistoryId: string,
   ) {
     return this.treatmentService.findByMedicalHistoryId(medicalHistoryId);
   }
 
   @Post(':medicalHistoryId')
   async create(
-    @Param('medicalHistoryId', ParseIntPipe) medicalHistoryId: number,
-    @Body() dto: CreateTreatmentDto,
+    @Param('medicalHistoryId') medicalHistoryId: string,
+    @Body() dto: CreateTreatmentDto & CreateTreatmentDtoType,
   ) {
     const medicalHistory =
       await this.medicalHistoryService.findById(medicalHistoryId);

@@ -1,28 +1,35 @@
 import { BaseEntity } from '@common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  TableInheritance,
+} from 'typeorm';
 import { Role } from './role.entity';
 
 @Entity('users')
+@TableInheritance({ column: { name: 'role', enumName: 'role_code_enum' } })
 export class User extends BaseEntity {
-  @Column({ name: 'first_name', type: 'varchar', length: 100 })
+  @Column({ name: 'first_name' })
   firstName: string;
 
-  @Column({ name: 'last_name', type: 'varchar', length: 100 })
+  @Column({ name: 'last_name' })
   lastName: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  phone: string | null;
-
-  @Column({ unique: true, type: 'varchar', length: 255 })
+  @Column()
   email: string;
 
-  @Column({ name: 'password_hash', type: 'varchar', length: 255 })
+  @Column()
+  phone: string;
+
+  @Column({ name: 'password_hash' })
   passwordHash: string;
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @ManyToOne(() => Role, { eager: true })
-  @JoinColumn({ name: 'role_id', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'role', referencedColumnName: 'code' })
   role: Role;
 }

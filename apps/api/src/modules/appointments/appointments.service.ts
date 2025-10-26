@@ -13,7 +13,7 @@ export class AppointmentsService {
     private readonly config: ConfigService,
   ) {}
 
-  reservarTurno(idPaciente: number, idTurno: number): Observable<unknown> {
+  reserveAppointment(idPatient: number, idSlot: number): Observable<unknown> {
     const url = `${this.apiUrl}/reservar_turno`;
     const token = this.config.get<string>('TURNOS_API_TOKEN');
     const headers = {
@@ -21,16 +21,16 @@ export class AppointmentsService {
       'Content-Type': 'application/json',
     };
     const body = {
-      id_paciente: idPaciente,
-      id_turno: idTurno,
+      id_paciente: 1,
+      id_turno: idSlot,
     };
     return this.httpService
       .patch(url, body, { headers })
       .pipe(map((resp) => resp.data as unknown));
   }
 
-  getTurnosPaciente(idPaciente: number): Observable<unknown> {
-    const url = `${this.apiUrl}/get_turnos_paciente?id_paciente=${idPaciente}`;
+  getPatientAppointments(idPatient: number): Observable<unknown> {
+    const url = `${this.apiUrl}/get_turnos_paciente?id_paciente=${idPatient}`;
     const token = this.config.get<string>('TURNOS_API_TOKEN');
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -40,7 +40,7 @@ export class AppointmentsService {
       .pipe(map((resp) => resp.data as unknown));
   }
 
-  postTurnos(body: any): Observable<unknown> {
+  createDoctorSlots(body: any): Observable<unknown> {
     const url = `${this.apiUrl}/post_turnos`;
     const token = this.config.get<string>('TURNOS_API_TOKEN');
     const headers = {
@@ -52,8 +52,8 @@ export class AppointmentsService {
       .pipe(map((resp) => resp.data as unknown));
   }
 
-  getTurnosMedico(idMedico: number): Observable<unknown> {
-    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${idMedico}`;
+  getDoctorAppointments(idDoctor: number): Observable<unknown> {
+    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${idDoctor}`;
     const token = this.config.get<string>('TURNOS_API_TOKEN');
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -63,9 +63,12 @@ export class AppointmentsService {
       .pipe(map((resp) => resp.data as unknown));
   }
 
-  getMedicoFecha(idMedico: number, fecha: string): Observable<unknown> {
-    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${idMedico}&fecha=${encodeURIComponent(
-      fecha,
+  getDoctorAppointmentsByDate(
+    idDoctor: number,
+    date: string,
+  ): Observable<unknown> {
+    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${idDoctor}&fecha=${encodeURIComponent(
+      date,
     )}`;
     const token = this.config.get<string>('TURNOS_API_TOKEN');
     const headers = {

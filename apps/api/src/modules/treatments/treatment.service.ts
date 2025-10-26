@@ -7,7 +7,8 @@ import {
   InitialObjective,
 } from './entities/treatment.entity';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
-import { CreateTreatmentDto } from './dto/create-treatment.dto';
+import { CreateTreatmentDto } from './dto';
+import type { CreateTreatmentDtoType } from './dto';
 
 @Injectable()
 export class TreatmentService {
@@ -18,7 +19,7 @@ export class TreatmentService {
 
   async createTreatment(
     medicalHistory: MedicalHistory,
-    dto: CreateTreatmentDto,
+    dto: CreateTreatmentDto & CreateTreatmentDtoType,
   ) {
     const status = (dto.status as TreatmentStatus) ?? TreatmentStatus.vigente;
     if (!Object.values(TreatmentStatus).includes(status)) {
@@ -46,7 +47,7 @@ export class TreatmentService {
     return this.treatmentRepo.save(treatment);
   }
 
-  async findByMedicalHistoryId(medicalHistoryId: number) {
+  async findByMedicalHistoryId(medicalHistoryId: string) {
     return this.treatmentRepo.find({
       where: { medicalHistory: { id: medicalHistoryId } },
     });

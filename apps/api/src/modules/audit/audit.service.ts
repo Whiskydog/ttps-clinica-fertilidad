@@ -16,7 +16,7 @@ export class AuditService {
     field: string,
     oldValue: any,
     newValue: any,
-    userId: number | null,
+    userId: string | null,
     userRole: string,
   ) {
     await this.auditRepo.save({

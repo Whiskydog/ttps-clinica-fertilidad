@@ -18,8 +18,8 @@ export class AuditLog extends BaseEntity {
   @Column({ type: 'text', nullable: true, name: 'new_value' })
   newValue: string;
 
-  @Column({ type: 'bigint', nullable: true, name: 'modified_by_user_id' })
-  modifiedByUserId: number | null;
+  @Column({ type: 'uuid', nullable: true, name: 'modified_by_user_id' })
+  modifiedByUserId: string | null;
 
   @Column({ name: 'user_role' })
   userRole: string;

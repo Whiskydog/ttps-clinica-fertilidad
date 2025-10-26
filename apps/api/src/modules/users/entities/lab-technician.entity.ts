@@ -1,13 +1,9 @@
-import { BaseEntity } from '@common/entities/base.entity';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { ChildEntity, Column } from 'typeorm';
+import { RoleCode } from '@repo/contracts';
 import { User } from './user.entity';
 
-@Entity('lab_technician')
-export class LabTechnician extends BaseEntity {
-  @OneToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
-  user: User;
-
+@ChildEntity(RoleCode.LAB_TECHNICIAN)
+export class LabTechnician extends User {
   @Column({ name: 'lab_area' })
   labArea: string;
 }

@@ -17,7 +17,7 @@ export class MedicalHistoryService {
     private readonly config: ConfigService,
   ) {}
 
-  async findByUserId(userId: number) {
+  async findByUserId(userId: string) {
     const patient = await this.patientsService.findPatientByUserId(userId);
     if (!patient) return null;
     return this.medicalHistoryRepo.findOne({
@@ -26,17 +26,19 @@ export class MedicalHistoryService {
     });
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return this.medicalHistoryRepo.findOne({ where: { id } });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async createForPatient(_patientExternalId: number) {
+  async createForPatient(patientId: string) {
     // Modo tolerante: si aún no existe el esquema de usuarios/pacientes o no hay paciente con ese id,
     // podemos crear un paciente "placeholder" y luego la HC.
     const allowFallback =
       this.config.get<string>('ALLOW_HC_CREATE_WITHOUT_PATIENT') === 'true';
     let patient: Patient | null = null;
+    if (patientId) {
+      patient = await this.patientsService.findPatientById(patientId);
+    }
 
     if (!patient && !allowFallback) {
       throw new ConflictException('Paciente no encontrado');
@@ -47,7 +49,7 @@ export class MedicalHistoryService {
       patient = newPatient;
       await this.auditService.log(
         'users',
-        newPatient.user.id,
+        newPatient.id,
         'creation',
         null,
         'placeholder-created',
@@ -71,8 +73,8 @@ export class MedicalHistoryService {
       'creation',
       null,
       'created',
-      effectivePatient.user ? effectivePatient.user.id : null,
-      effectivePatient.user ? 'patient' : 'system',
+      effectivePatient?.id ?? null,
+      effectivePatient ? 'patient' : 'system',
     );
     return saved;
   }

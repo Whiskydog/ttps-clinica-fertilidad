@@ -5,13 +5,13 @@ export class CreateAuditLogs1761332000003 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TABLE IF NOT EXISTS "audit_logs" (
-      "id" BIGINT PRIMARY KEY,
+      "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       "table_name" VARCHAR NOT NULL,
       "record_id" TEXT NOT NULL,
       "modified_field" VARCHAR NOT NULL,
       "old_value" TEXT NULL,
       "new_value" TEXT NULL,
-      "modified_by_user_id" BIGINT NULL,
+      "modified_by_user_id" uuid NULL,
       "user_role" VARCHAR NOT NULL,
       "modification_timestamp" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

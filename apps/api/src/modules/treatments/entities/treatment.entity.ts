@@ -36,8 +36,8 @@ export class Treatment extends BaseEntity {
   @Column({ type: 'date', nullable: true, name: 'start_date' })
   startDate: Date;
 
-  @Column({ type: 'bigint', nullable: true, name: 'initial_doctor_id' })
-  initialDoctorId: number;
+  @Column({ type: 'uuid', nullable: true, name: 'initial_doctor_id' })
+  initialDoctorId: string;
 
   @Column({
     type: 'enum',

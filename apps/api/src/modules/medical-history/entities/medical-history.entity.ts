@@ -18,7 +18,6 @@ export class MedicalHistory extends BaseEntity {
   patient: Patient;
 
   @Column({
-    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     name: 'creation_date',
   })
