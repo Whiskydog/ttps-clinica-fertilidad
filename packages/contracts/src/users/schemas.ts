@@ -19,7 +19,7 @@ export const PatientCreateSchema = z.object({
 export const PatientUpdateSchema = PatientCreateSchema.partial();
 
 export const PatientResponseSchema = z.object({
-  id: z.uuid(),
+  id: z.int().positive(),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   email: z.email(),
