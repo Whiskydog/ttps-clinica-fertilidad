@@ -1,12 +1,12 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
-import { PatientsService } from "@users/services/patients.service";
-import { PatientCreateDto, PatientResponseDto } from "@users/dto";
-import { Patient } from "@users/entities/patient.entity";
-import { ZodSerializerDto } from "nestjs-zod";
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { PatientsService } from '@users/services/patients.service';
+import { PatientCreateDto, PatientResponseDto } from '@users/dto';
+import { Patient } from '@users/entities/patient.entity';
+import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('patients')
 export class PatientsController {
-  constructor(private patientsService: PatientsService) { }
+  constructor(private patientsService: PatientsService) {}
 
   @Post()
   @ZodSerializerDto(PatientResponseDto)

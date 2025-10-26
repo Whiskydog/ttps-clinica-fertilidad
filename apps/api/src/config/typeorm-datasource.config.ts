@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { DataSource, DataSourceOptions } from "typeorm";
+import { DataSource, DataSourceOptions } from 'typeorm';
 
 export const options: DataSourceOptions = {
   type: 'postgres',
@@ -15,6 +15,6 @@ export const options: DataSourceOptions = {
   synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
   dropSchema: process.env.TYPEORM_DROP_SCHEMA === 'true',
   logging: process.env.TYPEORM_LOGGING === 'true',
-}
+};
 
 export default new DataSource(options);

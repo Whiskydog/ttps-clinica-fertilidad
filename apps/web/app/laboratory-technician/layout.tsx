@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Syringe,
   Egg,
   FlaskConical,
   Database,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from '@repo/ui/sidebar';
+} from "@repo/ui/sidebar";
 
 export default function LabTechnicianLayout({
   children,
@@ -26,39 +26,39 @@ export default function LabTechnicianLayout({
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'Operador',
-    lastName: 'de Laboratorio',
+    firstName: "Operador",
+    lastName: "de Laboratorio",
   };
 
   const handleLogout = () => {
-    console.log('Cerrar sesión');
+    console.log("Cerrar sesión");
     // TODO: Implement logout logic
   };
 
   const menuItems = [
     {
-      name: 'Resumen',
-      path: '/laboratory-technician',
+      name: "Resumen",
+      path: "/laboratory-technician",
       icon: LayoutDashboard,
     },
     {
-      name: 'Registro de Punciones',
-      path: '/laboratory-technician/punctures',
+      name: "Registro de Punciones",
+      path: "/laboratory-technician/punctures",
       icon: Syringe,
     },
     {
-      name: 'Ovocitos',
-      path: '/laboratory-technician/oocytes',
+      name: "Ovocitos",
+      path: "/laboratory-technician/oocytes",
       icon: Egg,
     },
     {
-      name: 'Fecundación / Embriones',
-      path: '/laboratory-technician/embryos',
+      name: "Fecundación / Embriones",
+      path: "/laboratory-technician/embryos",
       icon: FlaskConical,
     },
     {
-      name: 'Banco de Donantes',
-      path: '/laboratory-technician/donor-bank',
+      name: "Banco de Donantes",
+      path: "/laboratory-technician/donor-bank",
       icon: Database,
     },
   ];

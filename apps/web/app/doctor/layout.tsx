@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Users,
@@ -10,7 +10,7 @@ import {
   Beaker,
   BarChart3,
   Settings,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +20,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from '@repo/ui/sidebar';
+} from "@repo/ui/sidebar";
 
 export default function DoctorLayout({
   children,
@@ -28,50 +28,50 @@ export default function DoctorLayout({
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    specialty: 'Medicina Reproductiva',
+    firstName: "Juan",
+    lastName: "Pérez",
+    specialty: "Medicina Reproductiva",
   };
 
   const handleLogout = () => {
-    console.log('Cerrar sesión');
+    console.log("Cerrar sesión");
     // TODO: Implement logout logic
   };
 
   const menuItems = [
     {
-      name: 'Dashboard',
-      path: '/doctor',
+      name: "Dashboard",
+      path: "/doctor",
       icon: LayoutDashboard,
     },
     {
-      name: 'Mis Pacientes',
-      path: '/doctor/patients',
+      name: "Mis Pacientes",
+      path: "/doctor/patients",
       icon: Users,
     },
     {
-      name: 'Órdenes Médicas',
-      path: '/doctor/orders',
+      name: "Órdenes Médicas",
+      path: "/doctor/orders",
       icon: FileText,
     },
     {
-      name: 'Seguimientos',
-      path: '/doctor/follow-ups',
+      name: "Seguimientos",
+      path: "/doctor/follow-ups",
       icon: Activity,
     },
     {
-      name: 'Laboratorio',
-      path: '/doctor/laboratory',
+      name: "Laboratorio",
+      path: "/doctor/laboratory",
       icon: Beaker,
     },
     {
-      name: 'Estadísticas',
-      path: '/doctor/statistics',
+      name: "Estadísticas",
+      path: "/doctor/statistics",
       icon: BarChart3,
     },
     {
-      name: 'Configuración',
-      path: '/doctor/settings',
+      name: "Configuración",
+      path: "/doctor/settings",
       icon: Settings,
     },
   ];

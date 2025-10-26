@@ -4,21 +4,12 @@
     "baseUrl": "./",
     "outDir": "./dist",
     "paths": {
-      "@config/*": [
-        "./src/config/*"
-      ],
-      "@modules/*": [
-        "./src/modules/*"
-      ],
-      "@users/*": [
-        "./src/modules/users/*"
-      ],
-      "@common/*": [
-        "./src/common/*"
-      ],
-      "@filters/*": [
-        "./src/filters/*"
-      ]
+      "@config/*": ["./src/config/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@auth/*": ["./src/modules/auth/*"],
+      "@users/*": ["./src/modules/users/*"],
+      "@common/*": ["./src/common/*"],
+      "@filters/*": ["./src/filters/*"]
     }
-  },
+  }
 }

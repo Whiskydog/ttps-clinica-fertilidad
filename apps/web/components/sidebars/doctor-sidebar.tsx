@@ -1,5 +1,5 @@
-import * as React from 'react';
-import Link from 'next/link';
+import * as React from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Users,
@@ -8,7 +8,7 @@ import {
   Beaker,
   BarChart3,
   Settings,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,47 +16,49 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@repo/ui/sidebar';
+} from "@repo/ui/sidebar";
 
 const menuItems = [
   {
-    name: 'Dashboard',
-    path: '/doctor',
+    name: "Dashboard",
+    path: "/doctor",
     icon: LayoutDashboard,
   },
   {
-    name: 'Mis Pacientes',
-    path: '/doctor/patients',
+    name: "Mis Pacientes",
+    path: "/doctor/patients",
     icon: Users,
   },
   {
-    name: 'Órdenes Médicas',
-    path: '/doctor/orders',
+    name: "Órdenes Médicas",
+    path: "/doctor/orders",
     icon: FileText,
   },
   {
-    name: 'Seguimientos',
-    path: '/doctor/follow-ups',
+    name: "Seguimientos",
+    path: "/doctor/follow-ups",
     icon: Activity,
   },
   {
-    name: 'Laboratorio',
-    path: '/doctor/laboratory',
+    name: "Laboratorio",
+    path: "/doctor/laboratory",
     icon: Beaker,
   },
   {
-    name: 'Estadísticas',
-    path: '/doctor/statistics',
+    name: "Estadísticas",
+    path: "/doctor/statistics",
     icon: BarChart3,
   },
   {
-    name: 'Configuración',
-    path: '/doctor/settings',
+    name: "Configuración",
+    path: "/doctor/settings",
     icon: Settings,
   },
 ];
 
-export function DoctorSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function DoctorSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       variant="sidebar"

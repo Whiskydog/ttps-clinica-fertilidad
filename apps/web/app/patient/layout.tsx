@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/button';
+import { Button } from "@repo/ui/button";
 
 export default function PatientLayout({
   children,
@@ -8,12 +8,12 @@ export default function PatientLayout({
   children: React.ReactNode;
 }) {
   const user = {
-    firstName: 'María',
-    lastName: 'González',
+    firstName: "María",
+    lastName: "González",
   };
 
   const handleLogout = () => {
-    console.log('Cerrar sesión');
+    console.log("Cerrar sesión");
     // TODO: Implement logout logic
   };
 

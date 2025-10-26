@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
-import { Input } from '@repo/ui/input';
-import { Label } from '@repo/ui/label';
-import { User, Lock } from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { User, Lock } from "lucide-react";
 
 export default function LoginPage() {
-  const [dni, setDni] = useState('');
-  const [password, setPassword] = useState('');
+  const [dni, setDni] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { dni, password });
+    console.log("Login attempt:", { dni, password });
   };
 
   return (
@@ -106,7 +106,7 @@ export default function LoginPage() {
 
           {/* Register Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            ¿Desea iniciar un tratamiento?{' '}
+            ¿Desea iniciar un tratamiento?{" "}
             <Link
               href="/register"
               className="text-blue-600 hover:text-blue-500 underline font-medium"
