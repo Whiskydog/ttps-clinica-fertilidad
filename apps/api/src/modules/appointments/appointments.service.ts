@@ -21,7 +21,7 @@ export class AppointmentsService {
       'Content-Type': 'application/json',
     };
     const body = {
-      id_paciente: 1,
+      id_paciente: idPatient,
       id_turno: idSlot,
     };
     return this.httpService

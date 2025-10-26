@@ -11,6 +11,6 @@ export class MedicalHistoryController {
   async create(
     @Body() dto: CreateMedicalHistoryDto & CreateMedicalHistoryDtoType,
   ) {
-    return this.medicalHistoryService.createForPatient(String(dto.patient_id));
+    return this.medicalHistoryService.createForPatient(Number(dto.patient_id));
   }
 }

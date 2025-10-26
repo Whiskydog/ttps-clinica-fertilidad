@@ -34,10 +34,10 @@ export class Treatment extends BaseEntity {
   initialObjective: InitialObjective;
 
   @Column({ type: 'date', nullable: true, name: 'start_date' })
-  startDate: Date;
+  startDate: Date | null;
 
-  @Column({ type: 'uuid', nullable: true, name: 'initial_doctor_id' })
-  initialDoctorId: string;
+  @Column({ type: 'int', nullable: true, name: 'initial_doctor_id' })
+  initialDoctorId: number | null;
 
   @Column({
     type: 'enum',
@@ -57,5 +57,5 @@ export class Treatment extends BaseEntity {
   closureReason: string;
 
   @Column({ type: 'date', nullable: true, name: 'closure_date' })
-  closureDate: Date;
+  closureDate: Date | null;
 }

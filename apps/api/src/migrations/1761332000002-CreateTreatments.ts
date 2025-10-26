@@ -18,17 +18,17 @@ export class CreateTreatments1761332000002 implements MigrationInterface {
       END IF; END $$;`);
 
     await queryRunner.query(`CREATE TABLE IF NOT EXISTS "treatments" (
-      "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      "medical_history_id" UUID NOT NULL,
+      "id" SERIAL PRIMARY KEY,
+      "medical_history_id" INTEGER NOT NULL,
       "initial_objective" "public"."initial_objective" NOT NULL,
       "start_date" DATE NULL,
-      "initial_doctor_id" UUID NULL,
+      "initial_doctor_id" INTEGER NULL,
       "status" "public"."treatment_status" NOT NULL DEFAULT 'vigente',
       "closure_reason" VARCHAR(255) NULL,
       "closure_date" DATE NULL,
-      "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "deleted_at" TIMESTAMPTZ NULL,
+      "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+      "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+      "deleted_at" TIMESTAMP NULL,
       CONSTRAINT "FK_treatments_medical_history_id" FOREIGN KEY ("medical_history_id") REFERENCES "medical_histories"("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
       CONSTRAINT "FK_treatments_initial_doctor_id_users_id" FOREIGN KEY ("initial_doctor_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
     );`);

@@ -17,7 +17,7 @@ export const CreateTreatmentSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
-    initial_doctor_id: z.string().uuid().optional(),
+    initial_doctor_id: z.number().int().positive().optional(),
     status: TreatmentStatusEnum.default("vigente"),
     closure_reason: z.string().max(255).optional(),
     closure_date: z

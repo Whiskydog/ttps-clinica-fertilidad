@@ -20,22 +20,6 @@ import {
 } from '@modules/appointments/dto';
 import type { ConfirmAppointmentDtoType } from '@modules/appointments/dto';
 
-// Hardcoded mapping ONLY for quick local tests.
-// Add your UUID → numeric id here temporarily.
-const DOCTOR_MAP: Record<string, number> = {
-  '11111111-1111-1111-1111-111111111111': 123,
-};
-
-function toExternalDoctorId(id: string): number {
-  const asNumber = Number(id);
-  if (Number.isFinite(asNumber)) return asNumber;
-  const mapped = DOCTOR_MAP[id];
-  if (Number.isFinite(mapped)) return mapped;
-  throw new BadRequestException(
-    'Proporcione un id numérico o agregue un mapeo en DOCTOR_MAP (archivo appointments.controller.ts)',
-  );
-}
-
 @Controller('appointments')
 export class AppointmentsController {
   constructor(
@@ -50,12 +34,12 @@ export class AppointmentsController {
     @Body() dto: ConfirmAppointmentDto & ConfirmAppointmentDtoType,
   ) {
     return this.appointments
-      .reserveAppointment(Number(dto.id_paciente), Number(dto.id_turno))
+      .reserveAppointment(dto.id_paciente, dto.id_turno)
       .pipe(
         switchMap((reserva) =>
-          from(
-            this.medicalHistory.createForPatient(String(dto.id_paciente)),
-          ).pipe(map((hc) => ({ reserva, medical_history: hc }))),
+          from(this.medicalHistory.createForPatient(dto.id_paciente)).pipe(
+            map((hc) => ({ reserva, medical_history: hc })),
+          ),
         ),
       );
   }
@@ -76,7 +60,11 @@ export class AppointmentsController {
     if (this.config.get<string>('ENABLE_DEV_ENDPOINTS') !== 'true') {
       throw new ForbiddenException('Endpoint no disponible en producción');
     }
-    return this.appointments.getDoctorAppointments(toExternalDoctorId(id));
+    const doctorId = Number(id);
+    if (!Number.isFinite(doctorId)) {
+      throw new BadRequestException('id de médico inválido, debe ser numérico');
+    }
+    return this.appointments.getDoctorAppointments(doctorId);
   }
 
   // DEV-only: listar turnos de un médico por fecha YYYY-MM-DD
@@ -88,9 +76,10 @@ export class AppointmentsController {
     if (this.config.get<string>('ENABLE_DEV_ENDPOINTS') !== 'true') {
       throw new ForbiddenException('Endpoint no disponible en producción');
     }
-    return this.appointments.getDoctorAppointmentsByDate(
-      toExternalDoctorId(id),
-      fecha,
-    );
+    const doctorId = Number(id);
+    if (!Number.isFinite(doctorId)) {
+      throw new BadRequestException('id de médico inválido, debe ser numérico');
+    }
+    return this.appointments.getDoctorAppointmentsByDate(doctorId, fecha);
   }
 }

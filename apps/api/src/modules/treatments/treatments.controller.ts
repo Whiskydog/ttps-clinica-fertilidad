@@ -15,7 +15,8 @@ export class TreatmentsController {
   async getByMedicalHistory(
     @Param('medicalHistoryId') medicalHistoryId: string,
   ) {
-    return this.treatmentService.findByMedicalHistoryId(medicalHistoryId);
+    const id = Number(medicalHistoryId);
+    return this.treatmentService.findByMedicalHistoryId(id);
   }
 
   @Post(':medicalHistoryId')
@@ -23,8 +24,8 @@ export class TreatmentsController {
     @Param('medicalHistoryId') medicalHistoryId: string,
     @Body() dto: CreateTreatmentDto & CreateTreatmentDtoType,
   ) {
-    const medicalHistory =
-      await this.medicalHistoryService.findById(medicalHistoryId);
+    const id = Number(medicalHistoryId);
+    const medicalHistory = await this.medicalHistoryService.findById(id);
     return this.treatmentService.createTreatment(medicalHistory, dto);
   }
 }

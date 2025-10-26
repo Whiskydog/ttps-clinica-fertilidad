@@ -47,7 +47,7 @@ export class TreatmentService {
     return this.treatmentRepo.save(treatment);
   }
 
-  async findByMedicalHistoryId(medicalHistoryId: string) {
+  async findByMedicalHistoryId(medicalHistoryId: number) {
     return this.treatmentRepo.find({
       where: { medicalHistory: { id: medicalHistoryId } },
     });
