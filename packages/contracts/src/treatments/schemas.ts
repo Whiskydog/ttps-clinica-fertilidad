@@ -10,3 +10,14 @@ export const CreateTreatmentSchema = z.object({
 });
 
 export type CreateTreatmentDtoType = z.infer<typeof CreateTreatmentSchema>;
+
+export const CreateTreatmentResponseSchema = z.object({
+  id: z.number(),
+  initialObjective: InitialObjectiveEnum,
+  status: TreatmentStatusEnum,
+  startDate: z.date(),
+});
+
+export type CreateTreatmentResponseDtoType = z.infer<
+  typeof CreateTreatmentResponseSchema
+>;

@@ -52,7 +52,6 @@ export class MedicalHistoryService {
       null,
       'created',
       patient.id,
-      'patient',
     );
     return saved;
   }

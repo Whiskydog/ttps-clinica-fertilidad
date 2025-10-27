@@ -6,3 +6,4 @@ export * from "./treatments/schemas";
 export * from "./auth/schemas";
 export * from "./auth/types";
 export * from "./medical-insurances/schemas";
+export * from "./audit/schemas";

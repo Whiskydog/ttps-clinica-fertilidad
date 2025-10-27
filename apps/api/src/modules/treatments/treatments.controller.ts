@@ -13,7 +13,7 @@ import { MedicalHistoryService } from '../medical-history/medical-history.servic
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';
-import { RoleCode } from '@repo/contracts';
+import { CreateTreatmentResponseSchema, RoleCode } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 
@@ -45,6 +45,11 @@ export class TreatmentsController {
     if (!medicalHistory) {
       throw new NotFoundException('Historia clínica no encontrada');
     }
-    return this.treatmentService.createTreatment(medicalHistory, dto, user.id);
+    const treatment = await this.treatmentService.createTreatment(
+      medicalHistory,
+      dto,
+      user.id,
+    );
+    return CreateTreatmentResponseSchema.parse(treatment);
   }
 }

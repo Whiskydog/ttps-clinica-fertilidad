@@ -13,3 +13,22 @@ export const PostTurnosSchema = z.object({
 
 export type ConfirmAppointment = z.infer<typeof ConfirmAppointmentSchema>;
 export type PostTurnos = z.infer<typeof PostTurnosSchema>;
+
+export const TurnoSchema = z.object({
+  id: z.number(),
+  id_grupo: z.number(),
+  id_medico: z.number(),
+  id_paciente: z.number(),
+  fecha_hora: z.preprocess((val) => new Date(val as string), z.date()),
+});
+
+export const ReservaSchema = z.object({
+  message: z.string(),
+  turno: TurnoSchema,
+});
+
+export const ReservaResponseSchema = z
+  .object({
+    reserva: ReservaSchema,
+  })
+  .transform((data) => data.reserva);

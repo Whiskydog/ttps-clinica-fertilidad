@@ -1,5 +1,6 @@
 import { BaseEntity } from '@common/entities/base.entity';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '@users/entities/user.entity';
 
 @Entity('audit_logs')
 export class AuditLog extends BaseEntity {
@@ -18,11 +19,9 @@ export class AuditLog extends BaseEntity {
   @Column({ type: 'text', nullable: true, name: 'new_value' })
   newValue: string;
 
-  @Column({ type: 'int', nullable: true, name: 'modified_by_user_id' })
-  modifiedByUserId: number | null;
-
-  @Column({ name: 'user_role' })
-  userRole: string;
+  @ManyToOne(() => User, { nullable: false })
+  @JoinColumn({ name: 'modified_by_user_id', referencedColumnName: 'id' })
+  modifiedByUser: User;
 
   @Column({ type: 'timestamp', name: 'modification_timestamp' })
   modificationTimestamp: Date;

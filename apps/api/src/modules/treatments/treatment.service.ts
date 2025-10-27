@@ -16,7 +16,7 @@ export class TreatmentService {
   async createTreatment(
     medicalHistory: MedicalHistory,
     dto: CreateTreatmentDto,
-    doctorId?: number,
+    doctorId: number,
   ) {
     const initialObjective = (dto as any).initial_objective as InitialObjective;
 

@@ -16,8 +16,7 @@ export class AuditService {
     field: string,
     oldValue: any,
     newValue: any,
-    userId: number | null,
-    userRole: string,
+    userId: number,
   ) {
     await this.auditRepo.save({
       tableName: table,
@@ -25,9 +24,16 @@ export class AuditService {
       modifiedField: field,
       oldValue,
       newValue,
-      modifiedByUserId: userId,
-      userRole,
+      modifiedByUser: { id: Number(userId) },
       modificationTimestamp: new Date(),
+    });
+  }
+
+  async findByUserId(userId: number) {
+    return this.auditRepo.find({
+      where: { modifiedByUser: { id: userId } },
+      relations: ['modifiedByUser'],
+      order: { modificationTimestamp: 'DESC' as const },
     });
   }
 }

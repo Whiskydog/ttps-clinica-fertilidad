@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { from, map, switchMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AppointmentsService } from './appointments.service';
 import { MedicalHistoryService } from '@modules/medical-history/medical-history.service';
 import {
@@ -20,6 +20,7 @@ import {
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { User } from '@modules/users/entities/user.entity';
+import { ReservaResponseSchema } from '@repo/contracts';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -31,19 +32,19 @@ export class AppointmentsController {
   @Post('confirm')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  confirmAndCreateMedicalHistory(
+  async confirmAndCreateMedicalHistory(
     @Body() dto: ConfirmAppointmentDto,
     @CurrentUser() user: User,
   ) {
-    return this.appointments
-      .reserveAppointment(user.id, dto.id_turno)
-      .pipe(
-        switchMap((reserva) =>
-          from(this.medicalHistory.createForPatient(user.id)).pipe(
-            map((hc) => ({ reserva, medical_history: hc })),
-          ),
-        ),
-      );
+    const reserva = await firstValueFrom(
+      this.appointments.reserveAppointment(user.id, dto.id_turno),
+    );
+
+    const medical_history = await this.medicalHistory.createForPatient(user.id);
+
+    const result = { reserva, medical_history };
+
+    return ReservaResponseSchema.parse(result);
   }
 
   // Obtener turnos del paciente autenticado
