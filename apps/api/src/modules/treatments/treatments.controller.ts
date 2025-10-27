@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
 import { CreateTreatmentDto } from './dto';
 import { MedicalHistoryService } from '../medical-history/medical-history.service';
@@ -34,6 +42,9 @@ export class TreatmentsController {
   ) {
     const id = Number(medicalHistoryId);
     const medicalHistory = await this.medicalHistoryService.findById(id);
+    if (!medicalHistory) {
+      throw new NotFoundException('Historia clínica no encontrada');
+    }
     return this.treatmentService.createTreatment(medicalHistory, dto, user.id);
   }
 }
