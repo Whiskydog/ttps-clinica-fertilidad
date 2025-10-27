@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
 import { ArrowLeft } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -19,9 +18,15 @@ import {
   PatientSignUpSchema,
 } from "@repo/contracts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@repo/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { signUp } from "@/app/actions/auth";
+import { setValidationErrors } from "@/utils/rhf-utils";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const form = useForm<PatientSignUp>({
     resolver: zodResolver(PatientSignUpSchema),
     defaultValues: {
@@ -41,7 +46,21 @@ export default function RegisterPage() {
   });
 
   const onSubmit = (data: PatientSignUp) => {
-    console.log(data);
+    if (data.password !== data.confirmPassword) {
+      form.setError("confirmPassword", {
+        message: "Las contraseñas no coinciden",
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await signUp(data);
+      if ("errors" in res) {
+        setValidationErrors(res.errors, form.setError);
+      } else {
+        router.push("/login?registered=true");
+      }
+    });
   };
 
   return (
@@ -92,6 +111,9 @@ export default function RegisterPage() {
                           placeholder="Juan"
                           autoComplete="off"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -116,6 +138,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -139,6 +164,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -163,6 +191,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -173,37 +204,36 @@ export default function RegisterPage() {
                     name="biologicalSex"
                     control={form.control}
                     render={({ field, fieldState }) => (
-                      <FieldSet>
-                        <FieldLabel className="text-gray-700">
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel
+                          htmlFor="biologicalSex"
+                          className="text-gray-700"
+                        >
                           Sexo Biológico: *
                         </FieldLabel>
-                        <RadioGroup
-                          name={field.name}
+                        <Select
                           value={field.value}
                           onValueChange={field.onChange}
-                          className="flex gap-4 pt-2"
                         >
-                          {Object.values(BiologicalSex).map((sex) => (
-                            <FieldLabel
-                              key={sex}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Field
-                                orientation="horizontal"
-                                data-invalid={fieldState.invalid}
-                              >
-                                {/* <FieldContent>
-                                  <FieldTitle className="text-gray-700 font-normal">
-                                    {sex}
-                                  </FieldTitle>
-                                </FieldContent> */}
-                                <FieldLabel htmlFor={sex}>{sex}</FieldLabel>
-                                <RadioGroupItem value={sex} id={sex} />
-                              </Field>
-                            </FieldLabel>
-                          ))}
-                        </RadioGroup>
-                      </FieldSet>
+                          <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                            <SelectValue placeholder="Seleccione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={BiologicalSex.MALE}>
+                              Masculino
+                            </SelectItem>
+                            <SelectItem value={BiologicalSex.FEMALE}>
+                              Femenino
+                            </SelectItem>
+                            <SelectItem value={BiologicalSex.INTERSEX}>
+                              Intersexual
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
                     )}
                   />
                 </div>
@@ -228,6 +258,9 @@ export default function RegisterPage() {
                         autoComplete="off"
                         className="bg-white border-gray-300 text-gray-900"
                       />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -259,6 +292,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -280,6 +316,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -302,6 +341,9 @@ export default function RegisterPage() {
                         autoComplete="off"
                         className="bg-white border-gray-300 text-gray-900"
                       />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
                     </Field>
                   )}
                 />
@@ -347,6 +389,9 @@ export default function RegisterPage() {
                             <SelectItem value="otra">Otra</SelectItem>
                           </SelectContent>
                         </Select>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -371,6 +416,9 @@ export default function RegisterPage() {
                           autoComplete="off"
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -405,6 +453,9 @@ export default function RegisterPage() {
                           aria-invalid={fieldState.invalid}
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -428,6 +479,9 @@ export default function RegisterPage() {
                           aria-invalid={fieldState.invalid}
                           className="bg-white border-gray-300 text-gray-900"
                         />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
                       </Field>
                     )}
                   />
@@ -444,9 +498,10 @@ export default function RegisterPage() {
             <div className="flex justify-center pt-4">
               <Button
                 type="submit"
+                disabled={isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-12 py-6 text-base"
               >
-                CREAR CUENTA
+                {isPending ? "REGISTRANDO..." : "CREAR CUENTA"}
               </Button>
             </div>
           </FieldGroup>
