@@ -14,12 +14,13 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppointmentsService {
-  private readonly apiUrl =
-    'https://ahlnfxipnieoihruewaj.supabase.co/functions/v1';
+  private readonly apiUrl: string;
   constructor(
     private readonly httpService: HttpService,
     private readonly config: ConfigService,
-  ) {}
+  ) {
+    this.apiUrl = this.config.getOrThrow<string>('API_URL_TURNOS');
+  }
 
   reserveAppointment(idPatient: number, idSlot: number): Observable<unknown> {
     const url = `${this.apiUrl}/reservar_turno`;

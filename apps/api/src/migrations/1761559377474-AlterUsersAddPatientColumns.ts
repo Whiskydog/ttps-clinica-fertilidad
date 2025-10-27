@@ -1,19 +1,17 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AlterUsersAddPatientColumns1761331500000
+export class AlterUsersAddPatientColumns1761559377474
   implements MigrationInterface
 {
-  name = 'AlterUsersAddPatientColumns1761331500000';
+  name = 'AlterUsersAddPatientColumns1761559377474';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Move patient-specific columns into the single "users" table (STI)
     await queryRunner.query(
       `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "medical_insurance_id" INTEGER NULL`,
     );
     await queryRunner.query(
       `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "coverage_member_id" VARCHAR(100) NULL`,
     );
-    // Add FK to medical_insurances if not exists
     await queryRunner.query(`
       DO $$
       BEGIN

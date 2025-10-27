@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateTreatments1761332000002 implements MigrationInterface {
-  name = 'CreateTreatments1761332000002';
+export class CreateTreatments1761559855720 implements MigrationInterface {
+  name = 'CreateTreatments1761559855720';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     const hasMH = await queryRunner.hasTable('medical_histories');

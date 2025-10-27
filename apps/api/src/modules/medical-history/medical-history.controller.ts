@@ -1,13 +1,16 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { MedicalHistoryService } from './medical-history.service';
-import { CreateMedicalHistoryDto } from './dto';
+import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { User } from '@modules/users/entities/user.entity';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 
 @Controller('medical-history')
 export class MedicalHistoryController {
   constructor(private readonly medicalHistoryService: MedicalHistoryService) {}
 
   @Post()
-  async create(@Body() dto: CreateMedicalHistoryDto) {
-    return this.medicalHistoryService.createForPatient(Number(dto.patient_id));
+  @UseGuards(JwtAuthGuard)
+  async create(@CurrentUser() user: User) {
+    return this.medicalHistoryService.createForPatient(user.id);
   }
 }

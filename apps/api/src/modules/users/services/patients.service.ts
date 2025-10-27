@@ -4,8 +4,6 @@ import { Patient } from '@users/entities/patient.entity';
 import { Repository } from 'typeorm';
 import { PatientCreateDto } from '@users/dto';
 import argon2 from 'argon2';
-import { BiologicalSex, RoleCode } from '@repo/contracts';
-import { Role } from '@users/entities/role.entity';
 import { MedicalInsurance } from '@modules/medical-insurances/entities/medical-insurance.entity';
 import { MedicalInsurancesService } from '@modules/medical-insurances/medical-insurances.service';
 
@@ -13,15 +11,11 @@ import { MedicalInsurancesService } from '@modules/medical-insurances/medical-in
 export class PatientsService {
   constructor(
     @InjectRepository(Patient) private patientRepository: Repository<Patient>,
-    @InjectRepository(Role) private roleRepo: Repository<Role>,
     private readonly medicalInsurances: MedicalInsurancesService,
   ) {}
 
   async createPatient(dto: PatientCreateDto): Promise<Patient> {
     const passwordHash = await argon2.hash(dto.password);
-    const patientRole = await this.roleRepo.findOne({
-      where: { code: RoleCode.PATIENT },
-    });
 
     // Optional obra social (relation) and coverage member
     let medicalInsurance: MedicalInsurance | null = null;
@@ -40,19 +34,9 @@ export class PatientsService {
     }
 
     const newPatient = this.patientRepository.create({
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      email: dto.email,
-      phone: dto.phone,
+      ...dto,
       passwordHash,
-      isActive: true,
-      role: patientRole!,
-      dni: dto.dni,
-      dateOfBirth: dto.dateOfBirth,
-      occupation: dto.occupation,
-      biologicalSex: dto.biologicalSex as BiologicalSex,
       medicalInsurance,
-      coverageMemberId: dto.coverageMemberId ?? null,
     });
     return this.patientRepository.save(newPatient);
   }

@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { from, map, switchMap } from 'rxjs';
 import { AppointmentsService } from './appointments.service';
@@ -16,6 +17,9 @@ import {
   ConfirmAppointmentDto,
   PostTurnosDto,
 } from '@modules/appointments/dto';
+import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import { User } from '@modules/users/entities/user.entity';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -25,29 +29,28 @@ export class AppointmentsController {
   ) {}
 
   @Post('confirm')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  confirmAndCreateHC(@Body() dto: ConfirmAppointmentDto) {
+  confirmAndCreateMedicalHistory(
+    @Body() dto: ConfirmAppointmentDto,
+    @CurrentUser() user: User,
+  ) {
     return this.appointments
-      .reserveAppointment(dto.id_paciente, dto.id_turno)
+      .reserveAppointment(user.id, dto.id_turno)
       .pipe(
         switchMap((reserva) =>
-          from(this.medicalHistory.createForPatient(dto.id_paciente)).pipe(
+          from(this.medicalHistory.createForPatient(user.id)).pipe(
             map((hc) => ({ reserva, medical_history: hc })),
           ),
         ),
       );
   }
 
-  // Obtener turnos de un paciente en el modulo externo
-  @Get('patient/:id')
-  getPatientAppointments(@Param('id') id: string) {
-    const patientId = Number(id);
-    if (!Number.isFinite(patientId)) {
-      throw new BadRequestException(
-        'id de paciente inválido, debe ser numérico',
-      );
-    }
-    return this.appointments.getPatientAppointments(patientId);
+  // Obtener turnos del paciente autenticado
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getMyAppointments(@CurrentUser() user: User) {
+    return this.appointments.getPatientAppointments(user.id);
   }
 
   // Crear grilla de turnos para un médico

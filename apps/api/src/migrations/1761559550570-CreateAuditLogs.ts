@@ -1,8 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateAuditLogs1761332000003 implements MigrationInterface {
-  name = 'CreateAuditLogs1761332000003';
-
+export class CreateAuditLogs1761559550570 implements MigrationInterface {
+  name = 'CreateAuditLogs1761559550570';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TABLE IF NOT EXISTS "audit_logs" (
       "id" SERIAL PRIMARY KEY,
