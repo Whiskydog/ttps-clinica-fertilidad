@@ -4,6 +4,7 @@ import { PatientCreateDto, PatientResponseDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { Public } from '@modules/auth/decorators/public.decorator';
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 
 @Controller('patients')
 export class PatientsController {
@@ -11,6 +12,7 @@ export class PatientsController {
 
   @Public()
   @Post()
+  @EnvelopeMessage('Paciente creado con éxito')
   @ZodSerializerDto(PatientResponseDto)
   async createPatient(@Body() dto: PatientCreateDto): Promise<Patient> {
     return this.patientsService.createPatient(dto);
