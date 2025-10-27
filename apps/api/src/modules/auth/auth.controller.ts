@@ -13,6 +13,7 @@ import { User } from '@modules/users/entities/user.entity';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
 import { Public } from './decorators/public.decorator';
+import { LocalPatientAuthGuard } from './guards/local-patient-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('sign-in')
   async signIn(
+    @CurrentUser() user: User,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const signInResult = await this.authService.signIn(user);
+
+    this.authService.setCookie(response, signInResult.accessToken);
+
+    return signInResult;
+  }
+
+  @Public()
+  @UseGuards(LocalPatientAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('sign-in/patient')
+  async signInPatient(
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {

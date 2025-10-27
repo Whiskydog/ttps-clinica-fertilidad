@@ -7,6 +7,12 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface ApiErrorResponse {
+  statusCode: number;
+  message: string;
+  error: string;
+}
+
 export interface ApiValidationErrorResponse {
   statusCode: number;
   message: string;

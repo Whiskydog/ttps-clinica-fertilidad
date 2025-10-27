@@ -1,19 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { signInPatient } from "@/app/actions/auth";
+import { toast } from "@repo/ui";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { User, Lock } from "lucide-react";
+import { Lock, User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
 
 export default function LoginPage() {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
+  const passwordInputRef = useRef<HTMLInputElement | null>(null);
+
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { dni, password });
+
+    startTransition(async () => {
+      const res = await signInPatient({ dni, password });
+      if ("error" in res) {
+        toast.error(
+          "Error en el inicio de sesión: " + (res.message ?? res.error)
+        );
+        passwordInputRef.current?.focus();
+      } else {
+        router.push("/patient");
+      }
+    });
   };
 
   return (
@@ -86,6 +104,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  ref={passwordInputRef}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -98,9 +117,10 @@ export default function LoginPage() {
             {/* Submit Button */}
             <Button
               type="submit"
+              disabled={isPending}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-base"
             >
-              INGRESAR
+              {isPending ? "INGRESANDO..." : "INGRESAR"}
             </Button>
           </form>
 

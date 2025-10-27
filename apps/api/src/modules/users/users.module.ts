@@ -19,6 +19,6 @@ import { UserValidationService } from './services/user-validation.service';
     DoctorsService,
     UserValidationService,
   ],
-  exports: [UsersService],
+  exports: [UsersService, PatientsService],
 })
 export class UsersModule {}

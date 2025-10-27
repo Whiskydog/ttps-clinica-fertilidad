@@ -1,7 +1,16 @@
 "use client";
 
-import Link from "next/link";
+import { signUp } from "@/app/actions/auth";
+import { setValidationErrors } from "@/utils/rhf-utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  BiologicalSex,
+  PatientSignUp,
+  PatientSignUpSchema,
+} from "@repo/contracts";
+import { toast } from "@repo/ui";
 import { Button } from "@repo/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
 import {
   Select,
@@ -11,18 +20,10 @@ import {
   SelectValue,
 } from "@repo/ui/select";
 import { ArrowLeft } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
-import {
-  BiologicalSex,
-  PatientSignUp,
-  PatientSignUpSchema,
-} from "@repo/contracts";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
-import { useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signUp } from "@/app/actions/auth";
-import { setValidationErrors } from "@/utils/rhf-utils";
+import { useTransition } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -56,9 +57,10 @@ export default function RegisterPage() {
     startTransition(async () => {
       const res = await signUp(data);
       if ("errors" in res) {
-        setValidationErrors(res.errors, form.setError);
+        setValidationErrors(res.errors, form.setError, true);
       } else {
-        router.push("/login?registered=true");
+        router.push("/login");
+        toast.success(res.message || "Registro exitoso");
       }
     });
   };

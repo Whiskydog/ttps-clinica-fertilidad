@@ -25,4 +25,8 @@ export class PatientsService {
   async getPatients(): Promise<Patient[]> {
     return this.patientRepository.find();
   }
+
+  async findOneByDni(dni: string): Promise<Patient | null> {
+    return this.patientRepository.findOne({ where: { dni } });
+  }
 }
