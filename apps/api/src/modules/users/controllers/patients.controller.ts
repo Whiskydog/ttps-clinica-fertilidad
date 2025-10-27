@@ -3,11 +3,13 @@ import { PatientsService } from '@users/services/patients.service';
 import { PatientCreateDto, PatientResponseDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
 import { ZodSerializerDto } from 'nestjs-zod';
+import { Public } from '@modules/auth/decorators/public.decorator';
 
 @Controller('patients')
 export class PatientsController {
   constructor(private patientsService: PatientsService) {}
 
+  @Public()
   @Post()
   @ZodSerializerDto(PatientResponseDto)
   async createPatient(@Body() dto: PatientCreateDto): Promise<Patient> {

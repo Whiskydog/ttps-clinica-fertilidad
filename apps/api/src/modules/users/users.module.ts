@@ -8,11 +8,17 @@ import { DoctorsController } from './controllers/doctors.controller';
 import { DoctorsService } from './services/doctors.service';
 import { UsersService } from './services/users.service';
 import { User } from './entities/user.entity';
+import { UserValidationService } from './services/user-validation.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Patient, Doctor])],
   controllers: [PatientsController, DoctorsController],
-  providers: [UsersService, PatientsService, DoctorsService],
+  providers: [
+    UsersService,
+    PatientsService,
+    DoctorsService,
+    UserValidationService,
+  ],
   exports: [UsersService],
 })
 export class UsersModule {}
