@@ -2,6 +2,7 @@ import { BaseEntity } from '@common/entities/base.entity';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { MedicalHistory } from '../../medical-history/entities/medical-history.entity';
 import { InitialObjective, TreatmentStatus } from '@repo/contracts';
+import { User } from '@users/entities/user.entity';
 
 @Entity('treatments')
 export class Treatment extends BaseEntity {
@@ -23,8 +24,9 @@ export class Treatment extends BaseEntity {
   @Column({ type: 'date', nullable: true, name: 'start_date' })
   startDate: Date | null;
 
-  @Column({ type: 'int', nullable: true, name: 'initial_doctor_id' })
-  initialDoctorId: number | null;
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'initial_doctor_id', referencedColumnName: 'id' })
+  initialDoctor?: User | null;
 
   @Column({
     type: 'enum',

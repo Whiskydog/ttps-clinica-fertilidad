@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Treatment } from './entities/treatment.entity';
@@ -16,22 +16,17 @@ export class TreatmentService {
   async createTreatment(
     medicalHistory: MedicalHistory,
     dto: CreateTreatmentDto,
+    doctorId?: number,
   ) {
-    const status = (dto.status as TreatmentStatus) ?? TreatmentStatus.vigente;
-    if (status === TreatmentStatus.closed && !dto.closure_reason) {
-      throw new ConflictException(
-        'closure_reason es obligatorio si status = closed',
-      );
-    }
-    const initialObjective = dto.initial_objective as InitialObjective;
+    const initialObjective = (dto as any).initial_objective as InitialObjective;
 
     const treatment = this.treatmentRepo.create({
       initialObjective,
-      startDate: dto.start_date,
-      initialDoctorId: dto.initial_doctor_id,
-      status,
-      closureReason: dto.closure_reason,
-      closureDate: dto.closure_date,
+      startDate: new Date(),
+      initialDoctor: { id: Number(doctorId) },
+      status: TreatmentStatus.vigente,
+      closureReason: null,
+      closureDate: null,
       medicalHistory,
     });
     return this.treatmentRepo.save(treatment);

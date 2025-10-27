@@ -13,7 +13,7 @@ import { Patient } from '../../users/entities/patient.entity';
 @Entity('medical_histories')
 @Unique(['patient'])
 export class MedicalHistory extends BaseEntity {
-  @ManyToOne(() => Patient, { eager: true })
+  @ManyToOne(() => Patient, { eager: true, nullable: false })
   @JoinColumn({ name: 'patient_id', referencedColumnName: 'id' })
   patient: Patient;
 
