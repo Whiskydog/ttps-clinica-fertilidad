@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Patient } from '../entities/patient.entity';
 import { ValidationException } from '@common/exceptions/validations';
 import { Repository } from 'typeorm';
+import { ValidationError } from '@repo/contracts';
+import { PatientCreateDto } from '../dto';
 
 @Injectable()
 export class UserValidationService {
@@ -10,21 +12,31 @@ export class UserValidationService {
     @InjectRepository(Patient) private patientRepository: Repository<Patient>,
   ) {}
 
-  async ensureEmailUniqueness(email: string): Promise<void> {
-    if (await this.patientRepository.existsBy({ email })) {
-      throw new ValidationException({
+  async ensurePatientUniqueness({
+    email,
+    dni,
+  }: PatientCreateDto): Promise<void> {
+    const emailExists = await this.patientRepository.existsBy({ email });
+    const dniExists = await this.patientRepository.existsBy({ dni });
+
+    const error = new ValidationError();
+
+    if (emailExists) {
+      error.addCustomIssue({
         fieldName: 'email',
-        message: 'Ya existe un paciente con este email',
+        message: 'El email ya está en uso',
       });
     }
-  }
 
-  async ensureDniUniqueness(dni: string): Promise<void> {
-    if (await this.patientRepository.existsBy({ dni })) {
-      throw new ValidationException({
+    if (dniExists) {
+      error.addCustomIssue({
         fieldName: 'dni',
-        message: 'Ya existe un paciente con este DNI',
+        message: 'El DNI ya está en uso',
       });
+    }
+
+    if (error.issues.length > 0) {
+      throw new ValidationException(error);
     }
   }
 }

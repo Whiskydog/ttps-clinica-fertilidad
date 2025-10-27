@@ -14,8 +14,7 @@ export class PatientsService {
   ) {}
 
   async createPatient(dto: PatientCreateDto): Promise<Patient> {
-    await this.userValidationService.ensureEmailUniqueness(dto.email);
-    await this.userValidationService.ensureDniUniqueness(dto.dni);
+    await this.userValidationService.ensurePatientUniqueness(dto);
 
     const passwordHash = await argon2.hash(dto.password);
     const newPatient = this.patientRepository.create({ ...dto, passwordHash });
