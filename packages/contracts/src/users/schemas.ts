@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { BiologicalSex } from "./enums";
 import { ApiResponseSchema } from "../common/api";
+import { BiologicalSex } from "./enums";
 
 export const PatientCreateSchema = z.object({
   firstName: z
@@ -32,7 +32,7 @@ export const PatientCreateSchema = z.object({
     .min(5, { error: "DNI muy corto" })
     .max(20, { error: "DNI muy largo" }),
   dateOfBirth: z.iso.date({ error: "Fecha de nacimiento inválida" }),
-  medicalInsurance: z
+  medicalInsuranceName: z
     .string({ error: "Obra social es requerida" })
     .min(1, { error: "Obra social es obligatoria" })
     .max(100, { error: "Obra social muy larga" }),
@@ -59,6 +59,8 @@ const PatientSchema = z.object({
   dateOfBirth: z.iso.date(),
   occupation: z.string().min(1).max(100),
   biologicalSex: z.enum(BiologicalSex),
+  medicalInsuranceName: z.string().max(100).optional(),
+  insuranceNumber: z.string().max(50).optional(),
 });
 
 export const PatientResponseSchema = ApiResponseSchema(PatientSchema);

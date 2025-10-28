@@ -1,17 +1,21 @@
+import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Patient } from './entities/patient.entity';
-import { PatientsController } from './controllers/patients.controller';
-import { PatientsService } from './services/patients.service';
-import { Doctor } from './entities/doctor.entity';
 import { DoctorsController } from './controllers/doctors.controller';
-import { DoctorsService } from './services/doctors.service';
-import { UsersService } from './services/users.service';
+import { PatientsController } from './controllers/patients.controller';
+import { Doctor } from './entities/doctor.entity';
+import { Patient } from './entities/patient.entity';
 import { User } from './entities/user.entity';
+import { DoctorsService } from './services/doctors.service';
+import { PatientsService } from './services/patients.service';
 import { UserValidationService } from './services/user-validation.service';
+import { UsersService } from './services/users.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Patient, Doctor])],
+  imports: [
+    TypeOrmModule.forFeature([User, Patient, Doctor]),
+    MedicalInsurancesModule,
+  ],
   controllers: [PatientsController, DoctorsController],
   providers: [
     UsersService,
