@@ -8,11 +8,16 @@ import { DoctorsController } from './controllers/doctors.controller';
 import { DoctorsService } from './services/doctors.service';
 import { UsersService } from './services/users.service';
 import { User } from './entities/user.entity';
+import { Role } from './entities/role.entity';
+import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Patient, Doctor])],
+  imports: [
+    TypeOrmModule.forFeature([User, Patient, Doctor, Role]),
+    MedicalInsurancesModule,
+  ],
   controllers: [PatientsController, DoctorsController],
   providers: [UsersService, PatientsService, DoctorsService],
-  exports: [UsersService],
+  exports: [UsersService, PatientsService],
 })
 export class UsersModule {}

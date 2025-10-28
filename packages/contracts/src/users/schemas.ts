@@ -16,6 +16,9 @@ export const PatientCreateSchema = z.object({
     .transform((date) => new Date(date)),
   occupation: z.string().min(1).max(100),
   biologicalSex: z.enum(BiologicalSex),
+  // Optional obra social relation on create (camelCase only)
+  medicalInsuranceId: z.number().int().positive().optional(),
+  coverageMemberId: z.string().max(100).optional(),
 });
 
 export const PatientUpdateSchema = PatientCreateSchema.partial();
@@ -30,6 +33,8 @@ export const PatientResponseSchema = z.object({
   dateOfBirth: z.date(),
   occupation: z.string().min(1).max(100),
   biologicalSex: z.enum(BiologicalSex),
+  medicalInsuranceId: z.int().positive().nullable().optional(),
+  coverageMemberId: z.string().max(100).nullable().optional(),
 });
 
 export const PatientsListResponseSchema = z.array(PatientResponseSchema);

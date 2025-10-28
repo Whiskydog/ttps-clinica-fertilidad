@@ -7,9 +7,21 @@ import { ConfigModule } from '@modules/config/config.module';
 import { UsersModule } from '@modules/users/users.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
+import { TreatmentsModule } from '@modules/treatments/treatments.module';
+import { AppointmentsModule } from '@modules/appointments/appointments.module';
+import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 
 @Module({
-  imports: [ConfigModule, UsersModule, AuthModule],
+  imports: [
+    ConfigModule,
+    UsersModule,
+    AuthModule,
+    MedicalHistoryModule,
+    TreatmentsModule,
+    AppointmentsModule,
+    MedicalInsurancesModule,
+  ],
   controllers: [],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },
