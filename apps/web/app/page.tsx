@@ -1,15 +1,6 @@
-import { getUser } from "@/app/lib/dal";
-import { RoleCode } from "@repo/contracts";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default async function Home() {
-  const user = await getUser();
-
-  if (user && user.role.code === RoleCode.PATIENT) {
-    redirect("/patient");
-  }
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
       <main className="max-w-2xl mx-auto px-4 py-16 text-center">

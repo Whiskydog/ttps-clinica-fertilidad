@@ -23,12 +23,14 @@ export default async function PatientLayout({
           <h1 className="text-xl text-gray-900 font-medium">
             Bienvenido, {user.firstName} {user.lastName}
           </h1>
-          <Button
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <Link href="/logout">Cerrar Sesión</Link>
-          </Button>
+          <Link href="/logout">
+            <Button
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Cerrar Sesión
+            </Button>
+          </Link>
         </div>
       </header>
 
