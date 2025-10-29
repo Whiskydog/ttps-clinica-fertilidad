@@ -40,7 +40,7 @@ export default function RegisterPage() {
       confirmPassword: "",
       dni: "",
       dateOfBirth: "",
-      medicalInsurance: "",
+      medicalInsuranceName: "",
       insuranceNumber: "",
       occupation: "",
     },
@@ -363,12 +363,12 @@ export default function RegisterPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Controller
-                    name="medicalInsurance"
+                    name="medicalInsuranceName"
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel
-                          htmlFor="medicalInsurance"
+                          htmlFor="medicalInsuranceName"
                           className="text-gray-700"
                         >
                           Obra Social / Prepaga: *
