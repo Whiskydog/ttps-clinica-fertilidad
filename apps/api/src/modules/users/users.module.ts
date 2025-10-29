@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoctorsController } from './controllers/doctors.controller';
 import { PatientsController } from './controllers/patients.controller';
+import { UsersController } from './controllers/users.controller';
 import { Doctor } from './entities/doctor.entity';
 import { Patient } from './entities/patient.entity';
 import { User } from './entities/user.entity';
@@ -16,7 +17,7 @@ import { UsersService } from './services/users.service';
     TypeOrmModule.forFeature([User, Patient, Doctor]),
     MedicalInsurancesModule,
   ],
-  controllers: [PatientsController, DoctorsController],
+  controllers: [UsersController, PatientsController, DoctorsController],
   providers: [
     UsersService,
     PatientsService,

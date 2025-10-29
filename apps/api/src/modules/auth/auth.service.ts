@@ -1,12 +1,12 @@
 import { User } from '@modules/users/entities/user.entity';
+import { PatientsService } from '@modules/users/services/patients.service';
 import { UsersService } from '@modules/users/services/users.service';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthPayload, AuthToken, RoleCode } from '@repo/contracts';
-import { Response } from 'express';
 import argon2 from 'argon2';
-import { ConfigService } from '@nestjs/config';
-import { PatientsService } from '@modules/users/services/patients.service';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -42,9 +42,8 @@ export class AuthService {
   }
 
   async signIn(user: User): Promise<AuthToken> {
-    const payload: AuthPayload = {
-      sub: user.id,
-      email: user.email,
+    const payload: Partial<AuthPayload> = {
+      sub: String(user.id),
       role: user.role.code,
     };
 
@@ -54,7 +53,7 @@ export class AuthService {
   }
 
   setCookie(response: Response, accessToken: string) {
-    response.cookie('accessToken', accessToken, {
+    response.cookie('session', accessToken, {
       httpOnly: true,
       secure: this.config.get('NODE_ENV') === 'production',
       sameSite: 'strict',
@@ -64,7 +63,7 @@ export class AuthService {
   }
 
   clearCookie(response: Response) {
-    response.clearCookie('accessToken', {
+    response.clearCookie('session', {
       httpOnly: true,
       secure: this.config.get('NODE_ENV') === 'production',
       sameSite: 'strict',

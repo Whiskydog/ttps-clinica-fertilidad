@@ -1,11 +1,13 @@
 "use server";
 
+import { createSession } from "@/app/lib/session";
 import {
   ApiErrorResponse,
   ApiResponse,
   ApiValidationErrorResponse,
   AuthToken,
   PatientResponse,
+  PatientSignIn,
   PatientSignUp,
 } from "@repo/contracts";
 
@@ -23,10 +25,9 @@ export async function signUp(
   return await response.json();
 }
 
-export async function signInPatient(data: {
-  dni: string;
-  password: string;
-}): Promise<ApiResponse<AuthToken> | ApiErrorResponse> {
+export async function signInPatient(
+  data: PatientSignIn
+): Promise<ApiResponse<AuthToken> | ApiErrorResponse> {
   const response = await fetch(
     `${process.env.BACKEND_URL}/auth/sign-in/patient`,
     {
@@ -38,5 +39,12 @@ export async function signInPatient(data: {
     }
   );
 
-  return await response.json();
+  const payload = await response.json();
+  if (response.ok) {
+    const authResponse = payload as ApiResponse<AuthToken>;
+    await createSession(authResponse.data.accessToken);
+    return authResponse;
+  }
+
+  return payload as ApiErrorResponse;
 }

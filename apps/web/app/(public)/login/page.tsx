@@ -7,7 +7,7 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Lock, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 export default function LoginPage() {
@@ -23,13 +23,11 @@ export default function LoginPage() {
 
     startTransition(async () => {
       const res = await signInPatient({ dni, password });
-      if ("error" in res) {
-        toast.error(
-          "Error en el inicio de sesión: " + (res.message ?? res.error)
-        );
-        passwordInputRef.current?.focus();
+      if (res.statusCode !== 200) {
+        toast.error(res.message);
       } else {
-        router.push("/patient");
+        toast.success(res.message);
+        redirect("/patient");
       }
     });
   };

@@ -1,21 +1,19 @@
-"use client";
-
+import { getUser } from "@/app/lib/dal";
+import { RoleCode } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function PatientLayout({
+export default async function PatientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = {
-    firstName: "María",
-    lastName: "González",
-  };
+  const user = await getUser();
 
-  const handleLogout = () => {
-    console.log("Cerrar sesión");
-    // TODO: Implement logout logic
-  };
+  if (!user || user.role.code !== RoleCode.PATIENT) {
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -23,14 +21,13 @@ export default function PatientLayout({
       <header className="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h1 className="text-xl text-gray-900 font-medium">
-            Bienvenida, {user.firstName} {user.lastName}
+            Bienvenido, {user.firstName} {user.lastName}
           </h1>
           <Button
-            onClick={handleLogout}
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-100"
           >
-            Cerrar Sesión
+            <Link href="/logout">Cerrar Sesión</Link>
           </Button>
         </div>
       </header>
