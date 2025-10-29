@@ -1,5 +1,7 @@
+import moment from "moment";
 import * as z from "zod";
 import { ApiResponseSchema } from "../common/api";
+import { MedicalInsuranceSchema } from "../medical-insurances/schemas";
 import { BiologicalSex } from "./enums";
 
 export const PatientCreateSchema = z.object({
@@ -35,12 +37,14 @@ export const PatientCreateSchema = z.object({
   medicalInsuranceName: z
     .string({ error: "Obra social es requerida" })
     .min(1, { error: "Obra social es obligatoria" })
-    .max(100, { error: "Obra social muy larga" }),
+    .max(100, { error: "Obra social muy larga" })
+    .optional(),
   insuranceNumber: z
     .string({ error: "Número de afiliado es requerido" })
     .min(1, { error: "Número de afiliado es obligatorio" })
     .min(5, { error: "Número de afiliado muy corto" })
-    .max(50, { error: "Número de afiliado muy largo" }),
+    .max(50, { error: "Número de afiliado muy largo" })
+    .optional(),
   occupation: z.string().max(100, { error: "Ocupación muy larga" }).optional(),
   biologicalSex: z.enum(BiologicalSex, {
     error: "Sexo biológico es requerido",
@@ -49,19 +53,43 @@ export const PatientCreateSchema = z.object({
 
 export const PatientUpdateSchema = PatientCreateSchema.partial();
 
-const PatientSchema = z.object({
+const PatientEntitySchema = z.object({
   id: z.int().positive(),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   email: z.email(),
   phone: z.string().min(7).max(15),
+  address: z
+    .string()
+    .max(100)
+    .nullable()
+    .transform((val) => val ?? undefined),
   dni: z.string().min(5).max(20),
-  dateOfBirth: z.iso.date(),
-  occupation: z.string().min(1).max(100),
+  dateOfBirth: z.date(),
+  occupation: z
+    .string()
+    .min(1)
+    .max(100)
+    .nullable()
+    .transform((val) => val ?? undefined),
   biologicalSex: z.enum(BiologicalSex),
-  medicalInsuranceName: z.string().max(100).optional(),
-  insuranceNumber: z.string().max(50).optional(),
+  medicalInsurance: MedicalInsuranceSchema.nullable(),
+  coverageMemberId: z
+    .string()
+    .min(5)
+    .max(100)
+    .nullable()
+    .transform((val) => val ?? undefined),
 });
+
+const PatientSchema = PatientEntitySchema.transform(
+  ({ dateOfBirth, medicalInsurance, coverageMemberId, ...rest }) => ({
+    ...rest,
+    dateOfBirth: moment(dateOfBirth).format("YYYY-MM-DD"),
+    medicalInsuranceName: medicalInsurance?.name,
+    insuranceNumber: coverageMemberId,
+  })
+);
 
 export const PatientResponseSchema = ApiResponseSchema(PatientSchema);
 
@@ -70,3 +98,5 @@ export type PatientResponse = z.infer<typeof PatientResponseSchema>;
 export const PatientsListResponseSchema = ApiResponseSchema(
   z.array(PatientSchema)
 );
+
+export type PatientsListResponse = z.infer<typeof PatientsListResponseSchema>;

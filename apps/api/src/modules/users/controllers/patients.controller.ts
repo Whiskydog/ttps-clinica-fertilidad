@@ -1,7 +1,7 @@
 import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 import { Public } from '@modules/auth/decorators/public.decorator';
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { PatientCreateDto, PatientResponseDto } from '@users/dto';
+import { PatientCreateDto, PatientResponseDto, PatientsListResponseDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
 import { PatientsService } from '@users/services/patients.service';
 import { ZodSerializerDto } from 'nestjs-zod';
@@ -19,7 +19,7 @@ export class PatientsController {
   }
 
   @Get()
-  @ZodSerializerDto([PatientResponseDto])
+  @ZodSerializerDto(PatientsListResponseDto)
   async getPatients(): Promise<Patient[]> {
     return this.patientsService.getPatients();
   }
