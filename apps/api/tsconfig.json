@@ -9,7 +9,6 @@
       "@auth/*": ["./src/modules/auth/*"],
       "@users/*": ["./src/modules/users/*"],
       "@common/*": ["./src/common/*"],
-      "@filters/*": ["./src/filters/*"]
     }
   }
 }

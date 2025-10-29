@@ -1,5 +1,5 @@
+import HttpExceptionFilter from '@common/filters/http-exception.filter';
 import { EnvelopeInterceptor } from '@common/interceptors/envelope.interceptor';
-import HttpExceptionFilter from '@filters/http-exception.filter';
 import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
