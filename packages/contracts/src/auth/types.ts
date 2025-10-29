@@ -3,7 +3,8 @@ export type AuthToken = {
 };
 
 export interface AuthPayload {
-  sub: number;
-  email: string;
+  sub: string;
   role: string;
+  iat: number;
+  exp: number;
 }

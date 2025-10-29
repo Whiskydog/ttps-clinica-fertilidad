@@ -1,3 +1,4 @@
+import { Toaster } from "@repo/ui/sonner";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <Toaster richColors position="top-center" />
         {children}
       </body>
     </html>

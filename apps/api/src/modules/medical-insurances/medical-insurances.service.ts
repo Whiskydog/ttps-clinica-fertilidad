@@ -17,4 +17,8 @@ export class MedicalInsurancesService {
   findById(id: number): Promise<MedicalInsurance | null> {
     return this.repo.findOne({ where: { id } });
   }
+
+  findByName(name: string): Promise<MedicalInsurance | null> {
+    return this.repo.findOneBy({ name });
+  }
 }

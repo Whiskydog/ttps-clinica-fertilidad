@@ -1,7 +1,8 @@
+import { MedicalInsurance } from '@modules/medical-insurances/entities/medical-insurance.entity';
 import { BiologicalSex, RoleCode } from '@repo/contracts';
 import { ChildEntity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
-import { MedicalInsurance } from '@modules/medical-insurances/entities/medical-insurance.entity';
+
 @ChildEntity(RoleCode.PATIENT)
 export class Patient extends User {
   @Column({ unique: true })
@@ -10,8 +11,11 @@ export class Patient extends User {
   @Column({ name: 'date_of_birth' })
   dateOfBirth: Date;
 
-  @Column()
-  occupation: string;
+  @Column({ nullable: true })
+  occupation: string | null;
+
+  @Column({ nullable: true })
+  address: string | null;
 
   @Column({
     type: 'enum',
@@ -21,9 +25,9 @@ export class Patient extends User {
   })
   biologicalSex: BiologicalSex;
 
-  @ManyToOne(() => MedicalInsurance, { nullable: true })
+  @ManyToOne(() => MedicalInsurance, { nullable: true, eager: true })
   @JoinColumn({ name: 'medical_insurance_id' })
-  medicalInsurance?: MedicalInsurance | null;
+  medicalInsurance: MedicalInsurance | null;
 
   @Column({
     name: 'coverage_member_id',
