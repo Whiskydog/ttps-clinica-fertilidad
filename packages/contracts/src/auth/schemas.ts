@@ -10,6 +10,13 @@ export const PatientSignInSchema = z.object({
   password: z.string({ error: "Contraseña es requerida" }),
 });
 
+export const StaffSignInSchema = z.object({
+  email: z.string().email({ message: "Email inválido" }),
+  password: z.string().min(1, { message: "Contraseña es requerida" }),
+});
+
 export type PatientSignUp = z.infer<typeof PatientSignUpSchema>;
 
 export type PatientSignIn = z.infer<typeof PatientSignInSchema>;
+
+export type StaffSignIn = z.infer<typeof StaffSignInSchema>;
