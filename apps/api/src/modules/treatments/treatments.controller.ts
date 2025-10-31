@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
 import { CreateTreatmentDto } from './dto';
-import { MedicalHistoryService } from '../medical-history/medical-history.service';
+import { MedicalHistoryService } from '../medical-history/services/medical-history.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';

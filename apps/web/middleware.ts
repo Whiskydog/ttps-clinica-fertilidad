@@ -2,8 +2,8 @@ import { decrypt } from "@/app/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-// 1. Specify protected and public routes
-const protectedRoutes = ["/patient", "/logout"];
+// 1. Specify protected and public route prefixes
+const protectedRoutes = ["/patient", "/doctor", "/logout"];
 const publicRoutes = ["/login", "/register"];
 
 export default async function middleware(req: NextRequest) {
@@ -21,13 +21,29 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
-  // 5. Redirect to /patient if the user is authenticated
+  // 5. Role-based route protection for prefixes
   if (
-    isPublicRoute &&
-    session?.sub &&
-    !req.nextUrl.pathname.startsWith("/patient")
+    req.nextUrl.pathname.startsWith("/doctor") &&
+    session?.role !== "doctor"
   ) {
-    return NextResponse.redirect(new URL("/patient", req.nextUrl));
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
+  }
+
+  if (
+    req.nextUrl.pathname.startsWith("/patient") &&
+    session?.role !== "patient"
+  ) {
+    return NextResponse.redirect(new URL("/login", req.nextUrl));
+  }
+
+  // 6. Redirect authenticated users away from public routes to their home
+  if (isPublicRoute && session?.sub) {
+    if (session.role === "doctor") {
+      return NextResponse.redirect(new URL("/doctor", req.nextUrl));
+    }
+    if (session.role === "patient") {
+      return NextResponse.redirect(new URL("/patient", req.nextUrl));
+    }
   }
 
   return NextResponse.next();

@@ -15,7 +15,7 @@ export const CreateTreatmentResponseSchema = z.object({
   id: z.number(),
   initialObjective: InitialObjectiveEnum,
   status: TreatmentStatusEnum,
-  startDate: z.date(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export type CreateTreatmentResponseDtoType = z.infer<

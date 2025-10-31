@@ -9,84 +9,41 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@repo/ui/sidebar";
 
 const menuItems = [
-  {
-    name: "Dashboard",
-    path: "/doctor",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Mis Pacientes",
-    path: "/doctor/patients",
-    icon: Users,
-  },
-  {
-    name: "Órdenes Médicas",
-    path: "/doctor/orders",
-    icon: FileText,
-  },
-  {
-    name: "Seguimientos",
-    path: "/doctor/follow-ups",
-    icon: Activity,
-  },
-  {
-    name: "Laboratorio",
-    path: "/doctor/laboratory",
-    icon: Beaker,
-  },
-  {
-    name: "Estadísticas",
-    path: "/doctor/statistics",
-    icon: BarChart3,
-  },
-  {
-    name: "Configuración",
-    path: "/doctor/settings",
-    icon: Settings,
-  },
+  { name: "Dashboard", path: "/doctor", icon: LayoutDashboard },
+  { name: "Mis Pacientes", path: "/doctor/patients", icon: Users },
+  { name: "Órdenes Médicas", path: "/doctor/orders", icon: FileText },
+  { name: "Seguimientos", path: "/doctor/follow-ups", icon: Activity },
+  { name: "Laboratorio", path: "/doctor/laboratory", icon: Beaker },
+  { name: "Estadísticas", path: "/doctor/statistics", icon: BarChart3 },
+  { name: "Configuración", path: "/doctor/settings", icon: Settings },
 ];
 
-export function DoctorSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function DoctorSidebar() {
   return (
-    <Sidebar
-      variant="sidebar"
-      className="bg-green-800 border-green-700 md:w-64 w-[80vw]"
-      collapsible="icon"
-      {...props}
-    >
-      <SidebarContent>
-        <SidebarMenu className="px-2 pt-4">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <SidebarMenuItem key={item.path}>
-                <SidebarMenuButton asChild>
+    <aside className="hidden md:block w-64 bg-green-800 border-r border-green-700">
+      <div className="px-4 pt-6">
+        <h2 className="text-white text-lg font-bold mb-4">Dashboard</h2>
+        <nav>
+          <ul className="space-y-2">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.path}>
                   <Link
                     href={item.path}
-                    className="flex items-center gap-3 text-green-100 hover:text-white hover:bg-green-700"
+                    className="flex items-center gap-3 text-green-100 hover:text-white hover:bg-green-700 rounded-md px-3 py-2"
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
                   </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+    </aside>
   );
 }

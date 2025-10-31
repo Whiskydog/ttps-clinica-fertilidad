@@ -3,8 +3,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PatientCreateDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
+import { PatientsQuery } from '@repo/contracts';
 import argon2 from 'argon2';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { UserValidationService } from './user-validation.service';
 
 @Injectable()
@@ -37,11 +38,54 @@ export class PatientsService {
       newPatient.coverageMemberId = dto.insuranceNumber;
     }
 
-    return this.patientRepository.save(newPatient);
+    const saved = await this.patientRepository.save(newPatient);
+
+    // Recargá el paciente guardado para que las relaciones eager (role, medicalInsurance)
+    // y los campos de fecha se devuelvan con los tipos correctos (Date) y se conserven los nulls.
+    return this.patientRepository.findOne({ where: { id: saved.id } });
   }
 
-  async getPatients(): Promise<Patient[]> {
-    return this.patientRepository.find();
+  async getPatients(query: PatientsQuery) {
+    const { page, limit, dni } = query;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.patientRepository
+      .createQueryBuilder('patient')
+      .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
+      .leftJoinAndSelect('patient.role', 'role');
+
+    if (dni) {
+      queryBuilder.where('patient.dni LIKE :dni', { dni: `%${dni}%` });
+    }
+
+    const [patients, total] = await queryBuilder
+      .skip(skip)
+      .take(Number(limit))
+      .getManyAndCount();
+
+    const totalPages = Math.ceil(total / Number(limit));
+    console.log(patients);
+    return {
+      statusCode: 200,
+      message: 'OK',
+      data: patients.map((p) => ({
+        ...p,
+        dateOfBirth:
+          p.dateOfBirth instanceof Date
+            ? p.dateOfBirth.toISOString().slice(0, 10)
+            : p.dateOfBirth,
+        medicalInsuranceName: p.medicalInsurance?.name ?? null,
+        insuranceNumber: p.coverageMemberId ?? null,
+      })),
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages,
+        hasNext: Number(page) < totalPages,
+        hasPrev: Number(page) > 1,
+      },
+    };
   }
 
   async findOneByDni(dni: string): Promise<Patient | null> {

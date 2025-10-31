@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { AppointmentsService } from './appointments.service';
-import { MedicalHistoryService } from '@modules/medical-history/medical-history.service';
+import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
 import {
   ConfirmAppointmentDto,
   PostTurnosDto,

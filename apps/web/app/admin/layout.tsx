@@ -1,20 +1,14 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
-
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = {
-    firstName: "Admin",
-    lastName: "Sistema",
-  };
-
+  const user = { firstName: "Admin", lastName: "Sistema" };
   const handleLogout = () => {
-    console.log("Cerrar sesión");
-    // TODO: Implement logout logic
+    // TODO: implement logout
+    window.location.href = "/login";
   };
 
   return (
@@ -25,13 +19,12 @@ export default function AdminLayout({
           <h1 className="text-xl text-gray-900 font-medium">
             Panel de Administración - {user.firstName} {user.lastName}
           </h1>
-          <Button
+          <button
             onClick={handleLogout}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            className="inline-block rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 px-3 py-2"
           >
             Cerrar Sesión
-          </Button>
+          </button>
         </div>
       </header>
 
