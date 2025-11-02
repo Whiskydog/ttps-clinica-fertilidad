@@ -1,12 +1,26 @@
-export default function AdminDashboard() {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-          Dashboard Administrador
-        </h2>
-        <p className="text-gray-500">Contenido pendiente de implementación</p>
+import { UsersManagementClient } from "./components/users-management-client";
+import { getStaffUsers } from "./lib/get-staff-users";
+
+export default async function UsersManagementPage({
+  searchParams,
+}: {
+  searchParams: { page?: string; perPage?: string };
+}) {
+  const searchParamsResolved = await searchParams;
+  const page = parseInt(searchParamsResolved.page || "1");
+  const perPage = parseInt(searchParamsResolved.perPage || "10");
+
+  const response = await getStaffUsers(page, perPage);
+
+  if ("error" in response) {
+    // Error al obtener usuarios
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+        <p>{response.message}</p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <UsersManagementClient initialData={response.data} />;
 }

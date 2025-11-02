@@ -18,6 +18,7 @@ export const UserEntitySchema = z.object({
 
 export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 
+export type UserEntity = z.infer<typeof UserEntitySchema>;
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
 export const PaginationMetaSchema = z.object({
