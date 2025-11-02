@@ -54,6 +54,13 @@ export class PatientsService {
       .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
       .leftJoinAndSelect('patient.role', 'role');
 
+    // Solo pacientes que tienen una historia clínica (medical_histories.patient_id = patient.id)
+    queryBuilder.innerJoin(
+      'medical_histories',
+      'mh',
+      'mh.patient_id = patient.id',
+    );
+
     if (dni) {
       queryBuilder.where('patient.dni LIKE :dni', { dni: `%${dni}%` });
     }
@@ -64,7 +71,6 @@ export class PatientsService {
       .getManyAndCount();
 
     const totalPages = Math.ceil(total / Number(limit));
-    console.log(patients);
     return {
       statusCode: 200,
       message: 'OK',

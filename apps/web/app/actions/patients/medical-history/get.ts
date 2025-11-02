@@ -25,7 +25,6 @@ export async function getMedicalHistory(): Promise<MedicalHistoryResponse> {
     cache: "no-store",
   });
 
-  console.log(resp);
   const payload = await resp.json().catch(() => null);
 
   if (!resp.ok) {
