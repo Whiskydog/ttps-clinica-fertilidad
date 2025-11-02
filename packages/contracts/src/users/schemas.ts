@@ -155,7 +155,7 @@ export const AdminUserCreateSchema = z
       .string()
       .min(6, "Contraseña debe tener al menos 6 caracteres")
       .max(100, "Contraseña muy larga"),
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
     userType: z.enum(["doctor", "lab_technician", "admin", "director"]),
 
     // Campos solo de Doctor
