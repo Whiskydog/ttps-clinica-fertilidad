@@ -19,6 +19,9 @@ export interface StaffUser extends Omit<UserEntity, "role"> {
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
+  specialty?: string;
+  licenseNumber?: string;
+  labArea?: string;
 }
 
 interface UsersManagementClientProps {
@@ -44,6 +47,9 @@ export function UsersManagementClient({
       roleName: user.role.name,
       isActive: true,
       createdAt: new Date().toISOString(),
+      specialty: user.specialty,
+      licenseNumber: user.licenseNumber,
+      labArea: user.labArea,
     }));
   }, [initialData]);
 

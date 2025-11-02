@@ -14,6 +14,9 @@ export const UserEntitySchema = z.object({
     code: z.enum(RoleCode),
     name: z.string(),
   }),
+  specialty: z.string().optional(),
+  licenseNumber: z.string().optional(),
+  labArea: z.string().optional(),
 });
 
 export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);

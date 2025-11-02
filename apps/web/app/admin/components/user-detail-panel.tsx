@@ -17,7 +17,6 @@ import {
   AlertDialogTrigger,
 } from "@repo/ui/alert-dialog";
 import { Edit, Key, Trash2, X } from "lucide-react";
-import { forwardRef } from "react";
 
 interface UserDetailPanelProps {
   user: StaffUser;
@@ -38,8 +37,13 @@ function formatDate(isoString: string): string {
   });
 }
 
-export const UserDetailPanel = forwardRef<HTMLDivElement, UserDetailPanelProps>(
-  ({ user, onClose, onEdit, onResetPassword, onDelete }) => {
+export const UserDetailPanel = ({
+  user,
+  onClose,
+  onEdit,
+  onResetPassword,
+  onDelete,
+}: UserDetailPanelProps) => {
     return (
       <Card>
         <CardHeader className="bg-blue-900 text-white px-6 py-4 rounded-t-lg">
@@ -131,6 +135,36 @@ export const UserDetailPanel = forwardRef<HTMLDivElement, UserDetailPanelProps>(
                     {user.lastLogin ? formatDate(user.lastLogin) : "Nunca"}
                   </p>
                 </div>
+
+                {/* Campos específicos por rol */}
+                {(user.specialty || user.licenseNumber || user.labArea) && (
+                  <>
+                    <div className="col-span-2 mt-2">
+                      <Separator />
+                    </div>
+
+                    {user.specialty && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Especialidad</p>
+                        <p className="font-medium text-gray-900">{user.specialty}</p>
+                      </div>
+                    )}
+
+                    {user.licenseNumber && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Matrícula Profesional</p>
+                        <p className="font-medium text-gray-900">{user.licenseNumber}</p>
+                      </div>
+                    )}
+
+                    {user.labArea && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Área de Laboratorio</p>
+                        <p className="font-medium text-gray-900">{user.labArea}</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               </CardContent>
               </Card>
@@ -208,6 +242,6 @@ export const UserDetailPanel = forwardRef<HTMLDivElement, UserDetailPanelProps>(
       </Card>
     );
   }
-);
+
 
 UserDetailPanel.displayName = "UserDetailPanel";

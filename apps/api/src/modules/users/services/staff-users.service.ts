@@ -34,6 +34,7 @@ export class StaffUsersService {
     const [users, total] = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
+      .addSelect(['user.specialty', 'user.licenseNumber', 'user.labArea'])
       .where('user.role != :patientRole', { patientRole: RoleCode.PATIENT })
       .skip(skip)
       .take(perPage)
