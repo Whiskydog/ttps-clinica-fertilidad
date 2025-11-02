@@ -226,6 +226,28 @@ export const AdminUserCreateSchema = z
 
 export type AdminUserCreate = z.infer<typeof AdminUserCreateSchema>;
 
+export const AdminUserUpdateSchema = z.object({
+  firstName: z.string().min(2, "Nombre muy corto").max(100).trim().optional(),
+  lastName: z.string().min(2, "Apellido muy corto").max(100).trim().optional(),
+  email: z.string().email("Email inválido").optional(),
+  phone: z.string().min(7).max(15).optional(),
+  isActive: z.boolean().optional(),
+  licenseNumber: z.string().optional(),
+  specialty: z.string().optional(),
+  alternativeContact: z.string().optional(),
+  labArea: z.string().optional(),
+  internalId: z.string().optional(),
+  shift: z.enum(["morning", "afternoon", "night"]).optional(),
+});
+
+export type AdminUserUpdate = z.infer<typeof AdminUserUpdateSchema>;
+
+export const ResetPasswordSchema = z.object({
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+});
+
+export type ResetPassword = z.infer<typeof ResetPasswordSchema>;
+
 export const ToggleUserStatusSchema = z.object({
   isActive: z.boolean(),
 });

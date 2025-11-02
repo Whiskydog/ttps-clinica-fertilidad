@@ -16,7 +16,9 @@ import {
 import { RoleCode } from '@repo/contracts';
 import {
   AdminUserCreateDto,
+  AdminUserUpdateDto,
   GetStaffUsersQueryDto,
+  ResetPasswordDto,
   ToggleUserStatusDto,
   UserResponseDto,
   UsersListResponseDto,
@@ -44,6 +46,16 @@ export class StaffUsersController {
     return this.staffUsersService.createStaffUser(dto);
   }
 
+  @Patch(':id')
+  @EnvelopeMessage('Usuario actualizado exitosamente')
+  @ZodSerializerDto(UserResponseDto)
+  async updateUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AdminUserUpdateDto,
+  ): Promise<User> {
+    return this.staffUsersService.updateUser(id, dto);
+  }
+
   @Patch(':id/toggle-status')
   @EnvelopeMessage('Estado del usuario actualizado exitosamente')
   @ZodSerializerDto(UserResponseDto)
@@ -52,6 +64,16 @@ export class StaffUsersController {
     @Body() dto: ToggleUserStatusDto,
   ): Promise<User> {
     return this.staffUsersService.toggleUserStatus(id, dto.isActive);
+  }
+
+  @Patch(':id/reset-password')
+  @EnvelopeMessage('Contraseña restablecida exitosamente')
+  @ZodSerializerDto(UserResponseDto)
+  async resetPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ResetPasswordDto,
+  ): Promise<User> {
+    return this.staffUsersService.resetPassword(id, dto);
   }
 
   @Delete(':id')

@@ -400,28 +400,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     />
                   </div>
 
-                  {/* Contacto sec. */}
-                  <div className="space-y-2">
-                    <Controller
-                      name="alternativeContact"
-                      control={form.control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="alternativeContact">
-                            Contacto sec.
-                          </FieldLabel>
-                          <Input
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            placeholder="Email / Tel. alternativo"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
+                  
                 </div>
               </div>
             )}
@@ -472,57 +451,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     />
                   </div>
 
-                  {/* Legajo interno */}
-                  <div className="space-y-2">
-                    <Controller
-                      name="internalId"
-                      control={form.control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="internalId">
-                            Legajo interno
-                          </FieldLabel>
-                          <Input
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            placeholder="LEG-123"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  {/* Turno */}
-                  <div className="space-y-2">
-                    <Controller
-                      name="shift"
-                      control={form.control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="shift">Turno</FieldLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Mañana / Tarde ▼" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="morning">Mañana</SelectItem>
-                              <SelectItem value="afternoon">Tarde</SelectItem>
-                              <SelectItem value="night">Noche</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
+                
                 </div>
               </div>
             )}

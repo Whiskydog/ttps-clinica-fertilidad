@@ -1,8 +1,10 @@
 import {
   AdminUserCreateSchema,
+  AdminUserUpdateSchema,
   PatientCreateSchema,
   PatientResponseSchema,
   PatientsListResponseSchema,
+  ResetPasswordSchema,
   ToggleUserStatusSchema,
   UserResponseSchema,
   UsersListResponseSchema,
@@ -20,6 +22,8 @@ export class PatientsListResponseDto extends createZodDto(
 
 export class AdminUserCreateDto extends createZodDto(AdminUserCreateSchema) {}
 
+export class AdminUserUpdateDto extends createZodDto(AdminUserUpdateSchema) {}
+
 export class UsersListResponseDto extends createZodDto(
   UsersListResponseSchema,
 ) {}
@@ -36,3 +40,5 @@ export class GetStaffUsersQueryDto extends createZodDto(
 export class ToggleUserStatusDto extends createZodDto(
   ToggleUserStatusSchema,
 ) {}
+
+export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {}

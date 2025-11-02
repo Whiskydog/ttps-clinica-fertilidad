@@ -5,12 +5,14 @@ import { UserFilters } from "./user-filters";
 import { UsersTable } from "./users-table";
 import { UsersPagination } from "./users-pagination";
 import { UserDialog } from "./user-dialog";
+import { EditUserDialog } from "./edit-user-dialog";
 import { UserDetailPanel } from "./user-detail-panel";
+import { ResetPasswordDialog } from "./reset-password-dialog";
 import { useUserFilters } from "../hooks/use-user-filters";
 import { Card } from "@repo/ui/card";
-import { AdminUserCreate, UserEntity, UsersList } from "@repo/contracts";
+import { AdminUserCreate, AdminUserUpdate, UserEntity, UsersList } from "@repo/contracts";
 import { toast } from "@repo/ui";
-import { createStaffUser, deleteUser, toggleUserStatus } from "@/app/actions/users";
+import { createStaffUser, deleteUser, toggleUserStatus, updateStaffUser, resetUserPassword } from "@/app/actions/users";
 import { useRouter } from "next/navigation";
 
 export interface StaffUser extends Omit<UserEntity, "role" | "createdAt" | "updatedAt"> {
@@ -33,7 +35,9 @@ export function UsersManagementClient({
   const router = useRouter();
   const { filters, updateFilter, resetFilters } = useUserFilters();
   const [selectedUser, setSelectedUser] = useState<StaffUser | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<StaffUser | null>(null);
 
   const users: StaffUser[] = useMemo(() => {
     return initialData.data.map((user) => ({
@@ -80,8 +84,7 @@ export function UsersManagementClient({
 
 
   const handleEditUser = (user: StaffUser) => {
-    // setEditingUser(user);
-    // abrir un dialog igual al de crear usuario con los datos actuales
+    setEditingUser(user);
   };
 
   const handleToggleStatus = async (user: StaffUser) => {
@@ -101,8 +104,23 @@ export function UsersManagementClient({
   };
 
   const handleResetPassword = (user: StaffUser) => {
-    toast.info("Funcionalidad de reseteo de contraseña en desarrollo");
-    // para el reset de pw abrir un dialog donde hacer la modificacion
+    setResetPasswordUser(user);
+  };
+
+  const handleConfirmResetPassword = async (userId: number, password: string) => {
+    const response = await resetUserPassword(userId, { password });
+
+    if ("errors" in response) {
+      toast.error("Error de validación al restablecer la contraseña");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200) {
+      toast.success("Contraseña restablecida exitosamente");
+      setResetPasswordUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al restablecer la contraseña");
+      console.log("Server error:", response);
+    }
   };
 
   const handleDeleteUser = async (user: StaffUser) => {
@@ -118,21 +136,36 @@ export function UsersManagementClient({
   };
 
   const handleSaveUser = async (data: AdminUserCreate) => {
-    // startTransition(async () => {
-      const response = await createStaffUser(data);
+    const response = await createStaffUser(data);
 
-      if ("errors" in response) {
-        toast.error("Error de validación. Revisa los campos.");
-        console.log("Validation errors:", response.errors);
-      } else if (response.statusCode === 200 || response.statusCode === 201) {
-        toast.success(response.message || "Usuario creado correctamente");
-        setIsDialogOpen(false);
-        router.refresh();
-      } else {
-        toast.error(response.message || "Error al crear el usuario");
-        console.log("Server error:", response);
-      }
-    // });
+    if ("errors" in response) {
+      toast.error("Error de validación. Revisa los campos.");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200 || response.statusCode === 201) {
+      toast.success(response.message || "Usuario creado correctamente");
+      setIsCreateDialogOpen(false);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al crear el usuario");
+      console.log("Server error:", response);
+    }
+  };
+
+  const handleUpdateUser = async (userId: number, data: AdminUserUpdate) => {
+    const response = await updateStaffUser(userId, data);
+
+    if ("errors" in response) {
+      toast.error("Error de validación al actualizar");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200) {
+      toast.success("Usuario actualizado correctamente");
+      setEditingUser(null);
+      setSelectedUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al actualizar");
+      console.log("Server error:", response);
+    }
   };
 
   return (
@@ -150,7 +183,7 @@ export function UsersManagementClient({
         onFilterChange={updateFilter}
         onReset={resetFilters}
         onNewUser={() => {
-          setIsDialogOpen(true);
+          setIsCreateDialogOpen(true);
         }}
       />
 
@@ -181,13 +214,38 @@ export function UsersManagementClient({
 
       {/* Dialog crear usuario */}
       <UserDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
         onSave={handleSaveUser}
       />
 
+      {/* Dialog editar usuario */}
+      {editingUser && (
+        <EditUserDialog
+          open={!!editingUser}
+          onOpenChange={(open) => {
+            if (!open) setEditingUser(null);
+          }}
+          user={editingUser}
+          onUpdate={handleUpdateUser}
+        />
+      )}
+
+      {/* Dialog resetear contraseña */}
+      {resetPasswordUser && (
+        <ResetPasswordDialog
+          open={!!resetPasswordUser}
+          onOpenChange={(open) => {
+            if (!open) setResetPasswordUser(null);
+          }}
+          userId={resetPasswordUser.id}
+          userName={`${resetPasswordUser.firstName} ${resetPasswordUser.lastName}`}
+          onResetPassword={handleConfirmResetPassword}
+        />
+      )}
+
       {/* Panel de detalle */}
-      {selectedUser && !isDialogOpen && (
+      {selectedUser && !isCreateDialogOpen && (
         <UserDetailPanel
           user={selectedUser}
           onClose={() => setSelectedUser(null)}

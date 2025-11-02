@@ -2,9 +2,11 @@
 
 import {
   AdminUserCreate,
+  AdminUserUpdate,
   ApiErrorResponse,
   ApiResponse,
   ApiValidationErrorResponse,
+  ResetPassword,
   UserResponse,
 } from "@repo/contracts";
 import { headers } from "next/headers";
@@ -52,6 +54,64 @@ export async function toggleUserStatus(
     return {
       statusCode: 500,
       message: "Error al cambiar el estado del usuario",
+      error: "Internal Server Error",
+    };
+  }
+}
+
+export async function updateStaffUser(
+  userId: number,
+  data: AdminUserUpdate
+): Promise<ApiResponse<UserResponse> | ApiValidationErrorResponse | ApiErrorResponse> {
+  const cookieHeader = (await headers()).get("Cookie") ?? "";
+
+  try {
+    const response = await fetch(
+      `${process.env.BACKEND_URL}/admin/users/${userId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieHeader,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    return await response.json();
+  } catch (error) {
+    return {
+      statusCode: 500,
+      message: "Error al actualizar el usuario",
+      error: "Internal Server Error",
+    };
+  }
+}
+
+export async function resetUserPassword(
+  userId: number,
+  data: ResetPassword
+): Promise<ApiResponse<UserResponse> | ApiValidationErrorResponse | ApiErrorResponse> {
+  const cookieHeader = (await headers()).get("Cookie") ?? "";
+
+  try {
+    const response = await fetch(
+      `${process.env.BACKEND_URL}/admin/users/${userId}/reset-password`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieHeader,
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    return await response.json();
+  } catch (error) {
+    return {
+      statusCode: 500,
+      message: "Error al restablecer la contraseña",
       error: "Internal Server Error",
     };
   }

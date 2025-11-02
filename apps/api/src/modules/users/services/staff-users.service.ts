@@ -9,7 +9,8 @@ import { User } from '@users/entities/user.entity';
 import argon2 from 'argon2';
 import { Repository } from 'typeorm';
 import { UserValidationService } from './user-validation.service';
-import { RoleCode, type AdminUserCreate } from '@repo/contracts';
+import { RoleCode, type AdminUserCreate, type AdminUserUpdate, type ResetPassword } from '@repo/contracts';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class StaffUsersService {
@@ -114,6 +115,31 @@ export class StaffUsersService {
     return await this.userRepository.save(user);
   }
 
+  async updateUser(userId: number, dto: AdminUserUpdate): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['role'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (dto.email && dto.email !== user.email) {
+      await this.userValidationService.ensureStaffUserUniqueness({
+        email: dto.email,
+      });
+    }
+
+    Object.keys(dto).forEach((key) => {
+      if (dto[key] !== undefined) {
+        user[key] = dto[key];
+      }
+    });
+
+    return await this.userRepository.save(user);
+  }
+
   async deleteUser(userId: number): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: userId });
 
@@ -122,6 +148,19 @@ export class StaffUsersService {
     }
 
     await this.userRepository.remove(user);
+  }
+
+  async resetPassword(userId: number, dto: ResetPassword): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const passwordHash = await argon2.hash(dto.password);
+    user.passwordHash = passwordHash;
+
+    return await this.userRepository.save(user);
   }
 
   private getRoleCodeForUserType(userType: string): RoleCode {
