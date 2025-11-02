@@ -3,6 +3,7 @@ import {
   PatientCreateSchema,
   PatientResponseSchema,
   PatientsListResponseSchema,
+  ToggleUserStatusSchema,
   UserResponseSchema,
   UsersListResponseSchema,
 } from '@repo/contracts';
@@ -30,4 +31,8 @@ const GetStaffUsersQuerySchema = z.object({
 
 export class GetStaffUsersQueryDto extends createZodDto(
   GetStaffUsersQuerySchema,
+) {}
+
+export class ToggleUserStatusDto extends createZodDto(
+  ToggleUserStatusSchema,
 ) {}

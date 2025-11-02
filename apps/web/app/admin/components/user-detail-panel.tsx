@@ -128,14 +128,6 @@ export const UserDetailPanel = ({
                   </p>
                 </div>
 
-                {/* Último Login */}
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Último Login</p>
-                  <p className="font-medium text-gray-900">
-                    {user.lastLogin ? formatDate(user.lastLogin) : "Nunca"}
-                  </p>
-                </div>
-
                 {/* Campos específicos por rol */}
                 {(user.specialty || user.licenseNumber || user.labArea) && (
                   <>

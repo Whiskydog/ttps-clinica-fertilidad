@@ -1,10 +1,23 @@
 import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 import { RequireRoles } from '@modules/auth/decorators/require-roles.decorator';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { RoleCode } from '@repo/contracts';
 import {
   AdminUserCreateDto,
   GetStaffUsersQueryDto,
+  ToggleUserStatusDto,
   UserResponseDto,
   UsersListResponseDto,
 } from '@users/dto';
@@ -29,5 +42,22 @@ export class StaffUsersController {
   @ZodSerializerDto(UserResponseDto)
   async createStaffUser(@Body() dto: AdminUserCreateDto): Promise<User> {
     return this.staffUsersService.createStaffUser(dto);
+  }
+
+  @Patch(':id/toggle-status')
+  @EnvelopeMessage('Estado del usuario actualizado exitosamente')
+  @ZodSerializerDto(UserResponseDto)
+  async toggleUserStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ToggleUserStatusDto,
+  ): Promise<User> {
+    return this.staffUsersService.toggleUserStatus(id, dto.isActive);
+  }
+
+  @Delete(':id')
+  @EnvelopeMessage('Usuario eliminado exitosamente')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.staffUsersService.deleteUser(id);
   }
 }

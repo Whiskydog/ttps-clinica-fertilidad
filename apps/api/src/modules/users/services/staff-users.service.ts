@@ -34,7 +34,7 @@ export class StaffUsersService {
     const [users, total] = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
-      .addSelect(['user.specialty', 'user.licenseNumber', 'user.labArea'])
+      .addSelect(['user.specialty', 'user.licenseNumber', 'user.labArea', 'user.isActive'])
       .where('user.role != :patientRole', { patientRole: RoleCode.PATIENT })
       .skip(skip)
       .take(perPage)
@@ -101,6 +101,27 @@ export class StaffUsersService {
       default:
         throw new Error(`Tipo de usuario no soportado: ${(dto as any).userType}`);
     }
+  }
+
+  async toggleUserStatus(userId: number, isActive: boolean): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    user.isActive = isActive;
+    return await this.userRepository.save(user);
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    await this.userRepository.remove(user);
   }
 
   private getRoleCodeForUserType(userType: string): RoleCode {

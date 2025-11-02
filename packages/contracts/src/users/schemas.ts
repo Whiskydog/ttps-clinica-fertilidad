@@ -14,6 +14,9 @@ export const UserEntitySchema = z.object({
     code: z.enum(RoleCode),
     name: z.string(),
   }),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   specialty: z.string().optional(),
   licenseNumber: z.string().optional(),
   labArea: z.string().optional(),
@@ -222,3 +225,9 @@ export const AdminUserCreateSchema = z
   );
 
 export type AdminUserCreate = z.infer<typeof AdminUserCreateSchema>;
+
+export const ToggleUserStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
+export type ToggleUserStatus = z.infer<typeof ToggleUserStatusSchema>;

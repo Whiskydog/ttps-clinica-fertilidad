@@ -10,15 +10,14 @@ import { useUserFilters } from "../hooks/use-user-filters";
 import { Card } from "@repo/ui/card";
 import { AdminUserCreate, UserEntity, UsersList } from "@repo/contracts";
 import { toast } from "@repo/ui";
-import { createStaffUser } from "@/app/actions/users";
+import { createStaffUser, deleteUser, toggleUserStatus } from "@/app/actions/users";
 import { useRouter } from "next/navigation";
 
-export interface StaffUser extends Omit<UserEntity, "role"> {
+export interface StaffUser extends Omit<UserEntity, "role" | "createdAt" | "updatedAt"> {
   role: string;
   roleName: string;
   isActive: boolean;
   createdAt: string;
-  lastLogin?: string;
   specialty?: string;
   licenseNumber?: string;
   labArea?: string;
@@ -45,8 +44,8 @@ export function UsersManagementClient({
       phone: user.phone,
       role: user.role.code,
       roleName: user.role.name,
-      isActive: true,
-      createdAt: new Date().toISOString(),
+      isActive: user.isActive,
+      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
       specialty: user.specialty,
       licenseNumber: user.licenseNumber,
       labArea: user.labArea,
@@ -85,11 +84,20 @@ export function UsersManagementClient({
     // abrir un dialog igual al de crear usuario con los datos actuales
   };
 
-  const handleToggleStatus = (user: StaffUser) => {
-    toast.success(
-      `Usuario ${user.isActive ? "desactivado" : "activado"} correctamente`
-    );
-    // hacer una simple peticion para cambiar el estado
+  const handleToggleStatus = async (user: StaffUser) => {
+    const newStatus = !user.isActive;
+    const response = await toggleUserStatus(user.id, newStatus);
+
+    if ("errors" in response) {
+      toast.error("Error de validación al cambiar el estado");
+    } else if (response.statusCode === 200) {
+      toast.success(
+        `Usuario ${newStatus ? "activado" : "desactivado"} correctamente`
+      );
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al cambiar el estado");
+    }
   };
 
   const handleResetPassword = (user: StaffUser) => {
@@ -97,10 +105,16 @@ export function UsersManagementClient({
     // para el reset de pw abrir un dialog donde hacer la modificacion
   };
 
-  const handleDeleteUser = (user: StaffUser) => {
-    toast.success("Usuario eliminado correctamente");
-    console.log("Delete user:", user);
-    setSelectedUser(null);
+  const handleDeleteUser = async (user: StaffUser) => {
+    const response = await deleteUser(user.id);
+
+    if (response.statusCode === 204 || response.statusCode === 200) {
+      toast.success("Usuario eliminado correctamente");
+      setSelectedUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al eliminar el usuario");
+    }
   };
 
   const handleSaveUser = async (data: AdminUserCreate) => {

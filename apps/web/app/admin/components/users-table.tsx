@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@repo/ui/badge";
 import {
   Table,
@@ -16,6 +17,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/alert-dialog";
 import { Button } from "@repo/ui/button";
 import { Eye, Pencil, Power, Trash2, MoreVertical } from "lucide-react";
 import { StaffUser } from "./users-management-client";
@@ -35,6 +46,15 @@ export function UsersTable({
   onToggleStatus,
   onDeleteUser,
 }: UsersTableProps) {
+  const [userToDelete, setUserToDelete] = useState<StaffUser | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (userToDelete) {
+      onDeleteUser(userToDelete);
+      setUserToDelete(null);
+    }
+  };
+
   return (
     <div className="border rounded-lg">
       <Table>
@@ -114,7 +134,7 @@ export function UsersTable({
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          onDeleteUser(user);
+                          setUserToDelete(user);
                         }}
                         className="text-red-600"
                       >
@@ -129,6 +149,33 @@ export function UsersTable({
           )}
         </TableBody>
       </Table>
+
+      {/* AlertDialog de confirmación */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente al usuario{" "}
+              {userToDelete && (
+                <strong>
+                  {userToDelete.firstName} {userToDelete.lastName}
+                </strong>
+              )}{" "}
+              ({userToDelete?.email}). Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Confirmar Eliminación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
