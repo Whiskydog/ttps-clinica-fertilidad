@@ -8,7 +8,7 @@ import { UserDialog } from "./user-dialog";
 import { EditUserDialog } from "./edit-user-dialog";
 import { UserDetailPanel } from "./user-detail-panel";
 import { ResetPasswordDialog } from "./reset-password-dialog";
-import { useUserFilters } from "../hooks/use-user-filters";
+import { useUserFilters } from "@/app/hooks/admin/use-user-filters";
 import { Card } from "@repo/ui/card";
 import { AdminUserCreate, AdminUserUpdate, UserEntity, UsersList } from "@repo/contracts";
 import { toast } from "@repo/ui";

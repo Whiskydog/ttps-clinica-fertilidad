@@ -1,5 +1,5 @@
-import { UsersManagementClient } from "./components/users-management-client";
-import { getStaffUsers } from "./lib/get-staff-users";
+import { UsersManagementClient } from "@/components/admin/users-management-client";
+import { getStaffUsers } from "@/app/actions/admin/get-staff-users";
 
 export default async function UsersManagementPage({
   searchParams,
