@@ -4,9 +4,10 @@ export * from "./auth/schemas";
 export * from "./auth/types";
 export * from "./common/api";
 export * from "./medical-insurances/schemas";
+export * from "./medical-history/schemas";
+export * from "./medical-history/enums";
 export * from "./treatments/enums";
 export * from "./treatments/schemas";
-export * from "./users/enums";
-export * from "./users/schemas";
+export * from "./users";
+export type { User } from "./users/schemas";
 export * from "./validations/errors";
-

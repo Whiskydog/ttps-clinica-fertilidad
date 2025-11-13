@@ -1,6 +1,7 @@
 "use server";
 
 import { clearSession, createSession } from "@/app/lib/session";
+import { cookies } from "next/headers";
 import {
   ApiErrorResponse,
   ApiResponse,
@@ -71,6 +72,61 @@ export async function signInStaff(
   return payload as ApiErrorResponse;
 }
 
-export async function signOut(): Promise<void> {
-  await clearSession();
+export async function signOut(): Promise<ApiResponse<{
+  message: string;
+}> | null> {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return null;
+
+  const cookieStore = await cookies();
+  const sessionValue = cookieStore.get("session")?.value;
+
+  if (!sessionValue) {
+    await clearSession();
+    return null;
+  }
+
+  try {
+    const resp = await fetch(`${backendUrl}/auth/sign-out`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionValue}`,
+      },
+      cache: "no-store",
+    });
+
+    await clearSession();
+    const payload = await resp.json().catch(() => null);
+    return payload as ApiResponse<{ message: string }> | null;
+  } catch {
+    await clearSession();
+    return null;
+  }
+}
+
+export async function getMe() {
+  const backendUrl = process.env.BACKEND_URL;
+  if (!backendUrl) return null;
+
+  const cookieStore = await cookies();
+  const sessionValue = cookieStore.get("session")?.value;
+  if (!sessionValue) return null;
+
+  try {
+    const resp = await fetch(`${backendUrl}/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionValue}`,
+      },
+      cache: "no-store",
+    });
+    if (!resp.ok) return null;
+
+    const data = await resp.json().catch(() => null);
+    return data?.data ?? null;
+  } catch {
+    return null;
+  }
 }

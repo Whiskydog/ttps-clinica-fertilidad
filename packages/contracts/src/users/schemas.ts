@@ -1,6 +1,6 @@
 import moment from "moment";
 import * as z from "zod";
-import { ApiResponseSchema } from "../common/api";
+import { ApiResponseSchema, PaginatedResponseSchema } from "../common/api";
 import { MedicalInsuranceSchema } from "../medical-insurances/schemas";
 import { BiologicalSex, RoleCode } from "./enums";
 
@@ -14,36 +14,17 @@ export const UserEntitySchema = z.object({
     code: z.enum(RoleCode),
     name: z.string(),
   }),
-  isActive: z.boolean(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  specialty: z.string().optional(),
-  licenseNumber: z.string().optional(),
-  labArea: z.string().optional(),
 });
 
 export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 
-export type UserEntity = z.infer<typeof UserEntitySchema>;
+export type User = {
+  firstName?: string;
+  lastName?: string;
+  role?: { code: string; name: string };
+};
+
 export type UserResponse = z.infer<typeof UserResponseSchema>;
-
-export const PaginationMetaSchema = z.object({
-  total: z.number(),
-  page: z.number(),
-  perPage: z.number(),
-  totalPages: z.number(),
-});
-
-export const UsersListSchema = z.object({
-  data: z.array(UserEntitySchema),
-  meta: PaginationMetaSchema,
-});
-
-export const UsersListResponseSchema = ApiResponseSchema(UsersListSchema);
-
-export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;
-export type UsersList = z.infer<typeof UsersListSchema>;
-export type UsersListResponse = z.infer<typeof UsersListResponseSchema>;
 
 export const PatientCreateSchema = z.object({
   firstName: z
@@ -119,9 +100,8 @@ const PatientEntitySchema = UserEntitySchema.safeExtend({
 });
 
 const PatientSchema = PatientEntitySchema.transform(
-  ({ dateOfBirth, medicalInsurance, coverageMemberId, ...rest }) => ({
+  ({ medicalInsurance, coverageMemberId, ...rest }) => ({
     ...rest,
-    dateOfBirth: moment(dateOfBirth).format("YYYY-MM-DD"),
     medicalInsuranceName: medicalInsurance?.name,
     insuranceNumber: coverageMemberId,
   })
@@ -137,119 +117,19 @@ export const PatientsListResponseSchema = ApiResponseSchema(
 
 export type PatientsListResponse = z.infer<typeof PatientsListResponseSchema>;
 
-// Schema para la creacion de usuarios desde panel de admin.  
-export const AdminUserCreateSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(1, "Nombre es requerido")
-      .min(2, "Nombre muy corto")
-      .max(100, "Nombre muy largo")
-      .trim(),
-    lastName: z
-      .string()
-      .min(1, "Apellido es requerido")
-      .min(2, "Apellido muy corto")
-      .max(100, "Apellido muy largo")
-      .trim(),
-    email: z.string().email("Email inválido"),
-    phone: z
-      .string()
-      .min(7, "Teléfono muy corto")
-      .max(15, "Teléfono muy largo"),
-    password: z
-      .string()
-      .min(6, "Contraseña debe tener al menos 6 caracteres")
-      .max(100, "Contraseña muy larga"),
-    isActive: z.boolean(),
-    userType: z.enum(["doctor", "lab_technician", "admin", "director"]),
-
-    // Campos solo de Doctor
-    licenseNumber: z.string().optional(),
-    specialty: z.string().optional(),
-    alternativeContact: z.string().optional(),
-
-    // Campos solo de Lab Technician
-    labArea: z.string().optional(),
-    internalId: z.string().optional(),
-    shift: z.enum(["morning", "afternoon", "night"]).optional(),
-  })
-  
-  .refine(
-    (data) => {
-      if (data.userType === "doctor") {
-        return !!data.licenseNumber && data.licenseNumber.length > 0;
-      }
-      return true;
-    },
-    {
-      message: "Matrícula es requerida para médicos",
-      path: ["licenseNumber"],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.userType === "doctor") {
-        return !!data.specialty && data.specialty.length > 0;
-      }
-      return true;
-    },
-    {
-      message: "Especialidad es requerida para médicos",
-      path: ["specialty"],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.userType === "lab_technician") {
-        return !!data.labArea && data.labArea.length > 0;
-      }
-      return true;
-    },
-    {
-      message: "Área de laboratorio es requerida para técnicos",
-      path: ["labArea"],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.userType === "director") {
-        return !!data.licenseNumber && data.licenseNumber.length > 0;
-      }
-      return true;
-    },
-    {
-      message: "Matrícula es requerida para directores",
-      path: ["licenseNumber"],
-    }
-  );
-
-export type AdminUserCreate = z.infer<typeof AdminUserCreateSchema>;
-
-export const AdminUserUpdateSchema = z.object({
-  firstName: z.string().min(2, "Nombre muy corto").max(100).trim().optional(),
-  lastName: z.string().min(2, "Apellido muy corto").max(100).trim().optional(),
-  email: z.string().email("Email inválido").optional(),
-  phone: z.string().min(7).max(15).optional(),
-  isActive: z.boolean().optional(),
-  licenseNumber: z.string().optional(),
-  specialty: z.string().optional(),
-  alternativeContact: z.string().optional(),
-  labArea: z.string().optional(),
-  internalId: z.string().optional(),
-  shift: z.enum(["morning", "afternoon", "night"]).optional(),
+export const PatientsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  dni: z.string().optional(),
 });
 
-export type AdminUserUpdate = z.infer<typeof AdminUserUpdateSchema>;
+export type PatientsQuery = z.infer<typeof PatientsQuerySchema>;
 
-export const ResetPasswordSchema = z.object({
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
-});
+export const PatientsPaginatedResponseSchema =
+  PaginatedResponseSchema(PatientSchema);
 
-export type ResetPassword = z.infer<typeof ResetPasswordSchema>;
+export type PatientsPaginatedResponse = z.infer<
+  typeof PatientsPaginatedResponseSchema
+>;
 
-export const ToggleUserStatusSchema = z.object({
-  isActive: z.boolean(),
-});
-
-export type ToggleUserStatus = z.infer<typeof ToggleUserStatusSchema>;
+export type StaffSignIn = { email: string; password: string };

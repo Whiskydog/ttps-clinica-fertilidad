@@ -30,6 +30,7 @@
     "@nestjs/swagger": "^11.2.1",
     "@nestjs/typeorm": "^11.0.0",
     "@repo/contracts": "workspace:*",
+    "@tanstack/react-query-devtools": "^5.62.0",
     "argon2": "^0.44.0",
     "cookie-parser": "^1.4.7",
     "nestjs-zod": "^5.0.1",

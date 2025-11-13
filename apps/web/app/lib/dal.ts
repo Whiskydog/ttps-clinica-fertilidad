@@ -33,7 +33,6 @@ export const getUser = cache(async () => {
   });
 
   if (!res.ok) {
-    console.log("Error fetching user data:", res.statusText);
     return null;
   }
 
