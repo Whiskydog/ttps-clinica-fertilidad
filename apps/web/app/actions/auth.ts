@@ -16,6 +16,7 @@ import {
 export async function signUp(
   data: PatientSignUp
 ): Promise<ApiResponse<PatientResponse> | ApiValidationErrorResponse> {
+  
   const response = await fetch(`${process.env.BACKEND_URL}/patients`, {
     method: "POST",
     headers: {

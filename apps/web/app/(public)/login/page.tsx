@@ -2,6 +2,9 @@
 
 import { signInPatient } from "@/app/actions/auth";
 import { toast } from "@repo/ui";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { Lock, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,8 +23,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     startTransition(async () => {
-      let res;
-      res = await signInPatient({ dni, password });
+      const res = await signInPatient({ dni, password });
       if (res.statusCode !== 200) {
         toast.error(res.message);
       } else {
@@ -93,34 +95,34 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-gray-700">
+              <Label htmlFor="password" className="text-gray-700">
                 Contraseña:
-              </label>
+              </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-yellow-600" />
                 </div>
-                <input
+                <Input
                   id="password"
                   type="password"
                   ref={passwordInputRef}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className="pl-10 bg-gray-50 border-gray-300 text-gray-900 focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Ingrese su contraseña"
                 />
               </div>
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base disabled:opacity-50"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-base"
             >
               {isPending ? "INGRESANDO..." : "INGRESAR"}
-            </button>
+            </Button>
           </form>
 
           {/* Register Link */}
