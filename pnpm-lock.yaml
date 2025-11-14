@@ -50,6 +50,9 @@ importers:
       '@repo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@tanstack/react-query-devtools':
+        specifier: ^5.62.0
+        version: 5.90.2(@tanstack/react-query@5.90.5(react@19.1.0))(react@19.1.0)
       argon2:
         specifier: ^0.44.0
         version: 0.44.0

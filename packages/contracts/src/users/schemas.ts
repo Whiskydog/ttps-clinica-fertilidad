@@ -1,6 +1,6 @@
 import moment from "moment";
 import * as z from "zod";
-import { ApiResponseSchema } from "../common/api";
+import { ApiResponseSchema, PaginatedResponseSchema } from "../common/api";
 import { MedicalInsuranceSchema } from "../medical-insurances/schemas";
 import { BiologicalSex, RoleCode } from "./enums";
 
@@ -17,6 +17,12 @@ export const UserEntitySchema = z.object({
 });
 
 export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
+
+export type User = {
+  firstName?: string;
+  lastName?: string;
+  role?: { code: string; name: string };
+};
 
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
@@ -94,9 +100,8 @@ const PatientEntitySchema = UserEntitySchema.safeExtend({
 });
 
 const PatientSchema = PatientEntitySchema.transform(
-  ({ dateOfBirth, medicalInsurance, coverageMemberId, ...rest }) => ({
+  ({ medicalInsurance, coverageMemberId, ...rest }) => ({
     ...rest,
-    dateOfBirth: moment(dateOfBirth).format("YYYY-MM-DD"),
     medicalInsuranceName: medicalInsurance?.name,
     insuranceNumber: coverageMemberId,
   })
@@ -111,3 +116,20 @@ export const PatientsListResponseSchema = ApiResponseSchema(
 );
 
 export type PatientsListResponse = z.infer<typeof PatientsListResponseSchema>;
+
+export const PatientsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  dni: z.string().optional(),
+});
+
+export type PatientsQuery = z.infer<typeof PatientsQuerySchema>;
+
+export const PatientsPaginatedResponseSchema =
+  PaginatedResponseSchema(PatientSchema);
+
+export type PatientsPaginatedResponse = z.infer<
+  typeof PatientsPaginatedResponseSchema
+>;
+
+export type StaffSignIn = { email: string; password: string };
