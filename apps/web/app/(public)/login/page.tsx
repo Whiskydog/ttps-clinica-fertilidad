@@ -1,7 +1,7 @@
 "use client";
 
-import { signInPatient, signInStaff } from "@/app/actions/auth";
-import { toast } from "react-hot-toast";
+import { signInPatient } from "@/app/actions/auth";
+import { toast } from "@repo/ui";
 import { Lock, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,9 +9,8 @@ import { useRef, useState, useTransition } from "react";
 
 export default function LoginPage() {
   const [dni, setDni] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState<"patient" | "staff">("patient");
+  
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   const router = useRouter();
@@ -22,17 +21,13 @@ export default function LoginPage() {
 
     startTransition(async () => {
       let res;
-      if (userType === "patient") {
-        res = await signInPatient({ dni, password });
-      } else {
-        res = await signInStaff({ email, password });
-      }
+      res = await signInPatient({ dni, password });
       if (res.statusCode !== 200) {
         toast.error(res.message);
       } else {
         toast.success(res.message);
         // Redirect according to user type
-        router.push(userType === "patient" ? "/patient" : "/doctor");
+        router.push("/patient");
       }
     });
   };
@@ -74,31 +69,8 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="flex items-center gap-4 mb-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  checked={userType === "patient"}
-                  onChange={() => setUserType("patient")}
-                  className="mr-2"
-                />
-                Paciente
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  checked={userType === "staff"}
-                  onChange={() => setUserType("staff")}
-                  className="mr-2"
-                />
-                Profesional
-              </label>
-            </div>
-            {/* Identifier field: DNI for patients, Email for staff */}
-            {userType === "patient" ? (
-              <div className="space-y-2">
+            
+            <div className="space-y-2">
                 <label htmlFor="dni" className="text-gray-700">
                   DNI:
                 </label>
@@ -117,27 +89,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-gray-700">
-                  Email:
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Ingrese su email"
-                  />
-                </div>
-              </div>
-            )}
+           
 
             {/* Password Field */}
             <div className="space-y-2">

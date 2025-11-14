@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AdminUserUpdateSchema, type AdminUserUpdate } from "@repo/contracts";
-import { StaffUser } from "./users-management-client";
+import { AdminUserUpdateSchema, StaffUser, type AdminUserUpdate } from "@repo/contracts";
+
 import { Button } from "@repo/ui/button";
 import {
   Dialog,
@@ -16,7 +16,6 @@ import {
 } from "@repo/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@repo/ui/field";
 import { Input } from "@repo/ui/input";
-import { Switch } from "@repo/ui/switch";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -39,7 +38,6 @@ export function EditUserDialog({
       lastName: user.lastName,
       email: user.email,
       phone: user.phone,
-      isActive: user.isActive,
       specialty: user.specialty || "",
       licenseNumber: user.licenseNumber || "",
       labArea: user.labArea || "",
@@ -56,7 +54,6 @@ export function EditUserDialog({
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        isActive: user.isActive,
         specialty: user.specialty || "",
         licenseNumber: user.licenseNumber || "",
         labArea: user.labArea || "",
@@ -69,9 +66,9 @@ export function EditUserDialog({
     onOpenChange(false);
   };
 
-  const isDoctor = user.role === "doctor";
-  const isLabTechnician = user.role === "lab_technician";
-  const isDirector = user.role === "director";
+  const isDoctor = user.role.code === "doctor";
+  const isLabTechnician = user.role.code === "lab_technician";
+  const isDirector = user.role.code === "director";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,7 +76,7 @@ export function EditUserDialog({
         <DialogHeader>
           <DialogTitle>Editar usuario</DialogTitle>
           <DialogDescription>
-            Actualiza los datos de {user.firstName} {user.lastName} ({user.roleName})
+            Actualiza los datos de {user.firstName} {user.lastName} ({user.role})
           </DialogDescription>
         </DialogHeader>
 
@@ -154,22 +151,6 @@ export function EditUserDialog({
               />
             </div>
 
-            {/* Estado activo */}
-            <Controller
-              name="isActive"
-              control={form.control}
-              render={({ field }) => (
-                <Field>
-                  <div className="flex items-center justify-between">
-                    <FieldLabel>Usuario activo</FieldLabel>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </div>
-                </Field>
-              )}
-            />
           </div>
 
           {/* Campos específicos por rol */}

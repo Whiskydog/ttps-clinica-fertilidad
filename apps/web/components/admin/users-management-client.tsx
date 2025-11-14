@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect, useTransition } from "react";
+import { useState, useMemo } from "react";
 import { UserFilters } from "./user-filters";
 import { UsersTable } from "./users-table";
 import { UsersPagination } from "./users-pagination";
@@ -8,25 +8,15 @@ import { UserDialog } from "./user-dialog";
 import { EditUserDialog } from "./edit-user-dialog";
 import { UserDetailPanel } from "./user-detail-panel";
 import { ResetPasswordDialog } from "./reset-password-dialog";
-import { useUserFilters } from "@/app/hooks/admin/use-user-filters";
+import { useUserFilters } from "@/hooks/admin/use-user-filters";
 import { Card } from "@repo/ui/card";
-import { AdminUserCreate, AdminUserUpdate, UserEntity, UsersList } from "@repo/contracts";
+import { AdminUserCreate, AdminUserUpdate, StaffUser, StaffUsersListData } from "@repo/contracts";
 import { toast } from "@repo/ui";
 import { createStaffUser, deleteUser, toggleUserStatus, updateStaffUser, resetUserPassword } from "@/app/actions/users";
 import { useRouter } from "next/navigation";
 
-export interface StaffUser extends Omit<UserEntity, "role" | "createdAt" | "updatedAt"> {
-  role: string;
-  roleName: string;
-  isActive: boolean;
-  createdAt: string;
-  specialty?: string;
-  licenseNumber?: string;
-  labArea?: string;
-}
-
 interface UsersManagementClientProps {
-  initialData: UsersList;
+  initialData: StaffUsersListData;
 }
 
 export function UsersManagementClient({
@@ -39,7 +29,7 @@ export function UsersManagementClient({
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<StaffUser | null>(null);
 
-  const users: StaffUser[] = useMemo(() => {
+  const users = useMemo(() => {
     return initialData.data.map((user) => ({
       id: user.id,
       firstName: user.firstName,

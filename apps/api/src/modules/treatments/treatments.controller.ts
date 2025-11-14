@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
+import { TreatmentsService } from './treatments.service';
 import { CreateTreatmentDto } from './dto';
 import { MedicalHistoryService } from '../medical-history/services/medical-history.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
@@ -18,12 +19,35 @@ import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 
 @Controller('treatments')
+@UseGuards(JwtAuthGuard)
 export class TreatmentsController {
   constructor(
     private readonly treatmentService: TreatmentService,
+    private readonly treatmentsService: TreatmentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
   ) {}
 
+  // Endpoints para pacientes
+  @Get('patient/current')
+  @RequireRoles(RoleCode.PATIENT)
+  async getCurrentTreatment(@CurrentUser() user: User) {
+    return this.treatmentsService.getCurrentTreatmentByPatient(user.id);
+  }
+
+  @Get('patient/history')
+  @RequireRoles(RoleCode.PATIENT)
+  async getTreatmentHistory(@CurrentUser() user: User) {
+    return this.treatmentsService.getTreatmentHistory(user.id);
+  }
+
+  @Get('detail/:id')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getTreatmentDetail(@Param('id') id: string, @CurrentUser() user: User) {
+    const treatmentId = Number(id);
+    return this.treatmentsService.getTreatmentDetail(treatmentId, user.id);
+  }
+
+  // Endpoints existentes
   @Get(':medicalHistoryId')
   async getByMedicalHistory(
     @Param('medicalHistoryId') medicalHistoryId: string,
@@ -33,7 +57,7 @@ export class TreatmentsController {
   }
 
   @Post(':medicalHistoryId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.DOCTOR)
   async create(
     @Param('medicalHistoryId') medicalHistoryId: string,

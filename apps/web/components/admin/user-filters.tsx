@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@repo/ui/select";
 import { Plus } from "lucide-react";
-import { UserFilters as UserFiltersType } from "../hooks/use-user-filters";
+import { UserFilters as UserFiltersType } from "@/hooks/admin/use-user-filters";
 
 interface UserFiltersProps {
   filters: UserFiltersType;

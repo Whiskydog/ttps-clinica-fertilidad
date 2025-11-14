@@ -1,17 +1,19 @@
-import { ApiErrorResponse, UsersListResponse } from "@repo/contracts";
+"use server";
+
 import { cookies } from "next/headers";
+import type { StaffUsersListResponse } from "@repo/contracts";
 
 export async function getStaffUsers(
   page: number = 1,
   perPage: number = 10
-): Promise<UsersListResponse | ApiErrorResponse> {
+): Promise<StaffUsersListResponse> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore
     .getAll()
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 
-  try {
+  
     const url = new URL(`${process.env.BACKEND_URL}/admin/users`);
     url.searchParams.set("page", page.toString());
     url.searchParams.set("perPage", perPage.toString());
@@ -25,14 +27,12 @@ export async function getStaffUsers(
       cache: "no-store",
     });
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error al obtener usuarios:", error);
-    return {
-      statusCode: 500,
-      message: "Error al obtener usuarios",
-      error: "Internal Server Error",
-    };
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message = payload?.message || `Request failed: ${response.status}`;
+    throw new Error(message);
   }
+
+  return payload;
 }

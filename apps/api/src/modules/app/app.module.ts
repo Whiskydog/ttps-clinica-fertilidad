@@ -4,8 +4,10 @@ import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@modules/config/config.module';
+import { CryopreservationModule } from '@modules/cryopreservation/cryopreservation.module';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
+import { MedicalOrdersModule } from '@modules/medical-orders/medical-orders.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
@@ -19,6 +21,8 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     AuthModule,
     MedicalHistoryModule,
     TreatmentsModule,
+    MedicalOrdersModule,
+    CryopreservationModule,
     AppointmentsModule,
     MedicalInsurancesModule,
   ],

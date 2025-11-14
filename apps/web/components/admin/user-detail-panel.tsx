@@ -1,6 +1,5 @@
 "use client";
 
-import { StaffUser } from "./users-management-client";
 import { Card, CardContent, CardHeader } from "@repo/ui/card";
 import { Button } from "@repo/ui/button";
 import { Badge } from "@repo/ui/badge";
@@ -17,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@repo/ui/alert-dialog";
 import { Edit, Key, Trash2, X } from "lucide-react";
+import { StaffUser } from "@repo/contracts";
 
 interface UserDetailPanelProps {
   user: StaffUser;
@@ -102,7 +102,7 @@ export const UserDetailPanel = ({
                 {/* Rol */}
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Rol</p>
-                  <p className="font-medium text-gray-900">{user.roleName}</p>
+                  <p className="font-medium text-gray-900">{user.role}</p>
                 </div>
 
                 {/* Estado */}

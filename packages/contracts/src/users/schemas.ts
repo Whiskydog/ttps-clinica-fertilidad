@@ -1,4 +1,3 @@
-import moment from "moment";
 import * as z from "zod";
 import { ApiResponseSchema, PaginatedResponseSchema } from "../common/api";
 import { MedicalInsuranceSchema } from "../medical-insurances/schemas";
@@ -15,16 +14,14 @@ export const UserEntitySchema = z.object({
     name: z.string(),
   }),
 });
+export type User = z.infer<typeof UserEntitySchema>;
 
 export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 
-export type User = {
-  firstName?: string;
-  lastName?: string;
-  role?: { code: string; name: string };
-};
-
 export type UserResponse = z.infer<typeof UserResponseSchema>;
+
+
+// =====================
 
 export const PatientCreateSchema = z.object({
   firstName: z
@@ -111,12 +108,6 @@ export const PatientResponseSchema = ApiResponseSchema(PatientSchema);
 
 export type PatientResponse = z.infer<typeof PatientResponseSchema>;
 
-export const PatientsListResponseSchema = ApiResponseSchema(
-  z.array(PatientSchema)
-);
-
-export type PatientsListResponse = z.infer<typeof PatientsListResponseSchema>;
-
 export const PatientsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
@@ -132,4 +123,83 @@ export type PatientsPaginatedResponse = z.infer<
   typeof PatientsPaginatedResponseSchema
 >;
 
-export type StaffSignIn = { email: string; password: string };
+// =====================
+
+const UserType = ['admin', 'doctor', 'director', 'lab_technician'] as const;
+
+export const AdminUserCreateSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email(),
+  phone: z.string().min(7).max(15),
+  address: z.string().max(100).optional(),
+  password: z.string().min(6).max(100),
+  isActive: z.boolean().default(true),
+  userType: z.enum(UserType),
+  // Doctor/Director fields
+  specialty: z.string().max(100).optional(),
+  licenseNumber: z.string().max(50).optional(),
+  // Lab Technician fields
+  labArea: z.string().max(100).optional(),
+});
+
+export type AdminUserCreate = z.infer<typeof AdminUserCreateSchema>;
+
+export const AdminUserUpdateSchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(7).max(15).optional(),
+  address: z.string().max(100).optional(),
+  userType: z.enum(UserType).optional(),
+  // Doctor/Director fields
+  specialty: z.string().max(100).optional(),
+  licenseNumber: z.string().max(50).optional(),
+  // Lab Technician fields
+  labArea: z.string().max(100).optional(),
+});
+export type AdminUserUpdate = z.infer<typeof AdminUserUpdateSchema>;
+
+export const ToggleUserStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+export type ToggleUserStatus = z.infer<typeof ToggleUserStatusSchema>;
+
+export const ResetPasswordSchema = z.object({
+  password: z.string().min(6).max(100),
+});
+export type ResetPassword = z.infer<typeof ResetPasswordSchema>;
+
+// =====================
+// Staff Users List Response (with pagination)
+// =====================
+
+export const StaffUserEntitySchema = UserEntitySchema.extend({
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+  specialty: z.string().max(100).optional().nullable(),
+  licenseNumber: z.string().max(50).optional().nullable(),
+  labArea: z.string().max(100).optional().nullable(),
+});
+
+export type StaffUser = z.infer<typeof StaffUserEntitySchema>;
+
+export const StaffUsersPaginationMetaSchema = z.object({
+  total: z.number().int().min(0),
+  page: z.number().int().min(1),
+  perPage: z.number().int().min(1),
+  totalPages: z.number().int().min(0),
+});
+
+export type StaffUsersPaginationMeta = z.infer<typeof StaffUsersPaginationMetaSchema>;
+
+export const StaffUsersListDataSchema = z.object({
+  data: z.array(StaffUserEntitySchema),
+  meta: StaffUsersPaginationMetaSchema,
+});
+
+export type StaffUsersListData = z.infer<typeof StaffUsersListDataSchema>;
+
+export const StaffUsersListResponseSchema = ApiResponseSchema(StaffUsersListDataSchema);
+
+export type StaffUsersListResponse = z.infer<typeof StaffUsersListResponseSchema>;
