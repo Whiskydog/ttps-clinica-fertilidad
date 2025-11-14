@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 
 export default function PatientDashboard() {
   const currentTreatment = {
@@ -22,111 +24,123 @@ export default function PatientDashboard() {
   ];
 
   return (
-    <div className="page-container">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content - Left Side */}
-        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-          {/* Current Treatment Card */}
-          <div className="card">
-            <div className="p-4 border-b">
-              <h3 className="section-title">Tratamiento Actual</h3>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Content - Left Side */}
+      <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+        {/* Current Treatment Card */}
+        <Card className="bg-slate-400 border-slate-500">
+          <CardHeader>
+            <CardTitle className="text-black text-xl">
+              Tratamiento Actual
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <p className="text-black">
+                <span className="font-semibold">Estado:</span>{" "}
+                {currentTreatment.status}
+              </p>
+              <p className="text-black">
+                <span className="font-semibold">Tipo:</span>{" "}
+                {currentTreatment.type}
+              </p>
+              <p className="text-black">
+                <span className="font-semibold">Médico:</span>{" "}
+                {currentTreatment.doctor}
+              </p>
+              <p className="text-black">
+                <span className="font-semibold">Inicio:</span>{" "}
+                {currentTreatment.startDate}
+              </p>
+              <p className="text-black">
+                <span className="font-semibold">Próxima cita:</span>{" "}
+                {currentTreatment.nextAppointment}
+              </p>
             </div>
-            <div className="p-4 space-y-3">
-              <div className="space-y-2">
-                <p className="text-black">
-                  <span className="font-semibold">Estado:</span>{" "}
-                  {currentTreatment.status}
-                </p>
-                <p className="text-black">
-                  <span className="font-semibold">Tipo:</span>{" "}
-                  {currentTreatment.type}
-                </p>
-                <p className="text-black">
-                  <span className="font-semibold">Médico:</span>{" "}
-                  {currentTreatment.doctor}
-                </p>
-                <p className="text-black">
-                  <span className="font-semibold">Inicio:</span>{" "}
-                  {currentTreatment.startDate}
-                </p>
-                <p className="text-black">
-                  <span className="font-semibold">Próxima cita:</span>{" "}
-                  {currentTreatment.nextAppointment}
-                </p>
-              </div>
 
-              <div className="pt-4">
-                <Link href="/patient/treatment/current" className="btn-primary">
-                  Ver detalles
-                </Link>
-              </div>
+            <div className="pt-4">
+              <Button
+                asChild
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Link href="/patient/treatment/current">Ver detalles</Link>
+              </Button>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Treatment History Card */}
-          <div className="card">
-            <h3 className="section-title">Historial Tratamientos</h3>
-            <div className="space-y-4 mt-4">
-              {previousTreatments.map((treatment) => (
-                <div
-                  key={treatment.id}
-                  className="p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border"
+        {/* Treatment History Card */}
+        <Card className="bg-purple-300 border-purple-400">
+          <CardHeader>
+            <CardTitle className="text-black text-xl text-center">
+              Historial Tratamientos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {previousTreatments.map((treatment) => (
+              <div
+                key={treatment.id}
+                className="bg-gray-900 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+              >
+                <div className="text-white space-y-1">
+                  <p className="font-semibold">{treatment.name}</p>
+                  <p className="text-sm">Tipo: {treatment.type}</p>
+                  <p className="text-sm">Médico: {treatment.doctor}</p>
+                  <p className="text-sm">Período: {treatment.period}</p>
+                </div>
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
                 >
-                  <div className="space-y-1">
-                    <p className="font-semibold">{treatment.name}</p>
-                    <p className="text-sm">Tipo: {treatment.type}</p>
-                    <p className="text-sm">Médico: {treatment.doctor}</p>
-                    <p className="text-sm">Período: {treatment.period}</p>
-                  </div>
-                  <Link
-                    href={`/patient/treatment/${treatment.id}`}
-                    className="btn-primary"
-                  >
+                  <Link href={`/patient/treatment/${treatment.id}`}>
                     Ver Detalles
                   </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Action Buttons - Right Side */}
-        <div className="lg:col-span-1 space-y-3 order-1 lg:order-2">
-          <Link
-            href="/patient/appointments"
-            className="btn-primary w-full text-center"
-          >
-            Sacar Turno
-          </Link>
+      {/* Action Buttons - Right Side */}
+      <div className="lg:col-span-1 space-y-3 order-1 lg:order-2">
+        <Button
+          asChild
+          className="w-full bg-red-400 hover:bg-red-500 text-black font-semibold py-6 text-base"
+        >
+          <Link href="/patient/appointments">Sacar Turno</Link>
+        </Button>
 
-          <Link
-            href="/patient/medical-history"
-            className="btn-primary w-full text-center"
-          >
-            Historia Clínica
-          </Link>
+        <Button
+          asChild
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-6 text-base"
+        >
+          <Link href="/patient/medical-history">Historia Clínica</Link>
+        </Button>
 
-          <Link
-            href="/patient/calendar"
-            className="btn-primary w-full text-center"
-          >
-            Ver calendario
-          </Link>
+        <Button
+          asChild
+          className="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-semibold py-6 text-base"
+        >
+          <Link href="/patient/calendar">Ver calendario</Link>
+        </Button>
 
-          <Link
-            href="/patient/orders"
-            className="btn-primary w-full text-center"
-          >
-            Ver Órdenes Médicas
-          </Link>
+        <Button
+          asChild
+          className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-6 text-base"
+        >
+          <Link href="/patient/orders">Ver Órdenes Médicas</Link>
+        </Button>
 
-          <Link
-            href="/patient/cryo-products"
-            className="btn-primary w-full text-center"
-          >
+        <Button
+          asChild
+          className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-6 text-base"
+        >
+          <Link href="/patient/cryo-products">
             Mis Productos Criopreservados
           </Link>
-        </div>
+        </Button>
       </div>
     </div>
   );

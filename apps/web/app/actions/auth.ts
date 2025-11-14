@@ -1,7 +1,6 @@
 "use server";
 
-import { createSession, clearSession } from "@/app/lib/session";
-import { cookies } from "next/headers";
+import { createSession } from "@/app/lib/session";
 import {
   ApiErrorResponse,
   ApiResponse,
@@ -10,113 +9,42 @@ import {
   PatientResponse,
   PatientSignIn,
   PatientSignUp,
-  StaffSignIn,
 } from "@repo/contracts";
 
-// Registro de paciente
 export async function signUp(
   data: PatientSignUp
 ): Promise<ApiResponse<PatientResponse> | ApiValidationErrorResponse> {
-  const resp = await fetch(`${process.env.BACKEND_URL}/patients`, {
+  const response = await fetch(`${process.env.BACKEND_URL}/patients`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(data),
   });
 
-  return resp.json();
+  return await response.json();
 }
 
-// Login de paciente
 export async function signInPatient(
   data: PatientSignIn
 ): Promise<ApiResponse<AuthToken> | ApiErrorResponse> {
-  const resp = await fetch(`${process.env.BACKEND_URL}/auth/sign-in/patient`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  const payload = await resp.json();
-  if (resp.ok) {
-    await createSession((payload as ApiResponse<AuthToken>).data.accessToken);
-  }
-  return payload;
-}
-
-// Login de staff
-export async function signInStaff(
-  data: StaffSignIn
-): Promise<ApiResponse<AuthToken> | ApiErrorResponse> {
-  const resp = await fetch(`${process.env.BACKEND_URL}/auth/sign-in`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  const payload = await resp.json();
-  if (resp.ok) {
-    await createSession((payload as ApiResponse<AuthToken>).data.accessToken);
-  }
-  return payload;
-}
-
-// Logout
-export async function signOut(): Promise<ApiResponse<{
-  message: string;
-}> | null> {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) return null;
-
-  const cookieStore = await cookies();
-  const sessionValue = cookieStore.get("session")?.value;
-
-  if (!sessionValue) {
-    await clearSession();
-    return null;
-  }
-
-  try {
-    const resp = await fetch(`${backendUrl}/auth/sign-out`, {
+  const response = await fetch(
+    `${process.env.BACKEND_URL}/auth/sign-in/patient`,
+    {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionValue}`,
       },
-      cache: "no-store",
-    });
+      body: JSON.stringify(data),
+    }
+  );
 
-    await clearSession();
-    const payload = await resp.json().catch(() => null);
-    return payload as ApiResponse<{ message: string }> | null;
-  } catch {
-    await clearSession();
-    return null;
+  const payload = await response.json();
+  if (response.ok) {
+    const authResponse = payload as ApiResponse<AuthToken>;
+    await createSession(authResponse.data.accessToken);
+    return authResponse;
   }
-}
 
-// Obtener datos del usuario actual
-export async function getMe() {
-  const backendUrl = process.env.BACKEND_URL;
-  if (!backendUrl) return null;
-
-  const cookieStore = await cookies();
-  const sessionValue = cookieStore.get("session")?.value;
-  if (!sessionValue) return null;
-
-  try {
-    const resp = await fetch(`${backendUrl}/me`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionValue}`,
-      },
-      cache: "no-store",
-    });
-    if (!resp.ok) return null;
-
-    const data = await resp.json().catch(() => null);
-    return data?.data ?? null;
-  } catch {
-    return null;
-  }
+  return payload as ApiErrorResponse;
 }

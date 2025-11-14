@@ -1,17 +1,18 @@
 "use client";
 
-import { signInPatient, signInStaff } from "@/app/actions/auth";
-import { toast } from "react-hot-toast";
+import { signInPatient } from "@/app/actions/auth";
+import { toast } from "@repo/ui";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { Lock, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 export default function LoginPage() {
   const [dni, setDni] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState<"patient" | "staff">("patient");
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   const router = useRouter();
@@ -21,18 +22,12 @@ export default function LoginPage() {
     e.preventDefault();
 
     startTransition(async () => {
-      let res;
-      if (userType === "patient") {
-        res = await signInPatient({ dni, password });
-      } else {
-        res = await signInStaff({ email, password });
-      }
+      const res = await signInPatient({ dni, password });
       if (res.statusCode !== 200) {
         toast.error(res.message);
       } else {
         toast.success(res.message);
-        // Redirect according to user type
-        router.push(userType === "patient" ? "/patient" : "/doctor");
+        redirect("/patient");
       }
     });
   };
@@ -74,101 +69,57 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="flex items-center gap-4 mb-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  checked={userType === "patient"}
-                  onChange={() => setUserType("patient")}
-                  className="mr-2"
+            {/* DNI Field */}
+            <div className="space-y-2">
+              <Label htmlFor="dni" className="text-gray-700">
+                DNI:
+              </Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-purple-500" />
+                </div>
+                <Input
+                  id="dni"
+                  type="text"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  required
+                  className="pl-10 bg-gray-50 border-gray-300 text-gray-900 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Ingrese su DNI"
                 />
-                Paciente
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  checked={userType === "staff"}
-                  onChange={() => setUserType("staff")}
-                  className="mr-2"
-                />
-                Profesional
-              </label>
+              </div>
             </div>
-            {/* Identifier field: DNI for patients, Email for staff */}
-            {userType === "patient" ? (
-              <div className="space-y-2">
-                <label htmlFor="dni" className="text-gray-700">
-                  DNI:
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <input
-                    id="dni"
-                    type="text"
-                    value={dni}
-                    onChange={(e) => setDni(e.target.value)}
-                    required
-                    className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Ingrese su DNI"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-gray-700">
-                  Email:
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Ingrese su email"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-gray-700">
+              <Label htmlFor="password" className="text-gray-700">
                 Contraseña:
-              </label>
+              </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-yellow-600" />
                 </div>
-                <input
+                <Input
                   id="password"
                   type="password"
                   ref={passwordInputRef}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className="pl-10 bg-gray-50 border-gray-300 text-gray-900 focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Ingrese su contraseña"
                 />
               </div>
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base disabled:opacity-50"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-base"
             >
               {isPending ? "INGRESANDO..." : "INGRESAR"}
-            </button>
+            </Button>
           </form>
 
           {/* Register Link */}

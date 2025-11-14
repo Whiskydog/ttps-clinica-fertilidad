@@ -8,20 +8,17 @@ import {
   PatientSignUp,
   PatientSignUpSchema,
 } from "@repo/contracts";
-import { toast } from "react-hot-toast";
+import { toast } from "@repo/ui";
+import { Button } from "@repo/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@repo/ui/field";
+import { Input } from "@repo/ui/input";
 import {
-  Button,
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../../components/ui-shims";
+} from "@repo/ui/select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

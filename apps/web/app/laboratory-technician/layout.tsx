@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Syringe,
@@ -8,29 +9,48 @@ import {
   FlaskConical,
   Database,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@repo/ui/sidebar";
 
 export default function LabTechnicianLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = { firstName: "Operador", lastName: "de Laboratorio" };
-  const router = useRouter();
+  const user = {
+    firstName: "Operador",
+    lastName: "de Laboratorio",
+  };
 
   const handleLogout = () => {
-    // TODO: implement server-side logout; for now redirect to login
-    router.push("/login");
+    console.log("Cerrar sesión");
+    // TODO: Implement logout logic
   };
 
   const menuItems = [
-    { name: "Resumen", path: "/laboratory-technician", icon: LayoutDashboard },
+    {
+      name: "Resumen",
+      path: "/laboratory-technician",
+      icon: LayoutDashboard,
+    },
     {
       name: "Registro de Punciones",
       path: "/laboratory-technician/punctures",
       icon: Syringe,
     },
-    { name: "Ovocitos", path: "/laboratory-technician/oocytes", icon: Egg },
+    {
+      name: "Ovocitos",
+      path: "/laboratory-technician/oocytes",
+      icon: Egg,
+    },
     {
       name: "Fecundación / Embriones",
       path: "/laboratory-technician/embryos",
@@ -44,36 +64,39 @@ export default function LabTechnicianLayout({
   ];
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden md:block w-64 bg-white border-r border-gray-200">
-        <div className="px-4 pt-6">
-          <h2 className="text-gray-900 text-lg font-bold mb-4">
-            Panel de Laboratorio
-          </h2>
-          <nav>
-            <ul className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.path}>
+    <SidebarProvider>
+      <Sidebar
+        variant="sidebar"
+        className="bg-white border-gray-200 md:w-64 w-[80vw]"
+        collapsible="icon"
+      >
+        <SidebarContent>
+          <SidebarMenu className="px-2 pt-4">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild>
                     <Link
                       href={item.path}
-                      className="flex items-center gap-3 text-gray-700 hover:bg-gray-100 rounded-md px-3 py-2"
+                      className="flex items-center gap-3 text-gray-700 hover:bg-gray-100"
                     >
                       <Icon className="w-5 h-5" />
                       <span className="text-sm">{item.name}</span>
                     </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      </aside>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
 
-      <div className="flex-1 flex flex-col">
+      <SidebarInset>
+        {/* Header */}
         <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
+            <SidebarTrigger />
             <h1 className="text-base md:text-xl font-bold text-gray-900">
               Panel de Laboratorio
             </h1>
@@ -84,17 +107,19 @@ export default function LabTechnicianLayout({
                 {user.firstName} {user.lastName}
               </p>
             </div>
-            <button
+            <Button
               onClick={handleLogout}
-              className="rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm md:text-base px-3 py-2"
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm md:text-base"
             >
               Cerrar Sesión
-            </button>
+            </Button>
           </div>
         </header>
 
+        {/* Page Content */}
         <main className="flex-1 p-4 md:p-8">{children}</main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

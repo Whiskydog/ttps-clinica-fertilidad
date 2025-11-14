@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Users,
@@ -12,94 +11,129 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
-import { signOut as signOutAction, getMe } from "@/app/actions/auth";
-import type { User } from "@repo/contracts";
-
-const menuItems = [
-  { name: "Dashboard", path: "/doctor", icon: LayoutDashboard },
-  { name: "Mis Pacientes", path: "/doctor/patients", icon: Users },
-  { name: "Órdenes Médicas", path: "/doctor/orders", icon: FileText },
-  { name: "Seguimientos", path: "/doctor/follow-ups", icon: Activity },
-  { name: "Laboratorio", path: "/doctor/laboratory", icon: Beaker },
-  { name: "Estadísticas", path: "/doctor/statistics", icon: BarChart3 },
-  { name: "Configuración", path: "/doctor/settings", icon: Settings },
-];
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@repo/ui/sidebar";
 
 export default function DoctorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    getMe()
-      .then((data) => data && setUser(data))
-      .catch((err) => console.error("Error fetching user:", err));
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOutAction();
-    } catch (err) {
-      console.error("Error during logout:", err);
-    }
-    router.push("/login");
+  const user = {
+    firstName: "Juan",
+    lastName: "Pérez",
+    specialty: "Medicina Reproductiva",
   };
 
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="hidden md:block w-64 bg-green-800 border-r border-green-700">
-        <div className="px-4 pt-6">
-          <h2 className="text-white text-lg font-bold mb-4">Dashboard</h2>
-          <nav>
-            <ul className="space-y-2">
-              {menuItems.map(({ name, path, icon: Icon }) => (
-                <li key={path}>
-                  <Link
-                    href={path}
-                    className="flex items-center gap-3 text-green-100 hover:text-white hover:bg-green-700 rounded-md px-3 py-2"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-      </aside>
+  const handleLogout = () => {
+    console.log("Cerrar sesión");
+    // TODO: Implement logout logic
+  };
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+  const menuItems = [
+    {
+      name: "Dashboard",
+      path: "/doctor",
+      icon: LayoutDashboard,
+    },
+    {
+      name: "Mis Pacientes",
+      path: "/doctor/patients",
+      icon: Users,
+    },
+    {
+      name: "Órdenes Médicas",
+      path: "/doctor/orders",
+      icon: FileText,
+    },
+    {
+      name: "Seguimientos",
+      path: "/doctor/follow-ups",
+      icon: Activity,
+    },
+    {
+      name: "Laboratorio",
+      path: "/doctor/laboratory",
+      icon: Beaker,
+    },
+    {
+      name: "Estadísticas",
+      path: "/doctor/statistics",
+      icon: BarChart3,
+    },
+    {
+      name: "Configuración",
+      path: "/doctor/settings",
+      icon: Settings,
+    },
+  ];
+
+  return (
+    <SidebarProvider>
+      <Sidebar
+        variant="sidebar"
+        className="bg-green-800 border-green-700 md:w-64 w-[80vw]"
+        collapsible="icon"
+      >
+        <SidebarContent>
+          <SidebarMenu className="px-2 pt-4">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href={item.path}
+                      className="flex items-center gap-3 text-green-100 hover:text-white hover:bg-green-700"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+
+      <SidebarInset>
         {/* Header */}
         <header className="bg-green-600 text-white px-4 md:px-8 py-4 shadow-md flex items-center justify-between">
-          <h1 className="text-base md:text-xl font-bold">
-            CLÍNICA DE FERTILIDAD - DASHBOARD MÉDICO
-          </h1>
+          <div className="flex items-center gap-2 md:gap-4">
+            <SidebarTrigger className="text-white hover:bg-green-700" />
+            <h1 className="text-base md:text-xl font-bold">
+              CLÍNICA DE FERTILIDAD - DASHBOARD MÉDICO
+            </h1>
+          </div>
           <div className="flex items-center gap-2 md:gap-4">
             <div className="text-right hidden md:block">
               <p className="font-medium">
-                Dr. {user?.firstName ?? ""} {user?.lastName ?? ""}
+                Dr. {user.firstName} {user.lastName}
               </p>
-              <p className="text-sm text-green-100">
-                {user?.role?.name ?? "Médico"}
-              </p>
+              <p className="text-sm text-green-100">{user.specialty}</p>
             </div>
-            <button
+            <Button
               onClick={handleLogout}
-              className="rounded-md border border-white text-white px-3 py-2 hover:bg-green-700 text-sm md:text-base"
+              variant="outline"
+              className="bg-transparent border-white text-white hover:bg-green-700 text-sm md:text-base"
             >
               Cerrar Sesión
-            </button>
+            </Button>
           </div>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-8">{children}</main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
