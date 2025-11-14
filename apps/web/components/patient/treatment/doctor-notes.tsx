@@ -1,15 +1,10 @@
 'use client';
 
+import { TreatmentDetail } from '@repo/contracts';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 
-interface DoctorNote {
-  id: number;
-  date: string;
-  note: string;
-}
-
 interface DoctorNotesProps {
-  notes: DoctorNote[];
+  notes: TreatmentDetail["doctorNotes"] | null;
 }
 
 export function DoctorNotes({ notes }: DoctorNotesProps) {
@@ -20,14 +15,14 @@ export function DoctorNotes({ notes }: DoctorNotesProps) {
       </CardHeader>
       <CardContent className="pt-6">
         <div className="border border-black p-4 bg-white space-y-2">
-          {notes.map((note) => (
+          {notes?.map((note) => (
             <div key={note.id} className="text-sm">
               <span className="font-semibold">
-                {new Date(note.date).toLocaleDateString('es-AR')}:
+                {new Date(note.noteDate).toLocaleDateString('es-AR')}:
               </span>{' '}
-              {note.note}
+              {note.content || 'No hay contenido'}
             </div>
-          ))}
+          )) || <p>No hay notas del médico</p>}
         </div>
       </CardContent>
     </Card>

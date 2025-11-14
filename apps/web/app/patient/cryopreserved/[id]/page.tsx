@@ -1,21 +1,50 @@
+"use client";
+
+import { useParams } from 'next/navigation';
+import { useQuery } from "@tanstack/react-query";
 import Link from 'next/link';
 import { Button } from '@repo/ui/button';
 import { Badge } from '@repo/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import { ProductJourney } from '@/components/patient/cryopreserved/product-journey';
-import { ProductActions } from '@/components/patient/cryopreserved/product-actions';
-import { mockEmbryoDetail } from '../../lib/mock-data';
+import { getCryopreservedProductDetail } from '@/app/actions/patients/cryopreservation/get-detail';
+import type { CryopreservedProductDetail } from '@repo/contracts';
 
 export default function CryopreservedDetailPage() {
-  const product = mockEmbryoDetail;
+  const params = useParams();
+  const id = params.id as string;
+
+  const { data: response, isLoading, error } = useQuery({
+    queryKey: ["cryopreserved-product-detail", id],
+    queryFn: () => getCryopreservedProductDetail(id),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Cargando detalle del producto...</div>
+      </div>
+    );
+  }
+
+  if (error || !response?.data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error al cargar el producto criopreservado</div>
+      </div>
+    );
+  }
+
+  const product = response.data as CryopreservedProductDetail;
+  const isEmbryo = product.productType === 'embryo';
 
   return (
     <div className="space-y-6">
+      <Link href="/patient/cryopreserved">
+        <Button variant="link">← Volver a Productos</Button>
+      </Link>
       <div className="flex items-center gap-4">
-        <Link href="/patient/cryopreserved">
-          <Button variant="outline">← Volver a Productos</Button>
-        </Link>
-        <h1 className="text-2xl font-bold">ID: {product.id}</h1>
+        <h1 className="text-2xl font-bold">ID: {product.productId}</h1>
       </div>
 
       <Card>
@@ -32,98 +61,70 @@ export default function CryopreservedDetailPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2 text-sm">
               <p>
-                <span className="font-semibold">Tipo:</span> {product.type}
+                <span className="font-semibold">Tipo:</span>{' '}
+                {product.productType === 'embryo' ? 'Embrión' : 'Óvulo'}
               </p>
-              <p>
-                <span className="font-semibold">Fecha de fertilización:</span>{' '}
-                {new Date(product.fertilizationDate).toLocaleDateString('es-AR')}
-              </p>
+              {isEmbryo && product.fertilizationDate && (
+                <p>
+                  <span className="font-semibold">Fecha de fertilización:</span>{' '}
+                  {new Date(product.fertilizationDate).toLocaleDateString('es-AR')}
+                </p>
+              )}
+              {!isEmbryo && product.extractionDate && (
+                <p>
+                  <span className="font-semibold">Fecha de extracción:</span>{' '}
+                  {new Date(product.extractionDate).toLocaleDateString('es-AR')}
+                </p>
+              )}
               <p>
                 <span className="font-semibold">Fecha de criopreservación:</span>{' '}
                 {new Date(product.cryopreservationDate).toLocaleDateString('es-AR')}
               </p>
-              <p>
-                <span className="font-semibold">Días en cultivo:</span> {product.daysInCulture}
-              </p>
-              <p>
-                <span className="font-semibold">Calidad:</span> {product.quality} (
-                {product.qualityGrade})
-              </p>
+              {isEmbryo && product.quality && (
+                <p>
+                  <span className="font-semibold">Calidad:</span> {product.quality}
+                </p>
+              )}
+              {!isEmbryo && product.maturationState && (
+                <p>
+                  <span className="font-semibold">Estado de maduración:</span>{' '}
+                  {product.maturationState}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2 text-sm">
               <p className="font-semibold">Ubicación física:</p>
               <ul className="ml-4 space-y-1">
-                <li>• Tanque: {product.location.tank}</li>
-                <li>• Rack: {product.location.rack}</li>
-                <li>• Canister: {product.location.canister}</li>
-                <li>• Posición: {product.location.position}</li>
+                {product.locationTank && <li>• Tanque: {product.locationTank}</li>}
+                {product.locationRack && <li>• Rack: {product.locationRack}</li>}
+                {product.locationTube && <li>• Tubo: {product.locationTube}</li>}
+                {product.locationPosition && <li>• Posición: {product.locationPosition}</li>}
               </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="bg-slate-500">
-          <CardTitle className="text-white">DATOS TÉCNICOS</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid md:grid-cols-2 gap-6 text-sm">
-            <div className="space-y-2">
+      {isEmbryo && product.pgtResult && (
+        <Card>
+          <CardHeader className="bg-slate-500">
+            <CardTitle className="text-white">TEST GENÉTICO (PGT)</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="text-sm space-y-2">
               <p>
-                <span className="font-semibold">Óvulo origen:</span>{' '}
-                {product.technicalData.originOvule}
-              </p>
-              <p>
-                <span className="font-semibold">Técnica de fertilización:</span>{' '}
-                {product.technicalData.fertilizationTechnique}
-              </p>
-              <p>
-                <span className="font-semibold">Día de desarrollo a criopres:</span>{' '}
-                {product.technicalData.developmentDay}
-              </p>
-              <p>
-                <span className="font-semibold">Técnica de criopreservación:</span>{' '}
-                {product.technicalData.cryopreservationTechnique}
-              </p>
-              <p>
-                <span className="font-semibold">Medio utilizado:</span>{' '}
-                {product.technicalData.mediumUsed}
+                <span className="font-semibold">Resultado:</span>{' '}
+                <span className="text-green-600 font-semibold">{product.pgtResult}</span>
               </p>
             </div>
+          </CardContent>
+        </Card>
+      )}
 
-            <div className="space-y-2">
-              <p className="font-semibold">Test genético (PGT):</p>
-              <ul className="ml-4 space-y-1">
-                <li>
-                  ✓ <span className="font-semibold">Realizado</span>
-                </li>
-                <li>
-                  Resultado:{' '}
-                  <span className="text-green-600 font-semibold">
-                    {product.technicalData.pgt.result}
-                  </span>
-                </li>
-                <li>Sexo cromosómico: {product.technicalData.pgt.chromosomalSex}</li>
-              </ul>
-
-              <p className="mt-4">
-                <span className="font-semibold">Operador responsable:</span>{' '}
-                {product.technicalData.responsibleOperator}
-              </p>
-              <p>
-                <span className="font-semibold">Observaciones:</span>{' '}
-                {product.technicalData.observations}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <ProductJourney journey={product.journey} />
-
-      <ProductActions actions={product.actions} note={product.note} />
+      {product.journey && product.journey.length > 0 && (
+        <ProductJourney journey={product.journey} />
+      )}
     </div>
   );
 }

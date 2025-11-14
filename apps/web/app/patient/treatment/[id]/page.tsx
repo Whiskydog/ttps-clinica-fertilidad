@@ -1,23 +1,52 @@
+"use client";
+
+import { useParams } from 'next/navigation';
+import { useQuery } from "@tanstack/react-query";
 import Link from 'next/link';
 import { Button } from '@repo/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import { Badge } from '@repo/ui/badge';
-import { TreatmentTimeline } from '@/components/patient/treatment/treatment-timeline';
 import { MedicationProtocol } from '@/components/patient/treatment/medication-protocol';
 import { MonitoringList } from '@/components/patient/treatment/monitoring-list';
 import { DoctorNotes } from '@/components/patient/treatment/doctor-notes';
-import { mockTreatmentDetail } from '../../lib/mock-data';
+import { getTreatmentDetail } from '@/app/actions/patients/treatments/get-detail';
+import type { TreatmentDetail } from '@repo/contracts';
 
 export default function TreatmentDetailPage() {
-  const treatment = mockTreatmentDetail;
+  const params = useParams();
+  const id = Number(params.id);
+
+  const { data: response, isLoading, error } = useQuery({
+    queryKey: ["treatment-detail", id],
+    queryFn: () => getTreatmentDetail(id),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Cargando detalle del tratamiento...</div>
+      </div>
+    );
+  }
+
+  if (error || !response?.data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error al cargar el tratamiento</div>
+      </div>
+    );
+  }
+
+  const treatmentData = response.data as TreatmentDetail;
+  const { treatment, monitorings, protocol, doctorNotes } = treatmentData;
 
   return (
     <div className="space-y-6">
+      <Link href="/patient">
+        <Button variant="link">← Volver a inicio</Button>
+      </Link>
       <div className="flex items-center gap-4">
-        <Link href="/patient">
-          <Button variant="outline">← Volver a inicio</Button>
-        </Link>
-        <h1 className="text-2xl font-bold">DETALLE DEL TRATAMIENTO {treatment.code}</h1>
+        <h1 className="text-2xl font-bold">DETALLE DEL TRATAMIENTO #{treatment.id}</h1>
       </div>
 
       <Card>
@@ -27,94 +56,52 @@ export default function TreatmentDetailPage() {
         <CardContent className="pt-6">
           <div className="mb-4">
             <Badge className="bg-green-500 text-black text-sm px-3 py-1">
-              Estado: {treatment.status.toUpperCase()}
+              Estado: {treatment.status?.toUpperCase() || 'VIGENTE'}
             </Badge>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
               <p>
-                <span className="font-semibold">Tipo de Tratamiento:</span> {treatment.type}
+                <span className="font-semibold">Objetivo inicial:</span>{' '}
+                {treatment.initialObjective || 'No especificado'}
               </p>
-              <p>
-                <span className="font-semibold">Objetivo inicial:</span> {treatment.initialObjective}
-              </p>
-              <p>
-                <span className="font-semibold">Fecha de inicio:</span>{' '}
-                {new Date(treatment.startDate).toLocaleDateString('es-AR')}
-              </p>
-              <p>
-                <span className="font-semibold">Médico tratante:</span> Dr. {treatment.doctor.firstName}{' '}
-                {treatment.doctor.lastName}
-              </p>
+              {treatment.startDate && (
+                <p>
+                  <span className="font-semibold">Fecha de inicio:</span>{' '}
+                  {new Date(treatment.startDate).toLocaleDateString('es-AR')}
+                </p>
+              )}
+              {treatment.initialDoctor && (
+                <p>
+                  <span className="font-semibold">Médico tratante:</span> Dr.{' '}
+                  {treatment.initialDoctor.firstName} {treatment.initialDoctor.lastName}
+                </p>
+              )}
             </div>
 
             <div>
-              <p>
-                <span className="font-semibold">Pareja:</span> {treatment.partner.firstName}{' '}
-                {treatment.partner.lastName}
-              </p>
-              <p>
-                <span className="font-semibold">DNI Pareja:</span> {treatment.partner.dni}
-              </p>
-              <p>
-                <span className="font-semibold">Datos de semen:</span> {treatment.partner.semenData}
-              </p>
-              <p>
-                <span className="font-semibold">Donante requerido:</span>{' '}
-                {treatment.partner.donorRequired ? 'Sí' : 'No'}
-              </p>
+              {treatment.closureReason && (
+                <p>
+                  <span className="font-semibold">Motivo de cierre:</span> {treatment.closureReason}
+                </p>
+              )}
+              {treatment.closureDate && (
+                <p>
+                  <span className="font-semibold">Fecha de cierre:</span>{' '}
+                  {new Date(treatment.closureDate).toLocaleDateString('es-AR')}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <TreatmentTimeline timeline={treatment.timeline} />
+      {protocol && <MedicationProtocol protocol={protocol} />}
 
-      <MedicationProtocol protocol={treatment.protocol} />
+      {monitorings && monitorings.length > 0 && <MonitoringList monitorings={monitorings} />}
 
-      <MonitoringList monitorings={treatment.monitorings} />
-
-      <Card>
-        <CardHeader className="bg-slate-500">
-          <CardTitle className="text-white">RESULTADOS DE PUNCIÓN (Pendiente)</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="text-sm space-y-2">
-            <p>
-              Fecha programada:{' '}
-              {new Date(treatment.puncture.scheduledDate).toLocaleDateString('es-AR')} -{' '}
-              {treatment.puncture.scheduledTime}hs
-            </p>
-            <p>Quirófano: {treatment.puncture.operatingRoom}</p>
-            <p className="text-gray-500 italic">Anestesia: Sedación consciente</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="bg-slate-500">
-          <CardTitle className="text-white">ÓVULOS Y EMBRIONES</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <p className="text-sm text-gray-500 italic">
-            Sin datos aún - Pendiente de punción
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="bg-slate-500">
-          <CardTitle className="text-white">SEGUIMIENTO POST-TRANSFERENCIA</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <p className="text-sm text-gray-500 italic">
-            Sin datos aún - Pendiente de transferencia
-          </p>
-        </CardContent>
-      </Card>
-
-      <DoctorNotes notes={treatment.doctorNotes} />
+      {doctorNotes && doctorNotes.length > 0 && <DoctorNotes notes={doctorNotes} />}
     </div>
   );
 }

@@ -1,25 +1,12 @@
 'use client';
 
+import { Treatment } from '@repo/contracts';
 import { Button } from '@repo/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import Link from 'next/link';
 
 interface TreatmentCardProps {
-  treatment: {
-    id: number;
-    status: string;
-    initialObjective: string;
-    startDate: string;
-    doctor: {
-      firstName: string;
-      lastName: string;
-    };
-    nextAppointment?: {
-      date: string;
-      time: string;
-      type: string;
-    };
-  };
+  treatment: Treatment | null;
 }
 
 const objectiveLabels: Record<string, string> = {
@@ -31,6 +18,20 @@ const objectiveLabels: Record<string, string> = {
 };
 
 export function TreatmentCard({ treatment }: TreatmentCardProps) {
+  console.log("TreatmentCard: ", treatment);
+  if (!treatment) {
+    return (
+      <Card className="bg-slate-600 text-white border-none">
+        <CardHeader>
+          <CardTitle className="text-2xl">Tratamiento Actual</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-slate-300">No tienes un tratamiento activo en este momento.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-slate-600 text-white border-none">
       <CardHeader>
@@ -43,19 +44,21 @@ export function TreatmentCard({ treatment }: TreatmentCardProps) {
           </p>
           <p>
             <span className="font-semibold">Tipo:</span>{' '}
-            {objectiveLabels[treatment.initialObjective]}
+            {objectiveLabels[treatment.initialObjective] || treatment.initialObjective}
           </p>
-          <p>
-            <span className="font-semibold">Médico:</span> Dr. {treatment.doctor.firstName}{' '}
-            {treatment.doctor.lastName}
-          </p>
+          {treatment.initialDoctor && (
+            <p>
+              <span className="font-semibold">Médico:</span> Dr. {treatment.initialDoctor.firstName}{' '}
+              {treatment.initialDoctor.lastName}
+            </p>
+          )}
           <p>
             <span className="font-semibold">Inicio:</span>{' '}
-            {new Date(treatment.startDate).toLocaleDateString('es-AR')}
+            {treatment.startDate ? new Date(treatment.startDate).toLocaleDateString('es-AR') : '-'}
           </p>
         </div>
 
-        {treatment.nextAppointment && (
+        {/* {treatment.nextAppointment && (
           <div className="mt-4 pt-4 border-t border-slate-500">
             <p className="font-semibold">Próxima cita:</p>
             <p>
@@ -63,7 +66,7 @@ export function TreatmentCard({ treatment }: TreatmentCardProps) {
               {treatment.nextAppointment.time}hs
             </p>
           </div>
-        )}
+        )} */}
 
         <div className="pt-4">
           <Link href={`/patient/treatment/${treatment.id}`}>

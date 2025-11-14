@@ -21,7 +21,7 @@ export function ProductJourney({ journey }: ProductJourneyProps) {
         <CardTitle className="text-white">JOURNEY DEL EMBRIÓN</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex flex-wrap gap-2 items-center justify-start">
           {journey.map((step, index) => (
             <div key={index} className="flex items-center">
               <div className="flex flex-col items-center text-center min-w-[120px]">
@@ -48,7 +48,7 @@ export function ProductJourney({ journey }: ProductJourneyProps) {
                 )}
               </div>
               {index < journey.length - 1 && (
-                <div className="flex-shrink-0 w-8 h-0.5 bg-gray-300 mx-1" />
+                <div className="flex-shrink-0 w-8 h-0.5 bg-gray-300 mx-2" />
               )}
             </div>
           ))}

@@ -1,25 +1,18 @@
 'use client';
 
+import { TreatmentDetail } from '@repo/contracts';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import { Check } from 'lucide-react';
 
-interface Protocol {
-  type: string;
-  drug: string;
-  dose: string;
-  via: string;
-  duration: string;
-  startDate: string;
-  additionalMedication: string[];
-  consentSigned: boolean;
-  consentDate: string;
-}
-
 interface MedicationProtocolProps {
-  protocol: Protocol;
+  protocol: TreatmentDetail["protocol"] | null;
 }
 
 export function MedicationProtocol({ protocol }: MedicationProtocolProps) {
+  if (!protocol) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader className="bg-slate-500">
@@ -29,35 +22,24 @@ export function MedicationProtocol({ protocol }: MedicationProtocolProps) {
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-bold mb-3">Protocolo de estimulación:</h3>
-            <ul className="space-y-1 text-sm">
-              <li>• Tipo: {protocol.type}</li>
-              <li>• Droga: {protocol.drug}</li>
-              <li>• Dosis: {protocol.dose}</li>
-              <li>• Vía: {protocol.via}</li>
-              <li>• Duración estimada: {protocol.duration}</li>
-              <li>• Fecha inicio: {new Date(protocol.startDate).toLocaleDateString('es-AR')}</li>
+            <ul className="space-y-1 text-sm" >
+              {protocol.medications?.map((medication, index) => (
+                <li key={index}>
+                  • Droga: {medication.name}
+                  <span className="ml-2 text-sm">
+                    (Dosis: {medication.dosage}, Frecuencia: {medication.frequency},
+                    {medication.duration && `Duración: ${medication.duration}`})
+                  </span>
+                </li>
+              )) || <li>No hay medicamentos programados</li>}
+              <li>• Fecha inicio: {protocol.startDate ? new Date(protocol.startDate).toLocaleDateString('es-AR') : '-'}</li>
+              <li>• Fecha fin: {protocol.endDate ? new Date(protocol.endDate).toLocaleDateString('es-AR') : '-'}</li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-bold mb-3">Medicación adicional:</h3>
-            <ul className="space-y-1 text-sm">
-              {protocol.additionalMedication.map((med, index) => (
-                <li key={index}>• {med}</li>
-              ))}
-            </ul>
-
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm font-semibold">Consentimiento informado:</span>
-              {protocol.consentSigned && (
-                <div className="flex items-center gap-1 text-green-600">
-                  <Check className="w-4 h-4" />
-                  <span className="text-sm">
-                    Firmado {new Date(protocol.consentDate).toLocaleDateString('es-AR')}
-                  </span>
-                </div>
-              )}
-            </div>
+            <h3 className="font-bold mb-3">Instrucciones adicionales:</h3>
+            <p className="text-sm">{protocol.instructions || '-'}</p>
           </div>
         </div>
       </CardContent>

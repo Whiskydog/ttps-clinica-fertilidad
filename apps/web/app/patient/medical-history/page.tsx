@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getMedicalHistory } from "@/app/actions/patients/medical-history/get";
 
 import { MedicalHistoryResponse } from "@repo/contracts";
+import { Button } from "@repo/ui/button";
+import Link from "next/link";
 
 export default function MedicalHistorySummary() {
   const { data, error, isLoading } = useQuery({
@@ -19,6 +21,9 @@ export default function MedicalHistorySummary() {
 
   return (
     <div className="page-container">
+      <Link href="/patient">
+        <Button variant="link">← Volver a inicio</Button>
+      </Link>
       <div className="card">
         <h2 className="section-title">Resumen de Historia Clínica</h2>
         <div className="mb-2">

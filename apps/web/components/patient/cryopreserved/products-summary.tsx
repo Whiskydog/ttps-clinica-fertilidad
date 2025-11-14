@@ -1,18 +1,10 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
+import type { CryopreservationSummary } from '@repo/contracts';
 
 interface ProductsSummaryProps {
-  summary: {
-    ovules: {
-      total: number;
-      cryoDate: string;
-    };
-    embryos: {
-      total: number;
-      lastUpdate: string;
-    };
-  };
+  summary: CryopreservationSummary["summary"];
 }
 
 export function ProductsSummary({ summary }: ProductsSummaryProps) {

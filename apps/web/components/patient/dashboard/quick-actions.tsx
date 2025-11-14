@@ -11,7 +11,7 @@ export function QuickActions() {
           Sacar Turno
         </Button>
       </Link>
-      <Link href="/patient/history">
+      <Link href="/patient/medical-history">
         <Button className="w-full bg-blue-400 hover:bg-blue-500 text-black">
           Historia Clínica
         </Button>
