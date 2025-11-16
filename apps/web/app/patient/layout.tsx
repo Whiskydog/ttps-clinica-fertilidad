@@ -21,7 +21,7 @@ export default async function PatientLayout({
       <header className="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h1 className="text-xl text-gray-900 font-medium">
-            Bienvenido, {user.firstName} {user.lastName}
+            Bienvenida, {user.firstName} {user.lastName}
           </h1>
           <Link href="/logout">
             <Button

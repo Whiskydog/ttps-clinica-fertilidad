@@ -7,12 +7,13 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Lock, User } from "lucide-react";
 import Link from "next/link";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 export default function LoginPage() {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
+  
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
 
   const router = useRouter();
@@ -27,7 +28,8 @@ export default function LoginPage() {
         toast.error(res.message);
       } else {
         toast.success(res.message);
-        redirect("/patient");
+        // Redirect according to user type
+        router.push("/patient");
       }
     });
   };
@@ -69,26 +71,27 @@ export default function LoginPage() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* DNI Field */}
+            
             <div className="space-y-2">
-              <Label htmlFor="dni" className="text-gray-700">
-                DNI:
-              </Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-purple-500" />
+                <label htmlFor="dni" className="text-gray-700">
+                  DNI:
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <input
+                    id="dni"
+                    type="text"
+                    value={dni}
+                    onChange={(e) => setDni(e.target.value)}
+                    required
+                    className="pl-10 w-full rounded-md border border-gray-300 bg-gray-50 text-gray-900 py-3 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Ingrese su DNI"
+                  />
                 </div>
-                <Input
-                  id="dni"
-                  type="text"
-                  value={dni}
-                  onChange={(e) => setDni(e.target.value)}
-                  required
-                  className="pl-10 bg-gray-50 border-gray-300 text-gray-900 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="Ingrese su DNI"
-                />
               </div>
-            </div>
+           
 
             {/* Password Field */}
             <div className="space-y-2">

@@ -1,125 +1,16 @@
-"use client";
+import { getUser } from "@/app/lib/dal";
+import { LabTechnicianLayoutClient } from "./layout-client";
 
-import Link from "next/link";
-import { Button } from "@repo/ui/button";
-import {
-  LayoutDashboard,
-  Syringe,
-  Egg,
-  FlaskConical,
-  Database,
-} from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-} from "@repo/ui/sidebar";
-
-export default function LabTechnicianLayout({
+export default async function LabTechnicianLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = {
-    firstName: "Operador",
-    lastName: "de Laboratorio",
-  };
-
-  const handleLogout = () => {
-    console.log("Cerrar sesión");
-    // TODO: Implement logout logic
-  };
-
-  const menuItems = [
-    {
-      name: "Resumen",
-      path: "/laboratory-technician",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Registro de Punciones",
-      path: "/laboratory-technician/punctures",
-      icon: Syringe,
-    },
-    {
-      name: "Ovocitos",
-      path: "/laboratory-technician/oocytes",
-      icon: Egg,
-    },
-    {
-      name: "Fecundación / Embriones",
-      path: "/laboratory-technician/embryos",
-      icon: FlaskConical,
-    },
-    {
-      name: "Banco de Donantes",
-      path: "/laboratory-technician/donor-bank",
-      icon: Database,
-    },
-  ];
+  const user = await getUser();
 
   return (
-    <SidebarProvider>
-      <Sidebar
-        variant="sidebar"
-        className="bg-white border-gray-200 md:w-64 w-[80vw]"
-        collapsible="icon"
-      >
-        <SidebarContent>
-          <SidebarMenu className="px-2 pt-4">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton asChild>
-                    <Link
-                      href={item.path}
-                      className="flex items-center gap-3 text-gray-700 hover:bg-gray-100"
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="text-sm">{item.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-
-      <SidebarInset>
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-4">
-            <SidebarTrigger />
-            <h1 className="text-base md:text-xl font-bold text-gray-900">
-              Panel de Laboratorio
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <div className="text-right hidden md:block">
-              <p className="font-medium text-gray-900">
-                {user.firstName} {user.lastName}
-              </p>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm md:text-base"
-            >
-              Cerrar Sesión
-            </Button>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 p-4 md:p-8">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <LabTechnicianLayoutClient user={user}>
+      {children}
+    </LabTechnicianLayoutClient>
   );
 }

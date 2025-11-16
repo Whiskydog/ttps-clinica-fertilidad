@@ -1,0 +1,249 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { UserFilters } from "./user-filters";
+import { UsersTable } from "./users-table";
+import { UsersPagination } from "./users-pagination";
+import { UserDialog } from "./user-dialog";
+import { EditUserDialog } from "./edit-user-dialog";
+import { UserDetailPanel } from "./user-detail-panel";
+import { ResetPasswordDialog } from "./reset-password-dialog";
+import { useUserFilters } from "@/hooks/admin/use-user-filters";
+import { Card } from "@repo/ui/card";
+import { AdminUserCreate, AdminUserUpdate, StaffUser, StaffUsersListData } from "@repo/contracts";
+import { toast } from "@repo/ui";
+import { createStaffUser, deleteUser, toggleUserStatus, updateStaffUser, resetUserPassword } from "@/app/actions/users";
+import { useRouter } from "next/navigation";
+
+interface UsersManagementClientProps {
+  initialData: StaffUsersListData;
+}
+
+export function UsersManagementClient({
+  initialData,
+}: UsersManagementClientProps) {
+  const router = useRouter();
+  const { filters, updateFilter, resetFilters } = useUserFilters();
+  const [selectedUser, setSelectedUser] = useState<StaffUser | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<StaffUser | null>(null);
+
+  const users = useMemo(() => {
+    return initialData.data.map((user) => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role.code,
+      roleName: user.role.name,
+      isActive: user.isActive,
+      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+      specialty: user.specialty,
+      licenseNumber: user.licenseNumber,
+      labArea: user.labArea,
+    }));
+  }, [initialData]);
+
+  const pageSize = initialData.meta.perPage;
+  const totalItems = initialData.meta.total;
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch =
+          user.firstName.toLowerCase().includes(searchLower) ||
+          user.lastName.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      if (filters.role !== "all" && user.role !== filters.role) {
+        return false;
+      }
+      if (filters.status !== "all") {
+        const isActive = filters.status === "active";
+        if (user.isActive !== isActive) return false;
+      }
+
+      return true;
+    });
+  }, [filters, users]);
+
+
+  const handleEditUser = (user: StaffUser) => {
+    setEditingUser(user);
+  };
+
+  const handleToggleStatus = async (user: StaffUser) => {
+    const newStatus = !user.isActive;
+    const response = await toggleUserStatus(user.id, newStatus);
+
+    if ("errors" in response) {
+      toast.error("Error de validación al cambiar el estado");
+    } else if (response.statusCode === 200) {
+      toast.success(
+        `Usuario ${newStatus ? "activado" : "desactivado"} correctamente`
+      );
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al cambiar el estado");
+    }
+  };
+
+  const handleResetPassword = (user: StaffUser) => {
+    setResetPasswordUser(user);
+  };
+
+  const handleConfirmResetPassword = async (userId: number, password: string) => {
+    const response = await resetUserPassword(userId, { password });
+
+    if ("errors" in response) {
+      toast.error("Error de validación al restablecer la contraseña");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200) {
+      toast.success("Contraseña restablecida exitosamente");
+      setResetPasswordUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al restablecer la contraseña");
+      console.log("Server error:", response);
+    }
+  };
+
+  const handleDeleteUser = async (user: StaffUser) => {
+    const response = await deleteUser(user.id);
+
+    if (response.statusCode === 204 || response.statusCode === 200) {
+      toast.success("Usuario eliminado correctamente");
+      setSelectedUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al eliminar el usuario");
+    }
+  };
+
+  const handleSaveUser = async (data: AdminUserCreate) => {
+    const response = await createStaffUser(data);
+
+    if ("errors" in response) {
+      toast.error("Error de validación. Revisa los campos.");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200 || response.statusCode === 201) {
+      toast.success(response.message || "Usuario creado correctamente");
+      setIsCreateDialogOpen(false);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al crear el usuario");
+      console.log("Server error:", response);
+    }
+  };
+
+  const handleUpdateUser = async (userId: number, data: AdminUserUpdate) => {
+    const response = await updateStaffUser(userId, data);
+
+    if ("errors" in response) {
+      toast.error("Error de validación al actualizar");
+      console.log("Validation errors:", response.errors);
+    } else if (response.statusCode === 200) {
+      toast.success("Usuario actualizado correctamente");
+      setEditingUser(null);
+      setSelectedUser(null);
+      router.refresh();
+    } else {
+      toast.error(response.message || "Error al actualizar");
+      console.log("Server error:", response);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Título */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Usuarios registrados
+        </h1>
+      </div>
+
+      {/* Filtros */}
+      <UserFilters
+        filters={filters}
+        onFilterChange={updateFilter}
+        onReset={resetFilters}
+        onNewUser={() => {
+          setIsCreateDialogOpen(true);
+        }}
+      />
+
+      {/* Tabla */}
+      <Card>
+        <UsersTable
+          users={filteredUsers}
+          onViewUser={(user: StaffUser) => {
+            setSelectedUser(user);
+          }}
+          onEditUser={handleEditUser}
+          onToggleStatus={handleToggleStatus}
+          onDeleteUser={handleDeleteUser}
+        />
+
+        {/* Paginación */}
+        {totalItems > 0 && (
+          <UsersPagination
+            currentPage={initialData.meta.page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={(newPage: number) => {
+              router.push(`/admin?page=${newPage}&perPage=${pageSize}`);
+            }}
+          />
+        )}
+      </Card>
+
+      {/* Dialog crear usuario */}
+      <UserDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSave={handleSaveUser}
+      />
+
+      {/* Dialog editar usuario */}
+      {editingUser && (
+        <EditUserDialog
+          open={!!editingUser}
+          onOpenChange={(open) => {
+            if (!open) setEditingUser(null);
+          }}
+          user={editingUser}
+          onUpdate={handleUpdateUser}
+        />
+      )}
+
+      {/* Dialog resetear contraseña */}
+      {resetPasswordUser && (
+        <ResetPasswordDialog
+          open={!!resetPasswordUser}
+          onOpenChange={(open) => {
+            if (!open) setResetPasswordUser(null);
+          }}
+          userId={resetPasswordUser.id}
+          userName={`${resetPasswordUser.firstName} ${resetPasswordUser.lastName}`}
+          onResetPassword={handleConfirmResetPassword}
+        />
+      )}
+
+      {/* Panel de detalle */}
+      {selectedUser && !isCreateDialogOpen && (
+        <UserDetailPanel
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onEdit={handleEditUser}
+          onResetPassword={handleResetPassword}
+          onDelete={handleDeleteUser}
+        />
+      )}
+    </div>
+  );
+}

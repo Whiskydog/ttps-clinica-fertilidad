@@ -11,3 +11,17 @@ export enum TreatmentStatus {
   closed = "closed",
   completed = "completed",
 }
+
+export enum MilestoneType {
+  beta_test = "beta_test",
+  sac_present = "sac_present",
+  clinical_pregnancy = "clinical_pregnancy",
+  live_birth = "live_birth",
+}
+
+export enum MilestoneResult {
+  positive = "positive",
+  negative = "negative",
+  yes = "yes",
+  no = "no",
+}
