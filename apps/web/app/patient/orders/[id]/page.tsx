@@ -9,6 +9,7 @@ import { Badge } from '@repo/ui/badge';
 import { Check } from 'lucide-react';
 import { getMedicalOrderDetail } from '@/app/actions/patients/medical-orders/get-detail';
 import type { MedicalOrderDetail, MedicalOrderStatus } from '@repo/contracts';
+import { StudyResultsSection } from '@/components/patient/orders/study-results-section';
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -160,6 +161,9 @@ export default function OrderDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Nueva sección de resultados estructurados */}
+      <StudyResultsSection studyResults={order.studyResults || []} />
     </div>
   );
 }

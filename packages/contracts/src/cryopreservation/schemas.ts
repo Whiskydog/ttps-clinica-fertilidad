@@ -77,13 +77,13 @@ export const CryopreservationSummarySchema = z.object({
   summary: z.object({
         ovules: z.object({
             total: z.number(),
-            cryoDate: z.date(),
+            cryoDate: z.string(),
         }),
         embryos: z.object({
             total: z.number(),
-            lastUpdate: z.date(),
+            lastUpdate: z.string(),
         })
-    }),  
+    }),
     ovules: z.array(CryopreservedProductSchema),
     embryos: z.array(CryopreservedProductSchema),
 });

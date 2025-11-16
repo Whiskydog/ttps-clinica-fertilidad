@@ -2,14 +2,84 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@repo/ui/button';
 import { MonthCalendar } from '@/components/patient/calendar/month-calendar';
 import { UpcomingAppointments } from '@/components/patient/calendar/upcoming-appointments';
 import { CalendarLegend } from '@/components/patient/calendar/calendar-legend';
-import { mockCalendarEvents, mockUpcomingAppointments } from '../lib/mock-data';
+import { getAppointments } from '@/app/actions/patients/appointments/get';
+
+interface Turno {
+  id: number;
+  id_grupo: number;
+  id_medico: number;
+  id_paciente: number;
+  fecha_hora: string;
+}
 
 export default function CalendarPage() {
   const [view, setView] = useState<'mes' | 'semana' | 'lista'>('mes');
+
+  const { data: response, isLoading, error } = useQuery({
+    queryKey: ['appointments'],
+    queryFn: () => getAppointments(),
+  });
+
+  const appointments: Turno[] = (response?.data as Turno[]) || [];
+
+  // Transformar appointments del backend al formato esperado por el calendario
+  const calendarEvents = appointments.map((apt) => {
+    const dateObj = new Date(apt.fecha_hora);
+    const date = dateObj.toISOString().split('T')[0];
+    const time = dateObj.toTimeString().slice(0, 5);
+
+    return {
+      id: apt.id,
+      date,
+      time,
+      type: 'consulta',
+      title: 'Cita Médica',
+      status: 'scheduled' as const,
+      doctorId: apt.id_medico,
+    };
+  });
+
+  // Próximas citas (filtrar fechas futuras)
+  const now = new Date();
+  const upcomingAppointments = appointments
+    .filter((apt) => new Date(apt.fecha_hora) >= now)
+    .sort((a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime())
+    .slice(0, 5)
+    .map((apt) => {
+      const dateObj = new Date(apt.fecha_hora);
+      const date = dateObj.toISOString().split('T')[0];
+      const time = dateObj.toTimeString().slice(0, 5);
+
+      return {
+        id: apt.id,
+        date,
+        time,
+        type: 'Consulta médica',
+        doctor: `Doctor ID: ${apt.id_medico}`,
+        operatingRoom: undefined,
+      };
+    });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Cargando calendario...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error al cargar las citas</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -49,7 +119,10 @@ export default function CalendarPage() {
         </Button>
       </div>
 
-      {view === 'mes' && <MonthCalendar events={mockCalendarEvents} />}
+      {view === 'mes' && calendarEvents.length > 0 && <MonthCalendar events={calendarEvents} />}
+      {view === 'mes' && calendarEvents.length === 0 && (
+        <div className="text-center py-20 text-gray-400">No tienes citas programadas</div>
+      )}
 
       {view === 'semana' && (
         <div className="text-center py-20 text-gray-400">Vista semanal - Por implementar</div>
@@ -59,7 +132,7 @@ export default function CalendarPage() {
         <div className="text-center py-20 text-gray-400">Vista lista - Por implementar</div>
       )}
 
-      <UpcomingAppointments appointments={mockUpcomingAppointments} />
+      <UpcomingAppointments appointments={upcomingAppointments} />
 
       <CalendarLegend />
     </div>

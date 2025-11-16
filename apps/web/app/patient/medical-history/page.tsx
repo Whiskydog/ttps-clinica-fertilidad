@@ -5,6 +5,9 @@ import { getMedicalHistory } from "@/app/actions/patients/medical-history/get";
 import { MedicalHistoryResponse } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import Link from "next/link";
+import { HabitsSection } from "@/components/patient/medical-history/habits-section";
+import { FenotypeSection } from "@/components/patient/medical-history/fenotype-section";
+import { BackgroundsSection } from "@/components/patient/medical-history/backgrounds-section";
 
 export default function MedicalHistorySummary() {
   const { data, error, isLoading } = useQuery({
@@ -17,7 +20,7 @@ export default function MedicalHistorySummary() {
   if (error) return <div>Error: {(error as Error).message}</div>;
   if (!data) return <div>No hay historia clínica disponible.</div>;
 
-  const { patient, partnerData, gynecologicalHistory } = data;
+  const { patient, partnerData, gynecologicalHistory, habits, fenotypes, backgrounds } = data;
 
   return (
     <div className="page-container">
@@ -205,6 +208,11 @@ export default function MedicalHistorySummary() {
             )}
           </div>
         )}
+
+        {/* Nuevas secciones */}
+        <HabitsSection habits={habits || []} />
+        <FenotypeSection fenotypes={fenotypes || []} />
+        <BackgroundsSection backgrounds={backgrounds || []} />
       </div>
     </div>
   );

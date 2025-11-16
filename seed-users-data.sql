@@ -19,8 +19,7 @@ INSERT INTO roles (code, name, description) VALUES
   ('doctor', 'Médico', 'doctor'),
   ('director', 'Director Médico', 'director'),
   ('lab_technician', 'Técnico de Laboratorio', 'lab_technician'),
-  ('patient', 'Paciente', 'patient')
-ON CONFLICT (code) DO NOTHING;
+  ('patient', 'Paciente', 'patient');
 
 
 -- ============================================================

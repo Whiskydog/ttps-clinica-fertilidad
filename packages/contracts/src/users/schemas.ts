@@ -79,7 +79,7 @@ const PatientEntitySchema = UserEntitySchema.safeExtend({
     .nullable()
     .transform((val) => val ?? undefined),
   dni: z.string().min(5).max(20),
-  dateOfBirth: z.date(),
+  dateOfBirth: z.coerce.date(),
   occupation: z
     .string()
     .min(1)

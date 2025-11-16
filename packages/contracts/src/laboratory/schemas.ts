@@ -15,12 +15,12 @@ import {
 export const PunctureRecordSchema = z.object({
   id: z.number(),
   treatmentId: z.number(),
-  punctureDateTime: z.iso.datetime().nullable(),
+  punctureDateTime: z.string().nullable(),
   operatingRoomNumber: z.number().nullable(),
   observations: z.string().nullable(),
   labTechnicianId: z.number().nullable(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type PunctureRecord = z.infer<typeof PunctureRecordSchema>;
@@ -36,9 +36,9 @@ export const OocyteSchema = z.object({
   cryoRack: z.string().nullable(),
   cryoTube: z.string().nullable(),
   discardCause: z.string().nullable(),
-  discardDateTime: z.iso.datetime().nullable(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  discardDateTime: z.string().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type Oocyte = z.infer<typeof OocyteSchema>;
@@ -49,9 +49,9 @@ export const OocyteStateHistorySchema = z.object({
   oocyteId: z.number(),
   previousState: z.nativeEnum(OocyteState).nullable(),
   newState: z.nativeEnum(OocyteState),
-  transitionDate: z.iso.datetime(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  transitionDate: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type OocyteStateHistory = z.infer<typeof OocyteStateHistorySchema>;
@@ -61,7 +61,7 @@ export const EmbryoSchema = z.object({
   id: z.number(),
   uniqueIdentifier: z.string(), // emb_AAAAMMDD...
   oocyteOriginId: z.number(),
-  fertilizationDate: z.iso.datetime().nullable(),
+  fertilizationDate: z.string().nullable(),
   fertilizationTechnique: z.nativeEnum(FertilizationTechnique).nullable(),
   technicianId: z.number().nullable(),
   qualityScore: z.number().min(1).max(6).nullable(), // 1-6
@@ -74,8 +74,8 @@ export const EmbryoSchema = z.object({
   cryoRack: z.string().nullable(),
   cryoTube: z.string().nullable(),
   discardCause: z.string().nullable(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type Embryo = z.infer<typeof EmbryoSchema>;
@@ -121,7 +121,7 @@ export type EmbryoDetail = z.infer<typeof EmbryoDetailSchema>;
 // Puncture Record Input Schemas
 export const CreatePunctureRecordSchema = z.object({
   treatmentId: z.number(),
-  punctureDate: z.coerce.date(),
+  punctureDate: z.iso.datetime(),
   totalOocytesRetrieved: z.number().int().nullable().optional(),
   labTechnicianId: z.number().nullable().optional(),
   observations: z.string().nullable().optional(),
@@ -139,7 +139,7 @@ export const CreateOocyteSchema = z.object({
   punctureRecordId: z.number(),
   uniqueIdentifier: z.string().max(50),
   currentState: z.nativeEnum(OocyteState),
-  cryopreservationDate: z.coerce.date().nullable().optional(),
+  cryopreservationDate: z.iso.datetime().nullable().optional(),
   tankNumber: z.string().max(50).nullable().optional(),
   canisterNumber: z.string().max(50).nullable().optional(),
   caneNumber: z.string().max(50).nullable().optional(),
@@ -158,7 +158,7 @@ export const CreateOocyteStateHistorySchema = z.object({
   oocyteId: z.number(),
   previousState: z.nativeEnum(OocyteState).nullable().optional(),
   newState: z.nativeEnum(OocyteState),
-  changeDate: z.coerce.date(),
+  changeDate: z.iso.datetime(),
 });
 
 export const UpdateOocyteStateHistorySchema = CreateOocyteStateHistorySchema.partial().extend({
@@ -177,7 +177,7 @@ export const CreateEmbryoSchema = z.object({
   semenSource: z.nativeEnum(SemenSource).nullable().optional(),
   pgtResult: z.nativeEnum(PgtResult).nullable().optional(),
   finalDisposition: z.nativeEnum(EmbryoDisposition).nullable().optional(),
-  cryopreservationDate: z.coerce.date().nullable().optional(),
+  cryopreservationDate: z.iso.datetime().nullable().optional(),
   tankNumber: z.string().max(50).nullable().optional(),
   canisterNumber: z.string().max(50).nullable().optional(),
   caneNumber: z.string().max(50).nullable().optional(),

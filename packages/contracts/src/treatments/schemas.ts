@@ -105,11 +105,11 @@ export const InformedConsentSchema = z.object({
   id: z.number(),
   treatmentId: z.number(),
   pdfUri: z.string().nullable(),
-  signatureDate: z.iso.datetime().nullable(),
+  signatureDate: z.string().nullable(),
   uploadedByUserId: z.number().nullable(),
   uploadedByUser: UserEntitySchema.nullable().optional(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type InformedConsent = z.infer<typeof InformedConsentSchema>;
@@ -120,11 +120,11 @@ export const PostTransferMilestoneSchema = z.object({
   treatmentId: z.number(),
   milestoneType: z.nativeEnum(MilestoneType),
   result: z.string().max(20).nullable(),
-  milestoneDate: z.iso.datetime().nullable(),
+  milestoneDate: z.string().nullable(),
   registeredByDoctorId: z.number().nullable(),
   registeredByDoctor: UserEntitySchema.nullable().optional(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type PostTransferMilestone = z.infer<typeof PostTransferMilestoneSchema>;
@@ -141,8 +141,8 @@ export const MedicalCoverageSchema = z.object({
     id: z.number(),
     name: z.string(),
   }).optional(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type MedicalCoverage = z.infer<typeof MedicalCoverageSchema>;
@@ -168,7 +168,7 @@ export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
 export const CreateInformedConsentSchema = z.object({
   treatmentId: z.number(),
   pdfUri: z.string().nullable().optional(),
-  signatureDate: z.iso.datetime().nullable().optional(),
+  signatureDate: z.string().nullable().optional(),
   uploadedByUserId: z.number().nullable().optional(),
 });
 
@@ -184,7 +184,7 @@ export const CreatePostTransferMilestoneSchema = z.object({
   treatmentId: z.number(),
   milestoneType: z.nativeEnum(MilestoneType),
   result: z.string().max(20).nullable().optional(),
-  milestoneDate: z.iso.datetime().nullable().optional(),
+  milestoneDate: z.string().nullable().optional(),
   registeredByDoctorId: z.number().nullable().optional(),
 });
 
