@@ -7,8 +7,8 @@ import { Button } from '@repo/ui/button';
 import { Badge } from '@repo/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import { ProductJourney } from '@/components/patient/cryopreserved/product-journey';
-import { getCryopreservedProductDetail } from '@/app/actions/patients/cryopreservation/get-detail';
-import type { CryopreservedProductDetail } from '@repo/contracts';
+import { getEmbryoDetail } from '@/app/actions/patients/cryopreservation/get-embryo-detail';
+import { EmbryoDetail } from '@repo/contracts';
 
 export default function CryopreservedDetailPage() {
   const params = useParams();
@@ -16,7 +16,7 @@ export default function CryopreservedDetailPage() {
 
   const { data: response, isLoading, error } = useQuery({
     queryKey: ["cryopreserved-product-detail", id],
-    queryFn: () => getCryopreservedProductDetail(id),
+    queryFn: () => getEmbryoDetail(id),
   });
 
   if (isLoading) {
@@ -35,8 +35,7 @@ export default function CryopreservedDetailPage() {
     );
   }
 
-  const product = response.data as CryopreservedProductDetail;
-  const isEmbryo = product.productType === 'embryo';
+  const product = response.data as EmbryoDetail;
 
   return (
     <div className="space-y-6">
@@ -44,7 +43,10 @@ export default function CryopreservedDetailPage() {
         <Button variant="link">← Volver a Productos</Button>
       </Link>
       <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold">ID: {product.productId}</h1>
+        <h1 className="text-2xl font-bold">Embrión ID: {product.uniqueIdentifier}</h1>
+        <Link href={`/patient/cryopreserved/oocyte/${product.oocyteOriginId}`} className="text-blue-500">
+          <small>Óvulo Origen ID: {product.oocyteOriginId}</small>
+        </Link>
       </div>
 
       <Card>
@@ -54,41 +56,25 @@ export default function CryopreservedDetailPage() {
         <CardContent className="pt-6">
           <div className="mb-4">
             <Badge className="bg-cyan-400 text-black text-sm px-3 py-1">
-              Estado: {product.status}
+              Estado: {product.finalDisposition}
+            </Badge>
+            <Badge className="bg-cyan-400 text-black text-sm px-3 py-1">
+              Calidad: {product.qualityScore}
             </Badge>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2 text-sm">
               <p>
-                <span className="font-semibold">Tipo:</span>{' '}
-                {product.productType === 'embryo' ? 'Embrión' : 'Óvulo'}
+                <span className="font-semibold">Fecha de fertilización:</span>{' '}
+                {product.fertilizationDate ? new Date(product.fertilizationDate).toLocaleDateString('es-AR') : '-'}
+                <small>{product.fertilizationTechnique}</small>
               </p>
-              {isEmbryo && product.fertilizationDate && (
+            
+              {product.discardCause && (
                 <p>
-                  <span className="font-semibold">Fecha de fertilización:</span>{' '}
-                  {new Date(product.fertilizationDate).toLocaleDateString('es-AR')}
-                </p>
-              )}
-              {!isEmbryo && product.extractionDate && (
-                <p>
-                  <span className="font-semibold">Fecha de extracción:</span>{' '}
-                  {new Date(product.extractionDate).toLocaleDateString('es-AR')}
-                </p>
-              )}
-              <p>
-                <span className="font-semibold">Fecha de criopreservación:</span>{' '}
-                {new Date(product.cryopreservationDate).toLocaleDateString('es-AR')}
-              </p>
-              {isEmbryo && product.quality && (
-                <p>
-                  <span className="font-semibold">Calidad:</span> {product.quality}
-                </p>
-              )}
-              {!isEmbryo && product.maturationState && (
-                <p>
-                  <span className="font-semibold">Estado de maduración:</span>{' '}
-                  {product.maturationState}
+                  <span className="font-semibold">Causa descarte:</span>{' '}
+                  {product.discardCause}
                 </p>
               )}
             </div>
@@ -96,17 +82,16 @@ export default function CryopreservedDetailPage() {
             <div className="space-y-2 text-sm">
               <p className="font-semibold">Ubicación física:</p>
               <ul className="ml-4 space-y-1">
-                {product.locationTank && <li>• Tanque: {product.locationTank}</li>}
-                {product.locationRack && <li>• Rack: {product.locationRack}</li>}
-                {product.locationTube && <li>• Tubo: {product.locationTube}</li>}
-                {product.locationPosition && <li>• Posición: {product.locationPosition}</li>}
+                {product.cryoTank && <li>• Tanque: {product.cryoTank}</li>}
+                {product.cryoRack && <li>• Rack: {product.cryoRack}</li>}
+                {product.cryoTube && <li>• Tubo: {product.cryoTube}</li>}
               </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {isEmbryo && product.pgtResult && (
+      {product.pgtResult && (
         <Card>
           <CardHeader className="bg-slate-500">
             <CardTitle className="text-white">TEST GENÉTICO (PGT)</CardTitle>
@@ -117,14 +102,18 @@ export default function CryopreservedDetailPage() {
                 <span className="font-semibold">Resultado:</span>{' '}
                 <span className="text-green-600 font-semibold">{product.pgtResult}</span>
               </p>
+              <p>
+                <span className="font-semibold">Sugerencia:</span>{' '}
+                <span className="text-green-600 font-semibold">{product.pgtDecisionSuggested}</span>
+              </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {product.journey && product.journey.length > 0 && (
+      {/* {product.journey && product.journey.length > 0 && (
         <ProductJourney journey={product.journey} />
-      )}
+      )} */}
     </div>
   );
 }

@@ -1,13 +1,13 @@
 "use server";
 
 import { cookies } from "next/headers";
-import type { CryopreservedProductDetail, ApiResponse } from "@repo/contracts";
+import type { EmbryoDetail, ApiResponse } from "@repo/contracts";
 
-export type CryopreservedProductDetailResponse = ApiResponse<CryopreservedProductDetail | null>;
+export type EmbryoDetailResponse = ApiResponse<EmbryoDetail | null>;
 
-export async function getCryopreservedProductDetail(
+export async function getEmbryoDetail(
   productId: string
-): Promise<CryopreservedProductDetailResponse> {
+): Promise<EmbryoDetailResponse> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) throw new Error("BACKEND_URL no está definido");
 

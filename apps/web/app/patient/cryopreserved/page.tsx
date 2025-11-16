@@ -18,17 +18,7 @@ export default function CryopreservedPage() {
   });
 
   const defaultData: CryopreservationSummary = {
-    summary: {
-      ovules: {
-        total: 0,
-        cryoDate: new Date(),
-      },
-      embryos: {
-        total: 0,
-        lastUpdate: new Date(),
-      },
-    },
-    ovules: [],
+    oocytes: [],
     embryos: []
   };
 
@@ -52,11 +42,11 @@ export default function CryopreservedPage() {
         </Link>
       </div>
 
-      <ProductsSummary summary={cryoData.summary} />
+      <ProductsSummary ovulesTotal={cryoData.oocytes?.length || 0} embryosTotal={cryoData.embryos?.length || 0} />
 
-      <OvulesList ovules={cryoData.ovules?? []} />
+      <OvulesList ovules={cryoData.oocytes ?? []} />
 
-      <EmbryosList embryos={cryoData.embryos?? []  } />
+      <EmbryosList embryos={cryoData.embryos ?? []} />
 
       <Card className="bg-amber-100 border-amber-300">
         <CardContent className="pt-6">
