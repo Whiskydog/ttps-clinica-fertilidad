@@ -3,6 +3,12 @@ import {
   UpdateMedicalHistorySchema,
   PartnerDataSchema,
   GynecologicalHistorySchema,
+  CreateHabitsSchema,
+  UpdateHabitsSchema,
+  CreateFenotypeSchema,
+  UpdateFenotypeSchema,
+  CreateBackgroundSchema,
+  UpdateBackgroundSchema,
 } from '@repo/contracts';
 import { z } from 'zod';
 
@@ -44,3 +50,16 @@ export class GynecologicalUpsertDto extends createZodDto(
 export type GynecologicalUpsertDtoType = ReturnType<
   typeof GynecologicalUpsertSchema.parse
 >;
+
+// ============================================
+// DTOs for Habits, Fenotype, Background
+// ============================================
+
+export class CreateHabitsDto extends createZodDto(CreateHabitsSchema) {}
+export class UpdateHabitsDto extends createZodDto(UpdateHabitsSchema) {}
+
+export class CreateFenotypeDto extends createZodDto(CreateFenotypeSchema) {}
+export class UpdateFenotypeDto extends createZodDto(UpdateFenotypeSchema) {}
+
+export class CreateBackgroundDto extends createZodDto(CreateBackgroundSchema) {}
+export class UpdateBackgroundDto extends createZodDto(UpdateBackgroundSchema) {}

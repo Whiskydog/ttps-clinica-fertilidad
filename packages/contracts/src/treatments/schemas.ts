@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InitialObjective, TreatmentStatus } from "./enums";
+import { InitialObjective, TreatmentStatus, MilestoneType, MilestoneResult } from "./enums";
 import { UserEntitySchema } from "../users";
 
 export const InitialObjectiveEnum = z.enum(
@@ -96,12 +96,117 @@ export const DoctorNoteSchema = z.object({
 
 export type DoctorNote = z.infer<typeof DoctorNoteSchema>;
 
+// ============================================
+// New Schemas for Treatment Extensions
+// ============================================
+
+// Informed Consent Schema
+export const InformedConsentSchema = z.object({
+  id: z.number(),
+  treatmentId: z.number(),
+  pdfUri: z.string().nullable(),
+  signatureDate: z.iso.datetime().nullable(),
+  uploadedByUserId: z.number().nullable(),
+  uploadedByUser: UserEntitySchema.nullable().optional(),
+  createdAt: z.iso.datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
+});
+
+export type InformedConsent = z.infer<typeof InformedConsentSchema>;
+
+// Post Transfer Milestone Schema
+export const PostTransferMilestoneSchema = z.object({
+  id: z.number(),
+  treatmentId: z.number(),
+  milestoneType: z.nativeEnum(MilestoneType),
+  result: z.string().max(20).nullable(),
+  milestoneDate: z.iso.datetime().nullable(),
+  registeredByDoctorId: z.number().nullable(),
+  registeredByDoctor: UserEntitySchema.nullable().optional(),
+  createdAt: z.iso.datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
+});
+
+export type PostTransferMilestone = z.infer<typeof PostTransferMilestoneSchema>;
+
+// Medical Coverage Schema
+export const MedicalCoverageSchema = z.object({
+  id: z.number(),
+  medicalInsuranceId: z.number(),
+  treatmentId: z.number(),
+  coveragePercentage: z.number().nullable(), // decimal 5,2
+  patientDue: z.number().nullable(), // decimal 10,2
+  insuranceDue: z.number().nullable(), // decimal 10,2
+  medicalInsurance: z.object({
+    id: z.number(),
+    name: z.string(),
+  }).optional(),
+  createdAt: z.iso.datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
+});
+
+export type MedicalCoverage = z.infer<typeof MedicalCoverageSchema>;
+
 // Detalle completo de tratamiento
 export const TreatmentDetailSchema = z.object({
   treatment: TreatmentSchema,
   monitorings: z.array(MonitoringSchema).optional(),
   protocol: MedicationProtocolSchema.nullable().optional(),
   doctorNotes: z.array(DoctorNoteSchema).optional(),
+  informedConsent: InformedConsentSchema.nullable().optional(),
+  milestones: z.array(PostTransferMilestoneSchema).optional(),
+  medicalCoverage: MedicalCoverageSchema.nullable().optional(),
 });
 
 export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
+
+// ============================================
+// Input/Upsert Schemas for Treatment Extensions
+// ============================================
+
+// Informed Consent Input Schemas
+export const CreateInformedConsentSchema = z.object({
+  treatmentId: z.number(),
+  pdfUri: z.string().nullable().optional(),
+  signatureDate: z.iso.datetime().nullable().optional(),
+  uploadedByUserId: z.number().nullable().optional(),
+});
+
+export const UpdateInformedConsentSchema = CreateInformedConsentSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreateInformedConsentInput = z.infer<typeof CreateInformedConsentSchema>;
+export type UpdateInformedConsentInput = z.infer<typeof UpdateInformedConsentSchema>;
+
+// Post Transfer Milestone Input Schemas
+export const CreatePostTransferMilestoneSchema = z.object({
+  treatmentId: z.number(),
+  milestoneType: z.nativeEnum(MilestoneType),
+  result: z.string().max(20).nullable().optional(),
+  milestoneDate: z.iso.datetime().nullable().optional(),
+  registeredByDoctorId: z.number().nullable().optional(),
+});
+
+export const UpdatePostTransferMilestoneSchema = CreatePostTransferMilestoneSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreatePostTransferMilestoneInput = z.infer<typeof CreatePostTransferMilestoneSchema>;
+export type UpdatePostTransferMilestoneInput = z.infer<typeof UpdatePostTransferMilestoneSchema>;
+
+// Medical Coverage Input Schemas
+export const CreateMedicalCoverageSchema = z.object({
+  medicalInsuranceId: z.number(),
+  treatmentId: z.number(),
+  coveragePercentage: z.number().nullable().optional(),
+  patientDue: z.number().nullable().optional(),
+  insuranceDue: z.number().nullable().optional(),
+});
+
+export const UpdateMedicalCoverageSchema = CreateMedicalCoverageSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreateMedicalCoverageInput = z.infer<typeof CreateMedicalCoverageSchema>;
+export type UpdateMedicalCoverageInput = z.infer<typeof UpdateMedicalCoverageSchema>;

@@ -1,7 +1,8 @@
 import { BaseEntity } from '@common/entities/base.entity';
 import { BiologicalSex } from '@repo/contracts';
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { MedicalHistory } from './medical-history.entity';
+import { Fenotype } from './fenotype.entity';
 
 @Entity('partner_data')
 export class PartnerData extends BaseEntity {
@@ -43,4 +44,7 @@ export class PartnerData extends BaseEntity {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @OneToMany(() => Fenotype, (fenotype) => fenotype.partnerData)
+  fenotypes: Fenotype[];
 }

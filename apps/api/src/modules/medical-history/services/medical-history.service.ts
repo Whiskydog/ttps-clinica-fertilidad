@@ -7,6 +7,9 @@ import { PartnerData } from '../entities/partner-data.entity';
 import { MedicalHistoryAuditService } from './medical-history-audit.service';
 import { PartnerDataService } from './partner-data.service';
 import { GynecologicalHistoryService } from './gynecological-history.service';
+import { HabitsService } from './habits.service';
+import { FenotypeService } from './fenotype.service';
+import { BackgroundService } from './background.service';
 import { PatientsService } from '../../users/services/patients.service';
 
 @Injectable()
@@ -63,6 +66,9 @@ export class MedicalHistoryService {
     private readonly auditService: MedicalHistoryAuditService,
     private readonly partnerDataService: PartnerDataService,
     private readonly gynecologicalHistoryService: GynecologicalHistoryService,
+    private readonly habitsService: HabitsService,
+    private readonly fenotypeService: FenotypeService,
+    private readonly backgroundService: BackgroundService,
   ) {}
 
   async findByUserId(userId: number) {
@@ -84,11 +90,19 @@ export class MedicalHistoryService {
       order: { id: 'DESC' },
     });
 
+    // Fetch new related data
+    const habits = await this.habitsService.findByMedicalHistoryId(mh.id);
+    const fenotypes = await this.fenotypeService.findByMedicalHistoryId(mh.id);
+    const backgrounds = await this.backgroundService.findByMedicalHistoryId(mh.id);
+
     // adjuntar la pareja más relevante (la última) y la lista de historiales ginecológicos
     return {
       ...mh,
       partnerData: partners,
       gynecologicalHistory,
+      habits,
+      fenotypes,
+      backgrounds,
     };
   }
 

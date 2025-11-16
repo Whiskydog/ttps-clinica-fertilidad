@@ -9,6 +9,9 @@ import {
 } from 'typeorm';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { Patient } from '../../users/entities/patient.entity';
+import { Habits } from './habits.entity';
+import { Fenotype } from './fenotype.entity';
+import { Background } from './background.entity';
 
 @Entity('medical_histories')
 @Unique(['patient'])
@@ -34,4 +37,13 @@ export class MedicalHistory extends BaseEntity {
     (treatment: Treatment) => treatment.medicalHistory,
   )
   treatments: Treatment[];
+
+  @OneToMany(() => Habits, (habits) => habits.medicalHistory)
+  habits: Habits[];
+
+  @OneToMany(() => Fenotype, (fenotype) => fenotype.medicalHistory)
+  fenotypes: Fenotype[];
+
+  @OneToMany(() => Background, (background) => background.medicalHistory)
+  backgrounds: Background[];
 }

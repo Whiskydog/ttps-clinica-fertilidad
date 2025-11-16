@@ -7,6 +7,9 @@ import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { TreatmentStatus } from '@repo/contracts';
+import { InformedConsentService } from './services/informed-consent.service';
+import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
+import { MedicalCoverageService } from './services/medical-coverage.service';
 
 @Injectable()
 export class TreatmentsService {
@@ -21,6 +24,9 @@ export class TreatmentsService {
     private doctorNoteRepository: Repository<DoctorNote>,
     @InjectRepository(MedicalHistory)
     private medicalHistoryRepository: Repository<MedicalHistory>,
+    private readonly informedConsentService: InformedConsentService,
+    private readonly milestoneService: PostTransferMilestoneService,
+    private readonly coverageService: MedicalCoverageService,
   ) {}
 
   async getCurrentTreatmentByPatient(patientId: number) {
@@ -79,11 +85,23 @@ export class TreatmentsService {
       relations: ['doctor'],
     });
 
+    const informedConsent =
+      await this.informedConsentService.findByTreatmentId(treatmentId);
+
+    const milestones =
+      await this.milestoneService.findByTreatmentId(treatmentId);
+
+    const medicalCoverage =
+      await this.coverageService.findByTreatmentId(treatmentId);
+
     return {
       treatment,
       monitorings,
       protocol,
       doctorNotes,
+      informedConsent,
+      milestones,
+      medicalCoverage,
     };
   }
 

@@ -6,10 +6,23 @@ import {
   Param,
   UseGuards,
   NotFoundException,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { TreatmentService } from './treatment.service';
 import { TreatmentsService } from './treatments.service';
-import { CreateTreatmentDto } from './dto';
+import {
+  CreateTreatmentDto,
+  CreateInformedConsentDto,
+  UpdateInformedConsentDto,
+  CreatePostTransferMilestoneDto,
+  UpdatePostTransferMilestoneDto,
+  CreateMedicalCoverageDto,
+  UpdateMedicalCoverageDto,
+} from './dto';
+import { InformedConsentService } from './services/informed-consent.service';
+import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
+import { MedicalCoverageService } from './services/medical-coverage.service';
 import { MedicalHistoryService } from '../medical-history/services/medical-history.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
@@ -25,6 +38,9 @@ export class TreatmentsController {
     private readonly treatmentService: TreatmentService,
     private readonly treatmentsService: TreatmentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
+    private readonly informedConsentService: InformedConsentService,
+    private readonly milestoneService: PostTransferMilestoneService,
+    private readonly coverageService: MedicalCoverageService,
   ) {}
 
   // Endpoints para pacientes
@@ -75,5 +91,166 @@ export class TreatmentsController {
       user.id,
     );
     return CreateTreatmentResponseSchema.parse(treatment);
+  }
+
+  // ============================================
+  // Informed Consent Endpoints
+  // ============================================
+
+  @Post('informed-consent')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async createInformedConsent(
+    @Body() dto: CreateInformedConsentDto,
+    @CurrentUser() user: User,
+  ) {
+    const consent = await this.informedConsentService.create({
+      treatment: { id: dto.treatmentId } as any,
+      pdfUri: dto.pdfUri ?? null,
+      signatureDate: dto.signatureDate ? new Date(dto.signatureDate) : null,
+      uploadedByUser: dto.uploadedByUserId
+        ? ({ id: dto.uploadedByUserId } as any)
+        : ({ id: user.id } as any),
+    });
+    return {
+      message: 'Consentimiento informado creado correctamente',
+      id: consent.id,
+    };
+  }
+
+  @Patch('informed-consent/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async updateInformedConsent(
+    @Param('id') id: string,
+    @Body() dto: UpdateInformedConsentDto,
+  ) {
+    const consentId = Number(id);
+    const updated = await this.informedConsentService.update(consentId, {
+      pdfUri: dto.pdfUri ?? undefined,
+      signatureDate: dto.signatureDate ? new Date(dto.signatureDate) : undefined,
+    });
+    return {
+      message: 'Consentimiento informado actualizado correctamente',
+      id: updated.id,
+    };
+  }
+
+  @Delete('informed-consent/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async deleteInformedConsent(@Param('id') id: string) {
+    const consentId = Number(id);
+    await this.informedConsentService.remove(consentId);
+    return {
+      message: 'Consentimiento informado eliminado correctamente',
+    };
+  }
+
+  // ============================================
+  // Post Transfer Milestone Endpoints
+  // ============================================
+
+  @Post('milestone')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async createMilestone(
+    @Body() dto: CreatePostTransferMilestoneDto,
+    @CurrentUser() user: User,
+  ) {
+    const milestone = await this.milestoneService.create({
+      treatment: { id: dto.treatmentId } as any,
+      milestoneType: dto.milestoneType,
+      result: dto.result ?? null,
+      milestoneDate: dto.milestoneDate ? new Date(dto.milestoneDate) : null,
+      registeredByDoctor: dto.registeredByDoctorId
+        ? ({ id: dto.registeredByDoctorId } as any)
+        : ({ id: user.id } as any),
+    });
+    return {
+      message: 'Hito post-transferencia creado correctamente',
+      id: milestone.id,
+    };
+  }
+
+  @Patch('milestone/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async updateMilestone(
+    @Param('id') id: string,
+    @Body() dto: UpdatePostTransferMilestoneDto,
+  ) {
+    const milestoneId = Number(id);
+    const updated = await this.milestoneService.update(milestoneId, {
+      milestoneType: dto.milestoneType ?? undefined,
+      result: dto.result ?? undefined,
+      milestoneDate: dto.milestoneDate ? new Date(dto.milestoneDate) : undefined,
+    });
+    return {
+      message: 'Hito post-transferencia actualizado correctamente',
+      id: updated.id,
+    };
+  }
+
+  @Delete('milestone/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async deleteMilestone(@Param('id') id: string) {
+    const milestoneId = Number(id);
+    await this.milestoneService.remove(milestoneId);
+    return {
+      message: 'Hito post-transferencia eliminado correctamente',
+    };
+  }
+
+  // ============================================
+  // Medical Coverage Endpoints
+  // ============================================
+
+  @Post('coverage')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async createCoverage(@Body() dto: CreateMedicalCoverageDto) {
+    const coverage = await this.coverageService.create({
+      medicalInsurance: { id: dto.medicalInsuranceId } as any,
+      treatment: { id: dto.treatmentId } as any,
+      coveragePercentage: dto.coveragePercentage ?? null,
+      patientDue: dto.patientDue ?? null,
+      insuranceDue: dto.insuranceDue ?? null,
+    });
+    return {
+      message: 'Cobertura médica creada correctamente',
+      id: coverage.id,
+    };
+  }
+
+  @Patch('coverage/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async updateCoverage(
+    @Param('id') id: string,
+    @Body() dto: UpdateMedicalCoverageDto,
+  ) {
+    const coverageId = Number(id);
+    const updated = await this.coverageService.update(coverageId, {
+      coveragePercentage: dto.coveragePercentage ?? undefined,
+      patientDue: dto.patientDue ?? undefined,
+      insuranceDue: dto.insuranceDue ?? undefined,
+    });
+    return {
+      message: 'Cobertura médica actualizada correctamente',
+      id: updated.id,
+    };
+  }
+
+  @Delete('coverage/:id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async deleteCoverage(@Param('id') id: string) {
+    const coverageId = Number(id);
+    await this.coverageService.remove(coverageId);
+    return {
+      message: 'Cobertura médica eliminada correctamente',
+    };
   }
 }

@@ -4,6 +4,8 @@ export * from "./auth/schemas";
 export * from "./auth/types";
 export * from "./common/api";
 export * from "./cryopreservation/schemas";
+export * from "./laboratory/enums";
+export * from "./laboratory/schemas";
 export * from "./medical-insurances/schemas";
 export * from "./medical-history/schemas";
 export * from "./medical-history/enums";
@@ -38,3 +40,33 @@ export type {
   CryopreservedProductDetail,
   CryopreservationSummary,
 } from "./cryopreservation/schemas";
+
+// Exportar tipos específicos de laboratory
+export type {
+  PunctureRecord,
+  Oocyte,
+  OocyteStateHistory,
+  Embryo,
+  PunctureRecordDetail,
+  OocyteDetail,
+  EmbryoDetail,
+} from "./laboratory/schemas";
+
+// Exportar tipos específicos de medical history extensions
+export type {
+  Habits,
+  Fenotype,
+  Background,
+} from "./medical-history/schemas";
+
+// Exportar tipos específicos de treatment extensions
+export type {
+  InformedConsent,
+  PostTransferMilestone,
+  MedicalCoverage,
+} from "./treatments/schemas";
+
+// Exportar tipos específicos de study results
+export type {
+  StudyResult,
+} from "./medical-orders/schemas";

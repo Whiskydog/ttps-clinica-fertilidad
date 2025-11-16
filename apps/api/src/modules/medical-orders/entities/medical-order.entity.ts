@@ -3,14 +3,16 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { User } from '../../users/entities/user.entity';
 import { Treatment } from '../../treatments/entities/treatment.entity';
+import { StudyResult } from './study-result.entity';
 
 export type MedicalOrderStatus = 'pending' | 'completed';
 
-interface Study {
+export interface Study {
   name: string;
   checked: boolean;
 }
@@ -44,8 +46,8 @@ export class MedicalOrder extends BaseEntity {
   @Column({ name: 'completed_date', type: 'date', nullable: true })
   completedDate: Date;
 
-  @Column({ type: 'text', nullable: true })
-  results: string;
+  @OneToMany(() => StudyResult, (studyResult) => studyResult.medicalOrder)
+  studyResults: StudyResult[];
 
   @Column({ name: 'patient_id' })
   patientId: number;

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
+import {toast} from "@repo/ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { upsertPartner } from "@/app/actions/medical-history/partner";
 import { upsertGynecological } from "@/app/actions/medical-history/gynecological";
