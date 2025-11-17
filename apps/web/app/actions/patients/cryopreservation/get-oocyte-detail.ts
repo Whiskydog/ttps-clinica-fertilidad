@@ -17,7 +17,7 @@ export async function getOocyteDetail(
   if (!sessionToken) throw new Error("No se encontró el token de sesión");
 
   const resp = await fetch(
-    `${backendUrl}/cryopreservation/patient/${productId}`,
+    `${backendUrl}/laboratory/patient/oocyte/${productId}`,
     {
       method: "GET",
       headers: {
@@ -31,6 +31,7 @@ export async function getOocyteDetail(
   const payload = await resp.json().catch(() => null);
 
   if (!resp.ok) {
+    console.log(JSON.stringify(payload,null,2));
     const message = payload?.message || `Request failed: ${resp.status}`;
     throw new Error(message);
   }

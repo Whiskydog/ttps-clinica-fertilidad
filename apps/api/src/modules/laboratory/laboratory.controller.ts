@@ -332,4 +332,18 @@ export class LaboratoryController {
       embryos,
     };
   }
+
+  @Get('patient/oocyte/:id')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getOocyteDetail(@Param('id') id: string) {
+    const oocyteIdNum = Number(id);
+    return this.oocyteService.findOne(oocyteIdNum);
+  }
+
+  @Get('patient/embryo/:id')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getEmbryoDetail(@Param('id') id: string) {
+    const embryoIdNum = Number(id);
+    return this.embryoService.findOne(embryoIdNum);
+  }
 }

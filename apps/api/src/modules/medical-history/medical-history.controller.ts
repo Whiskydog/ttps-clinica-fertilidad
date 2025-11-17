@@ -117,6 +117,7 @@ export class MedicalHistoryController {
     };
   }
 
+  // endpoint para obtener la historia clínica del paciente
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.PATIENT)
@@ -132,7 +133,6 @@ export class MedicalHistoryController {
   }
 
   // endpoints para hábitos
-
   @Post('habits')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.DOCTOR)

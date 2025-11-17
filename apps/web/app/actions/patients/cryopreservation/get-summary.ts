@@ -29,6 +29,6 @@ export async function getCryopreservationSummary(): Promise<CryopreservationSumm
     const message = payload?.message || `Request failed: ${resp.status}`;
     throw new Error(message);
   }
-  console.log(JSON.stringify(payload))
+  
   return payload;
 }

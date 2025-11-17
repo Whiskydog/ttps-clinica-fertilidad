@@ -1,20 +1,24 @@
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
-import { ProductJourney } from '@/components/patient/cryopreserved/product-journey';
-import { getOocyteDetail } from '@/app/actions/patients/cryopreservation/get-oocyte-detail';
-import type { OocyteDetail } from '@repo/contracts';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { ProductJourney } from "@/components/patient/cryopreserved/product-journey";
+import { getOocyteDetail } from "@/app/actions/patients/cryopreservation/get-oocyte-detail";
+import type { OocyteDetail } from "@repo/contracts";
 
 export default function CryopreservedDetailPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data: response, isLoading, error } = useQuery({
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["oocyte-detail", id],
     queryFn: () => getOocyteDetail(id),
   });
@@ -30,7 +34,9 @@ export default function CryopreservedDetailPage() {
   if (error || !response?.data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-red-600">Error al cargar el producto criopreservado</div>
+        <div className="text-lg text-red-600">
+          Error al cargar el producto criopreservado
+        </div>
       </div>
     );
   }
@@ -43,9 +49,11 @@ export default function CryopreservedDetailPage() {
         <Button variant="link">← Volver a Productos</Button>
       </Link>
       <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold">Óvulo ID: {product.uniqueIdentifier}</h1>
+        <h1 className="text-2xl font-bold">
+          Óvulo ID: {product.uniqueIdentifier}
+        </h1>
       </div>
-
+      {JSON.stringify(product)}
       <Card>
         <CardHeader className="bg-slate-500">
           <CardTitle className="text-white">INFORMACIÓN GENERAL</CardTitle>
@@ -60,10 +68,9 @@ export default function CryopreservedDetailPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2 text-sm">
               <p>
-                <span className="font-semibold">Criopreservado:</span>{' '}
-                {product.isCryopreserved ? 'Si' : 'No'}
+                <span className="font-semibold">Criopreservado:</span>{" "}
+                {product.isCryopreserved ? "Si" : "No"}
               </p>
-              
             </div>
 
             <div className="space-y-2 text-sm">
@@ -86,14 +93,17 @@ export default function CryopreservedDetailPage() {
           <CardContent className="pt-6">
             <div className="text-sm space-y-2">
               <p>
-                <span className="font-semibold">Causa:</span>{' '}
-                <span className="text-green-600 font-semibold">{product.discardCause}</span>
+                <span className="font-semibold">Causa:</span>{" "}
+                <span className="text-gray-600 font-semibold">
+                  {product.discardCause}
+                </span>
               </p>
               <p>
-                <span className="font-semibold">Fecha:</span>{' '}
-                <span className="text-green-600 font-semibold">{product.discardDateTime}</span>
+                <span className="font-semibold">Fecha:</span>{" "}
+                <span className="text-gray-600 font-semibold">
+                  {product.discardDateTime}
+                </span>
               </p>
-
             </div>
           </CardContent>
         </Card>

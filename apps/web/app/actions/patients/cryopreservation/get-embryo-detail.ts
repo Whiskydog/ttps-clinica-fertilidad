@@ -17,7 +17,7 @@ export async function getEmbryoDetail(
   if (!sessionToken) throw new Error("No se encontró el token de sesión");
 
   const resp = await fetch(
-    `${backendUrl}/cryopreservation/patient/${productId}`,
+    `${backendUrl}/laboratory/patient/embryo/${productId}`,
     {
       method: "GET",
       headers: {
