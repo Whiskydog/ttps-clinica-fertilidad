@@ -1,9 +1,10 @@
 import { MedicalInsurancesService } from '@modules/medical-insurances/medical-insurances.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PatientCreateDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
 import { PatientsQuery } from '@repo/contracts';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import argon2 from 'argon2';
 import { Repository, Like } from 'typeorm';
 import { UserValidationService } from './user-validation.service';
@@ -12,6 +13,7 @@ import { UserValidationService } from './user-validation.service';
 export class PatientsService {
   constructor(
     @InjectRepository(Patient) private patientRepository: Repository<Patient>,
+    @InjectRepository(Treatment) private treatmentRepository: Repository<Treatment>,
     private userValidationService: UserValidationService,
     private medicalInsurancesService: MedicalInsurancesService,
   ) {}
@@ -45,24 +47,24 @@ export class PatientsService {
     return this.patientRepository.findOne({ where: { id: saved.id } });
   }
 
-  async getPatients(query: PatientsQuery) {
+  async getPatients(query: PatientsQuery, doctorId: number) {
     const { page, limit, dni } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.patientRepository
       .createQueryBuilder('patient')
       .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
-      .leftJoinAndSelect('patient.role', 'role');
+      .leftJoinAndSelect('patient.role', 'role')
+      .distinct(true);
 
-    // Solo pacientes que tienen una historia clínica (medical_histories.patient_id = patient.id)
-    queryBuilder.innerJoin(
-      'medical_histories',
-      'mh',
-      'mh.patient_id = patient.id',
-    );
+    // Solo pacientes que tienen una historia clínica con al menos un tratamiento del doctor actual
+    queryBuilder
+      .innerJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
+      .innerJoin('treatments', 't', 't.medical_history_id = mh.id')
+      .andWhere('t.initial_doctor_id = :doctorId', { doctorId });
 
     if (dni) {
-      queryBuilder.where('patient.dni LIKE :dni', { dni: `%${dni}%` });
+      queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });
     }
 
     const [patients, total] = await queryBuilder
@@ -100,5 +102,47 @@ export class PatientsService {
 
   async findPatientById(id: number): Promise<Patient | null> {
     return this.patientRepository.findOne({ where: { id } });
+  }
+
+  async getPatientById(id: number) {
+    const patient = await this.patientRepository.findOne({
+      where: { id },
+      relations: ['medicalInsurance', 'role'],
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Paciente no encontrado');
+    }
+
+    return {
+      ...patient,
+      dateOfBirth:
+        patient.dateOfBirth instanceof Date
+          ? patient.dateOfBirth.toISOString().slice(0, 10)
+          : patient.dateOfBirth,
+      medicalInsuranceName: patient.medicalInsurance?.name ?? null,
+      insuranceNumber: patient.coverageMemberId ?? null,
+    };
+  }
+
+  async getPatientTreatments(patientId: number, doctorId: number) {
+    // Verificar que el paciente existe
+    const patient = await this.findPatientById(patientId);
+    if (!patient) {
+      throw new NotFoundException('Paciente no encontrado');
+    }
+
+    // Obtener tratamientos del paciente filtrados por doctor
+    const treatments = await this.treatmentRepository
+      .createQueryBuilder('treatment')
+      .leftJoinAndSelect('treatment.initialDoctor', 'doctor')
+      .leftJoinAndSelect('treatment.medicalHistory', 'medicalHistory')
+      .leftJoinAndSelect('medicalHistory.patient', 'patient')
+      .where('patient.id = :patientId', { patientId })
+      .andWhere('treatment.initial_doctor_id = :doctorId', { doctorId })
+      .orderBy('treatment.start_date', 'DESC')
+      .getMany();
+
+    return treatments;
   }
 }

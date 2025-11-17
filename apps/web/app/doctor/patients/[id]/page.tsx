@@ -1,65 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams } from "next/navigation";
-import {toast} from "@repo/ui";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { upsertPartner } from "@/app/actions/medical-history/partner";
-import { upsertGynecological } from "@/app/actions/medical-history/gynecological";
-import { updateMedicalHistory } from "@/app/actions/medical-history/update";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicalHistory } from "@/app/actions/medical-history/get";
+import { getPatientTreatments } from "@/app/actions/doctor/patients/get-treatments";
+import { MedicalHistoryResponse } from "@repo/contracts";
+import { HabitsCard } from "@/components/doctor/medical-history/cards/habits-card";
+import { BackgroundsCard } from "@/components/doctor/medical-history/cards/backgrounds-card";
+import { GynecologicalCard } from "@/components/doctor/medical-history/cards/gynecological-card";
+import { PhysicalExamCard } from "@/components/doctor/medical-history/cards/physical-exam-card";
+import { FamilyBackgroundsCard } from "@/components/doctor/medical-history/cards/family-backgrounds-card";
+import { PartnerDataCard } from "@/components/doctor/medical-history/cards/partner-data-card";
 import {
-  GynecologicalHistory,
-  PartnerData,
-  CycleRegularity,
-  MedicalHistoryResponse,
-  PartnerWithGynecology,
-  MedicalDataState,
-} from "@repo/contracts";
-import { PhysicalExamSection } from "@/components/medical-history/PhysicalExamSection";
-import { PatientGynecologySection } from "@/components/medical-history/PatientGynecologySection";
-import { PartnerDataSection } from "@/components/medical-history/PartnerDataSection";
-import { FileText, User, Calendar, AlertCircle } from "lucide-react";
+  FileText,
+  User,
+  Calendar,
+  AlertCircle,
+  Stethoscope,
+} from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@repo/ui/badge";
+import { Button } from "@repo/ui/button";
 
 export default function DoctorPatientMedicalHistoryPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
   const queryClient = useQueryClient();
-
-  // Estado unificado para toda la información médica
-  const [medicalData, setMedicalData] = useState<MedicalDataState>({
-    physicalExamNotes: "",
-    familyBackgrounds: "",
-    partner: {
-      firstName: "",
-      lastName: "",
-      dni: "",
-      birthDate: "",
-      occupation: "",
-      phone: "",
-      email: "",
-      biologicalSex: "male",
-      genitalBackgrounds: "",
-      menarcheAge: null,
-      cycleRegularity: null,
-      cycleDurationDays: null,
-      bleedingCharacteristics: null,
-      gestations: null,
-      births: null,
-      abortions: null,
-      ectopicPregnancies: null,
-    } as PartnerWithGynecology,
-    patientGynecology: {
-      menarcheAge: null,
-      cycleRegularity: null,
-      cycleDurationDays: null,
-      bleedingCharacteristics: null,
-      gestations: null,
-      births: null,
-      abortions: null,
-      ectopicPregnancies: null,
-    } as GynecologicalHistory,
-  });
 
   const { data, isLoading, error } = useQuery<MedicalHistoryResponse | null>({
     queryKey: ["medicalHistory", id],
@@ -71,165 +38,15 @@ export default function DoctorPatientMedicalHistoryPage() {
     enabled: !!id,
   });
 
-  // Helper functions for data loading
-  const loadPartnerData = (
-    partnerData: NonNullable<MedicalHistoryResponse["partnerData"]>
-  ) => ({
-    firstName: partnerData.firstName || "",
-    lastName: partnerData.lastName || "",
-    dni: partnerData.dni || "",
-    birthDate: partnerData.birthDate?.slice(0, 10) || "",
-    occupation: partnerData.occupation || "",
-    phone: partnerData.phone || "",
-    email: partnerData.email || "",
-    biologicalSex: partnerData.biologicalSex,
-    genitalBackgrounds: partnerData.genitalBackgrounds || "",
-  });
-
-  const loadPartnerGynecology = (
-    gyneList: GynecologicalHistory[],
-    partnerId: number
-  ) => {
-    const partnerGyne = gyneList.find(
-      (g: GynecologicalHistory) => g.partnerData?.id === partnerId
-    );
-    if (!partnerGyne) return {};
-
-    return {
-      menarcheAge:
-        typeof partnerGyne.menarcheAge === "number"
-          ? partnerGyne.menarcheAge
-          : null,
-      cycleRegularity: partnerGyne.cycleRegularity ?? null,
-      cycleDurationDays:
-        typeof partnerGyne.cycleDurationDays === "number"
-          ? partnerGyne.cycleDurationDays
-          : null,
-      bleedingCharacteristics: partnerGyne.bleedingCharacteristics || null,
-      gestations:
-        typeof partnerGyne.gestations === "number"
-          ? partnerGyne.gestations
-          : null,
-      births:
-        typeof partnerGyne.births === "number" ? partnerGyne.births : null,
-      abortions:
-        typeof partnerGyne.abortions === "number"
-          ? partnerGyne.abortions
-          : null,
-      ectopicPregnancies:
-        typeof partnerGyne.ectopicPregnancies === "number"
-          ? partnerGyne.ectopicPregnancies
-          : null,
-    };
-  };
-
-  const loadPatientGynecology = (gyneList: GynecologicalHistory[]) => {
-    const patientGyne = gyneList.find(
-      (g: GynecologicalHistory) => !g.partnerData
-    );
-    if (!patientGyne) return {};
-
-    return {
-      menarcheAge: patientGyne.menarcheAge ?? null,
-      cycleRegularity:
-        typeof patientGyne.cycleRegularity === "string"
-          ? Object.values(CycleRegularity).includes(
-              patientGyne.cycleRegularity as CycleRegularity
-            )
-            ? (patientGyne.cycleRegularity as CycleRegularity)
-            : null
-          : (patientGyne.cycleRegularity ?? null),
-      cycleDurationDays: patientGyne.cycleDurationDays ?? null,
-      bleedingCharacteristics: patientGyne.bleedingCharacteristics ?? null,
-      gestations: patientGyne.gestations ?? null,
-      births: patientGyne.births ?? null,
-      abortions: patientGyne.abortions ?? null,
-      ectopicPregnancies: patientGyne.ectopicPregnancies ?? null,
-    };
-  };
-
-  useEffect(() => {
-    if (!data) return;
-
-    setMedicalData((prev) => ({
-      ...prev,
-      physicalExamNotes: data.physicalExamNotes || "",
-      familyBackgrounds: data.familyBackgrounds || "",
-    }));
-
-    if (data.partnerData) {
-      const partnerData = loadPartnerData(data.partnerData);
-      setMedicalData((prev) => ({
-        ...prev,
-        partner: { ...prev.partner, ...partnerData },
-      }));
-    }
-
-    const gyneList = data.gynecologicalHistory || [];
-
-    if (data.partnerData?.id) {
-      const partnerGynecology = loadPartnerGynecology(
-        gyneList,
-        data.partnerData.id
-      );
-      setMedicalData((prev) => ({
-        ...prev,
-        partner: { ...prev.partner, ...partnerGynecology },
-      }));
-    }
-
-    const patientGynecology = loadPatientGynecology(gyneList);
-    setMedicalData((prev) => ({
-      ...prev,
-      patientGynecology: { ...prev.patientGynecology, ...patientGynecology },
-    }));
-  }, [data]);
-
-  // Mutations
-  const mutation = useMutation<
-    unknown,
-    Error,
-    { id: number; physicalExamNotes: string; familyBackgrounds: string }
-  >({
-    mutationFn: updateMedicalHistory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medicalHistory", id] });
-      toast.success("Actualizado");
+  // Get patient treatments
+  const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
+    queryKey: ["patientTreatments", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const payload = await getPatientTreatments(Number(id));
+      return payload?.data || [];
     },
-    onError: (err: Error) =>
-      toast.error(err?.message || "No se pudo actualizar"),
-  });
-
-  const partnerMutation = useMutation<
-    unknown,
-    Error,
-    {
-      medicalHistoryId: number;
-      partnerData: PartnerData;
-      gynecologicalHistory?: GynecologicalHistory;
-    }
-  >({
-    mutationFn: upsertPartner,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medicalHistory", id] });
-      toast.success("Datos de pareja guardados");
-    },
-    onError: (err: Error) =>
-      toast.error(err?.message || "No se pudo guardar datos de pareja"),
-  });
-
-  const gyneMutation = useMutation<
-    unknown,
-    Error,
-    { medicalHistoryId: number; gynecologicalHistory: GynecologicalHistory }
-  >({
-    mutationFn: upsertGynecological,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medicalHistory", id] });
-      toast.success("Historia ginecológica guardada");
-    },
-    onError: (err: Error) =>
-      toast.error(err?.message || "No se pudo guardar historia ginecológica"),
+    enabled: !!id,
   });
 
   if (isLoading)
@@ -286,103 +103,184 @@ export default function DoctorPatientMedicalHistoryPage() {
       </div>
 
       {/* Patient Info Card */}
-      <div className="card mb-8">
-        <div className="card-content">
-          <div className="flex items-start gap-4">
-            <div className="patient-card-avatar">
-              <User className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground">
-                {data.patient?.firstName} {data.patient?.lastName}
-              </h3>
-              <div className="flex items-center gap-4 mt-2 text-small text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  DNI:{" "}
-                  <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
-                    {data.patient?.dni}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  Creado: {new Date(data.createdAt).toLocaleDateString()}
-                </div>
-              </div>
+      <div className="border rounded-lg p-4 bg-card mb-4">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <User className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">
+              {data.patient?.firstName} {data.patient?.lastName}
+            </h3>
+            <div className="flex items-center gap-4 mt-2 text-small text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
+                DNI: {data.patient?.dni}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Fecha de Nacimiento: {data.patient?.dateOfBirth}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Fecha de Ingreso:{" "}
+                {new Date(data.createdAt).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Medical History Sections */}
-      <div className="section-spacing">
-        {/* Examen físico y antecedentes familiares */}
-        <PhysicalExamSection
-          medicalData={medicalData}
-          setMedicalData={setMedicalData}
-          onSubmit={() =>
-            mutation.mutate({
-              id: data.id,
-              physicalExamNotes: medicalData.physicalExamNotes,
-              familyBackgrounds: medicalData.familyBackgrounds,
-            })
-          }
-          isPending={mutation.isPending}
-        />
-
-        {/* Historia ginecológica paciente */}
-        <PatientGynecologySection
-          medicalData={medicalData}
-          setMedicalData={setMedicalData}
-          onSubmit={() =>
-            gyneMutation.mutate({
-              medicalHistoryId: data.id,
-              gynecologicalHistory: { ...medicalData.patientGynecology },
-            })
-          }
-          isPending={gyneMutation.isPending}
-          biologicalSex={data.patient?.biologicalSex}
-        />
-
-        {/* Datos de la pareja */}
-        <PartnerDataSection
-          medicalData={medicalData}
-          setMedicalData={setMedicalData}
-          onSubmit={() => {
-            const payload: {
-              medicalHistoryId: number;
-              partnerData: PartnerData;
-              gynecologicalHistory?: GynecologicalHistory;
-            } = {
-              medicalHistoryId: data.id,
-              partnerData: { ...medicalData.partner },
-            };
-            if (medicalData.partner.biologicalSex === "female") {
-              payload.gynecologicalHistory = {
-                menarcheAge: medicalData.partner.menarcheAge ?? undefined,
-                cycleRegularity:
-                  typeof medicalData.partner.cycleRegularity === "string"
-                    ? Object.values(CycleRegularity).includes(
-                        medicalData.partner.cycleRegularity as CycleRegularity
-                      )
-                      ? (medicalData.partner.cycleRegularity as CycleRegularity)
-                      : null
-                    : (medicalData.partner.cycleRegularity ?? null),
-                cycleDurationDays:
-                  medicalData.partner.cycleDurationDays ?? undefined,
-                bleedingCharacteristics:
-                  medicalData.partner.bleedingCharacteristics ?? undefined,
-                gestations: medicalData.partner.gestations ?? undefined,
-                births: medicalData.partner.births ?? undefined,
-                abortions: medicalData.partner.abortions ?? undefined,
-                ectopicPregnancies:
-                  medicalData.partner.ectopicPregnancies ?? undefined,
-              };
+      {/* Medical History Cards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <BackgroundsCard
+            backgrounds={data.backgrounds}
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
             }
-            partnerMutation.mutate(payload);
-          }}
-          isPending={partnerMutation.isPending}
-        />
+          />
+
+          <FamilyBackgroundsCard
+            familyBackgrounds={data.familyBackgrounds}
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
+            }
+          />
+
+          <PhysicalExamCard
+            fenotype={data.fenotypes?.[0]}
+            physicalExamNotes={data.physicalExamNotes}
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
+            }
+          />
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <HabitsCard
+            habits={data.habits?.[0]}
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
+            }
+          />
+
+          <GynecologicalCard
+            gynecologicalHistory={
+              data.gynecologicalHistory?.find((g) => !g.partnerData) || null
+            }
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
+            }
+          />
+
+          <PartnerDataCard
+            partnerData={data.partnerData}
+            medicalHistoryId={data.id}
+            onUpdate={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["medicalHistory", id],
+              })
+            }
+          />
+        </div>
+      </div>
+
+      {/* Treatments Section */}
+      <div className="card mt-8">
+        <div className="card-header">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Stethoscope className="h-5 w-5 text-primary" />
+            </div>
+            <h2 className="text-heading-2">Tratamientos</h2>
+          </div>
+        </div>
+        <div className="card-content">
+          {treatmentsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="loading-spinner"></div>
+            </div>
+          ) : !treatmentsData || treatmentsData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No hay tratamientos registrados para este paciente</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {treatmentsData.map((treatment: any) => (
+                <div
+                  key={treatment.id}
+                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground">
+                          Tratamiento #{treatment.id}
+                        </h3>
+                        <Badge
+                          variant="outline"
+                          className={
+                            treatment.status === "vigente"
+                              ? "bg-green-100 text-green-800 border-green-300"
+                              : treatment.status === "completed"
+                                ? "bg-blue-100 text-blue-800 border-blue-300"
+                                : "bg-gray-100 text-gray-800 border-gray-300"
+                          }
+                        >
+                          {treatment.status === "vigente"
+                            ? "Vigente"
+                            : treatment.status === "completed"
+                              ? "Completado"
+                              : "Cerrado"}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p>
+                          <span className="font-medium">Objetivo:</span>{" "}
+                          {treatment.initialObjective?.replace(/_/g, " ")}
+                        </p>
+                        {treatment.startDate && (
+                          <p>
+                            <span className="font-medium">Inicio:</span>{" "}
+                            {new Date(treatment.startDate).toLocaleDateString()}
+                          </p>
+                        )}
+                        {treatment.closureDate && (
+                          <p>
+                            <span className="font-medium">Cierre:</span>{" "}
+                            {new Date(
+                              treatment.closureDate
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Link href={`/doctor/treatments/${treatment.id}`}>
+                      <Button variant="outline" size="sm">
+                        Ver Detalle
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
