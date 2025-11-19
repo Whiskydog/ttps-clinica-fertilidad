@@ -12,6 +12,8 @@ import { Patient } from '../../users/entities/patient.entity';
 import { Habits } from './habits.entity';
 import { Fenotype } from './fenotype.entity';
 import { Background } from './background.entity';
+import { PartnerData } from './partner-data.entity';
+import { GynecologicalHistory } from './gynecological-history.entity';
 
 @Entity('medical_histories')
 @Unique(['patient'])
@@ -46,4 +48,13 @@ export class MedicalHistory extends BaseEntity {
 
   @OneToMany(() => Background, (background) => background.medicalHistory)
   backgrounds: Background[];
+
+  @OneToMany(() => PartnerData, (partnerData) => partnerData.medicalHistory)
+  partnerData: PartnerData[];
+
+  @OneToMany(
+    () => GynecologicalHistory,
+    (gynecologicalHistory) => gynecologicalHistory.medicalHistory,
+  )
+  gynecologicalHistory: GynecologicalHistory[];
 }

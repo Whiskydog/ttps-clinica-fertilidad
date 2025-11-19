@@ -9,6 +9,7 @@ import { MedicalHistoryModule } from '@modules/medical-history/medical-history.m
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { MedicalOrdersModule } from '@modules/medical-orders/medical-orders.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
+import { UploadsModule } from '@modules/uploads/uploads.module';
 import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -25,6 +26,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     LaboratoryModule,
     AppointmentsModule,
     MedicalInsurancesModule,
+    UploadsModule,
   ],
   controllers: [],
   providers: [

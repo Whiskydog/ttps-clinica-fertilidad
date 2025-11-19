@@ -12,6 +12,7 @@ import { LabTechnician } from './entities/lab-technician.entity';
 import { Patient } from './entities/patient.entity';
 import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { DoctorsService } from './services/doctors.service';
 import { PatientsService } from './services/patients.service';
 import { StaffUsersService } from './services/staff-users.service';
@@ -28,6 +29,7 @@ import { UsersService } from './services/users.service';
       LabTechnician,
       Admin,
       Role,
+      Treatment,
     ]),
     MedicalInsurancesModule,
   ],

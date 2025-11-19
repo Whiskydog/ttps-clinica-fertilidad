@@ -66,17 +66,15 @@ export type Monitoring = z.infer<typeof MonitoringSchema>;
 export const MedicationProtocolSchema = z.object({
   id: z.number(),
   treatmentId: z.number(),
-  medications: z.array(
-    z.object({
-      name: z.string(),
-      dosage: z.string(),
-      frequency: z.string(),
-      duration: z.string().optional(),
-    }),
-  ),
+  protocolType: z.string(),
+  drugName: z.string(),
+  dose: z.string(),
+  administrationRoute: z.string(),
+  duration: z.string().nullable(),
   startDate: z.string().nullable(),
-  endDate: z.string().nullable(),
-  instructions: z.string().nullable(),
+  additionalMedication: z.array(z.string()).nullable(),
+  consentSigned: z.boolean().optional(),
+  consentDate: z.string().nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -88,7 +86,7 @@ export const DoctorNoteSchema = z.object({
   id: z.number(),
   treatmentId: z.number(),
   noteDate: z.string(),
-  content: z.string(),
+  note: z.string(),
   doctor: UserEntitySchema.optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -210,3 +208,66 @@ export const UpdateMedicalCoverageSchema = CreateMedicalCoverageSchema.partial()
 
 export type CreateMedicalCoverageInput = z.infer<typeof CreateMedicalCoverageSchema>;
 export type UpdateMedicalCoverageInput = z.infer<typeof UpdateMedicalCoverageSchema>;
+
+// Doctor Note Input Schemas
+export const CreateDoctorNoteSchema = z.object({
+  treatmentId: z.number(),
+  noteDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  note: z.string().min(1, "La nota es requerida"),
+});
+
+export const UpdateDoctorNoteSchema = CreateDoctorNoteSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreateDoctorNoteInput = z.infer<typeof CreateDoctorNoteSchema>;
+export type UpdateDoctorNoteInput = z.infer<typeof UpdateDoctorNoteSchema>;
+
+// Medication Protocol Input Schemas
+export const CreateMedicationProtocolSchema = z.object({
+  treatmentId: z.number(),
+  protocolType: z.string().min(1, "El tipo de protocolo es requerido"),
+  drugName: z.string().min(1, "El medicamento principal es requerido"),
+  dose: z.string(),
+  administrationRoute: z.string(),
+  duration: z.string().nullable().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  additionalMedication: z.array(z.string()).nullable().optional(),
+});
+
+export const UpdateMedicationProtocolSchema = CreateMedicationProtocolSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreateMedicationProtocolInput = z.infer<typeof CreateMedicationProtocolSchema>;
+export type UpdateMedicationProtocolInput = z.infer<typeof UpdateMedicationProtocolSchema>;
+
+// Monitoring Input Schemas
+export const CreateMonitoringSchema = z.object({
+  treatmentId: z.number(),
+  monitoringDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  dayNumber: z.number().nullable().optional(),
+  follicleCount: z.number().nullable().optional(),
+  follicleSize: z.string().nullable().optional(),
+  estradiolLevel: z.number().nullable().optional(),
+  observations: z.string().nullable().optional(),
+});
+
+export const UpdateMonitoringSchema = CreateMonitoringSchema.partial().extend({
+  id: z.number(),
+});
+
+export type CreateMonitoringInput = z.infer<typeof CreateMonitoringSchema>;
+export type UpdateMonitoringInput = z.infer<typeof UpdateMonitoringSchema>;
+
+// Treatment Update Schema
+export const UpdateTreatmentSchema = z.object({
+  id: z.number(),
+  initialObjective: InitialObjectiveEnum.optional(),
+  startDate: z.string().nullable().optional(),
+  status: TreatmentStatusEnum.optional(),
+  closureReason: z.string().nullable().optional(),
+  closureDate: z.string().nullable().optional(),
+});
+
+export type UpdateTreatmentInput = z.infer<typeof UpdateTreatmentSchema>;

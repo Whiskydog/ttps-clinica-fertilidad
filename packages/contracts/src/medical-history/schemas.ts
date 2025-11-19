@@ -9,7 +9,7 @@ export const PartnerDataSchema = z.object({
   dni: z.string().max(20).optional().nullable(),
   birthDate: z
     .string()
-    .regex(/^\d{2}-\d{2}-\d{4}$/)
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
     .nullable(),
   occupation: z.string().max(100).optional().nullable(),

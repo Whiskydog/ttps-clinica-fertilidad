@@ -3,6 +3,15 @@
 export function parseBirthDate(input: unknown): Date | null {
   if (input == null) return null;
   if (typeof input === 'string') {
+    // Expect YYYY-MM-DD format (ISO)
+    // Use Date constructor with year, month, day to avoid timezone issues
+    const match = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, year, month, day] = match;
+      const d = new Date(Number(year), Number(month) - 1, Number(day));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    // Fallback to normal parsing
     const d = new Date(input);
     return isNaN(d.getTime()) ? null : d;
   }
