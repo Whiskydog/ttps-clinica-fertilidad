@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { DoctorNote } from '../entities/doctor-note.entity';
 import { Treatment } from '../entities/treatment.entity';
 import { User } from '@users/entities/user.entity';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Injectable()
 export class DoctorNoteService {
@@ -14,14 +15,14 @@ export class DoctorNoteService {
 
   async create(data: {
     treatmentId: number;
-    noteDate: string;
+    noteDate: string | null;
     note: string;
     doctorId: number;
   }): Promise<DoctorNote> {
     const doctorNote = this.doctorNoteRepository.create({
       treatment: { id: data.treatmentId } as Treatment,
       doctor: { id: data.doctorId } as User,
-      noteDate: new Date(data.noteDate),
+      noteDate: parseDateFromString(data.noteDate),
       note: data.note,
     });
 
@@ -43,8 +44,8 @@ export class DoctorNoteService {
       throw new NotFoundException('Nota del doctor no encontrada');
     }
 
-    if (data.noteDate) {
-      doctorNote.noteDate = new Date(data.noteDate);
+    if (data.noteDate !== undefined) {
+      doctorNote.noteDate = parseDateFromString(data.noteDate);
     }
     if (data.note !== undefined) {
       doctorNote.note = data.note;

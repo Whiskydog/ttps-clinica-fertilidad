@@ -29,7 +29,7 @@ import { DeleteNoteDialog } from "@/components/doctor/treatments/forms/delete-no
 import { CreateMedicalOrderSheet } from "@/components/doctor/treatments/forms/create-medical-order-sheet";
 import { InformedConsentFormSheet } from "@/components/doctor/treatments/forms/informed-consent-form-sheet";
 import { useQueryClient } from "@tanstack/react-query";
-import { getFileUrl } from "@/lib/upload-utils";
+import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -334,7 +334,7 @@ export default function TreatmentDetailPage() {
                   </label>
                   <p className="mt-1 text-foreground flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(treatment.startDate).toLocaleDateString()}
+                    {formatDateForDisplay(treatment.startDate)}
                   </p>
                 </div>
               )}
@@ -345,7 +345,7 @@ export default function TreatmentDetailPage() {
                   </label>
                   <p className="mt-1 text-foreground flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(treatment.closureDate).toLocaleDateString()}
+                    {formatDateForDisplay(treatment.closureDate)}
                   </p>
                 </div>
               )}
@@ -399,7 +399,7 @@ export default function TreatmentDetailPage() {
                 {protocol.startDate && (
                   <p>
                     <span className="font-medium">Inicio:</span>{" "}
-                    {new Date(protocol.startDate).toLocaleDateString()}
+                    {formatDateForDisplay(protocol.startDate)}
                   </p>
                 )}
                 {protocol.additionalMedication &&
@@ -480,7 +480,7 @@ export default function TreatmentDetailPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
                         <p className="font-medium">
-                          {new Date(note.noteDate).toLocaleDateString()}
+                          {formatDateForDisplay(note.noteDate)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Dr. {note.doctor?.firstName} {note.doctor?.lastName}

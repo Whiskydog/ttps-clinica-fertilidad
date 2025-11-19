@@ -30,6 +30,7 @@ import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { createDoctorNote } from "@/app/actions/doctor/treatments/create-doctor-note";
 import { updateDoctorNote } from "@/app/actions/doctor/treatments/update-doctor-note";
+import { normalizeDateForInput } from "@/lib/upload-utils";
 
 interface DoctorNote {
   id: number;
@@ -71,7 +72,7 @@ export function DoctorNoteFormSheet({
       ? {
           id: note.id,
           treatmentId,
-          noteDate: note.noteDate || new Date().toISOString().split("T")[0],
+          noteDate: normalizeDateForInput(note.noteDate) || new Date().toISOString().split("T")[0],
           note: note.note || "",
         }
       : {
@@ -87,7 +88,7 @@ export function DoctorNoteFormSheet({
         form.reset({
           id: note.id,
           treatmentId,
-          noteDate: note.noteDate || new Date().toISOString().split("T")[0],
+          noteDate: normalizeDateForInput(note.noteDate) || new Date().toISOString().split("T")[0],
           note: note.note || "",
         });
       } else {

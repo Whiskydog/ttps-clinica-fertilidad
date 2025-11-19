@@ -264,10 +264,10 @@ export type UpdateMonitoringInput = z.infer<typeof UpdateMonitoringSchema>;
 export const UpdateTreatmentSchema = z.object({
   id: z.number(),
   initialObjective: InitialObjectiveEnum.optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  startDate: z.string().nullable().optional(),
   status: TreatmentStatusEnum.optional(),
   closureReason: z.string().nullable().optional(),
-  closureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  closureDate: z.string().nullable().optional(),
 });
 
 export type UpdateTreatmentInput = z.infer<typeof UpdateTreatmentSchema>;

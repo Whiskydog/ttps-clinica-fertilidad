@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicationProtocol } from '../entities/medication-protocol.entity';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Injectable()
 export class MedicationProtocolService {
@@ -46,7 +47,7 @@ export class MedicationProtocolService {
       protocol.duration = data.duration;
     }
     if (data.startDate !== undefined) {
-      protocol.startDate = data.startDate ? new Date(data.startDate) : null;
+      protocol.startDate = data.startDate ? parseDateFromString(data.startDate) : null;
     }
     if (data.additionalMedication !== undefined) {
       protocol.additionalMedication = data.additionalMedication;

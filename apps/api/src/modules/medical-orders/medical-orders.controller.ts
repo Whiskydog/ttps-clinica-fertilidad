@@ -20,6 +20,7 @@ import { RoleCode } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 import type { MedicalOrderStatus } from './entities/medical-order.entity';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Controller('medical-orders')
 @UseGuards(JwtAuthGuard)
@@ -118,7 +119,7 @@ export class MedicalOrdersController {
       diagnosis: dto.diagnosis,
       justification: dto.justification,
       status: dto.status,
-      completedDate: dto.completedDate,
+      completedDate: parseDateFromString(dto.completedDate),
     });
     return {
       message: 'Orden médica actualizada correctamente',
@@ -149,9 +150,7 @@ export class MedicalOrdersController {
       transcribedByLabTechnician: dto.transcribedByLabTechnicianId
         ? ({ id: dto.transcribedByLabTechnicianId } as any)
         : ({ id: user.id } as any),
-      transcriptionDate: dto.transcriptionDate
-        ? new Date(dto.transcriptionDate)
-        : null,
+      transcriptionDate: parseDateFromString(dto.transcriptionDate),
     });
 
     console.log('[DEBUG] createStudyResult - Resultado creado:', JSON.stringify(result));
@@ -181,7 +180,7 @@ export class MedicalOrdersController {
     if ('transcription' in dto) updateData.transcription = dto.transcription;
     if ('originalPdfUri' in dto) updateData.originalPdfUri = dto.originalPdfUri;
     if ('transcriptionDate' in dto) {
-      updateData.transcriptionDate = dto.transcriptionDate ? new Date(dto.transcriptionDate) : null;
+      updateData.transcriptionDate = parseDateFromString(dto.transcriptionDate);
     }
 
     console.log('[DEBUG] updateStudyResult - Datos a actualizar:', JSON.stringify(updateData));

@@ -29,7 +29,7 @@ import {
 import { Upload, FileText, X } from "lucide-react";
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { uploadPDF, getFileUrl } from "@/lib/upload-utils";
+import { uploadPDF, getFileUrl, normalizeDateForInput } from "@/lib/upload-utils";
 import { createInformedConsent } from "@/app/actions/doctor/treatments/create-informed-consent";
 import { updateInformedConsent } from "@/app/actions/doctor/treatments/update-informed-consent";
 
@@ -74,7 +74,7 @@ export function InformedConsentFormSheet({
           id: informedConsent.id,
           treatmentId,
           pdfUri: informedConsent.pdfUri || null,
-          signatureDate: informedConsent.signatureDate || null,
+          signatureDate: normalizeDateForInput(informedConsent.signatureDate),
           uploadedByUserId: informedConsent.uploadedByUserId || null,
         }
       : {
@@ -92,7 +92,7 @@ export function InformedConsentFormSheet({
           id: informedConsent.id,
           treatmentId,
           pdfUri: informedConsent.pdfUri || null,
-          signatureDate: informedConsent.signatureDate || null,
+          signatureDate: normalizeDateForInput(informedConsent.signatureDate),
           uploadedByUserId: informedConsent.uploadedByUserId || null,
         });
         setCurrentPdfUri(informedConsent.pdfUri || null);

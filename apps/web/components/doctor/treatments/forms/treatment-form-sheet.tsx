@@ -37,6 +37,7 @@ import {
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTreatment } from "@/app/actions/doctor/treatments/update-treatment";
+import { normalizeDateForInput } from "@/lib/upload-utils";
 
 interface Treatment {
   id: number;
@@ -69,14 +70,10 @@ export function TreatmentFormSheet({
     defaultValues: {
       id: treatment?.id,
       initialObjective: treatment?.initialObjective,
-      startDate: treatment?.startDate
-        ? new Date(treatment.startDate).toISOString().split("T")[0]
-        : null,
+      startDate: normalizeDateForInput(treatment?.startDate),
       status: treatment?.status,
       closureReason: treatment?.closureReason || null,
-      closureDate: treatment?.closureDate
-        ? new Date(treatment.closureDate).toISOString().split("T")[0]
-        : null,
+      closureDate: normalizeDateForInput(treatment?.closureDate),
     },
   });
 
@@ -85,14 +82,10 @@ export function TreatmentFormSheet({
       form.reset({
         id: treatment.id,
         initialObjective: treatment.initialObjective,
-        startDate: treatment.startDate
-          ? new Date(treatment.startDate).toISOString().split("T")[0]
-          : null,
+        startDate: normalizeDateForInput(treatment.startDate),
         status: treatment.status,
         closureReason: treatment.closureReason || null,
-        closureDate: treatment.closureDate
-          ? new Date(treatment.closureDate).toISOString().split("T")[0]
-          : null,
+        closureDate: normalizeDateForInput(treatment.closureDate),
       });
     }
   }, [open, treatment, form]);

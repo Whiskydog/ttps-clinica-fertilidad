@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalOrder, MedicalOrderStatus, Study } from './entities/medical-order.entity';
 import { StudyResultService } from './services/study-result.service';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Injectable()
 export class MedicalOrdersService {
@@ -53,7 +54,7 @@ export class MedicalOrdersService {
       diagnosis?: string;
       justification?: string;
       status?: MedicalOrderStatus;
-      completedDate?: string;
+      completedDate?: Date | null;
     },
   ): Promise<MedicalOrder> {
     const medicalOrder = await this.medicalOrderRepository.findOne({
@@ -84,7 +85,7 @@ export class MedicalOrdersService {
     }
     if (data.completedDate !== undefined) {
       medicalOrder.completedDate = data.completedDate
-        ? new Date(data.completedDate)
+        ? parseDateFromString(data.completedDate)
         : null;
     }
 

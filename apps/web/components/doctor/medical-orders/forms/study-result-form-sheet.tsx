@@ -30,7 +30,7 @@ import {
 import { Upload, FileText, X } from "lucide-react";
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { uploadPDF, getFileUrl } from "@/lib/upload-utils";
+import { uploadPDF, getFileUrl, normalizeDateForInput } from "@/lib/upload-utils";
 import { createStudyResult } from "@/app/actions/doctor/medical-orders/create-study-result";
 import { updateStudyResult } from "@/app/actions/doctor/medical-orders/update-study-result";
 
@@ -80,9 +80,7 @@ export function StudyResultFormSheet({
           determinationName: studyResult.determinationName || null,
           transcription: studyResult.transcription || null,
           originalPdfUri: studyResult.originalPdfUri || null,
-          transcriptionDate: studyResult.transcriptionDate
-            ? new Date(studyResult.transcriptionDate).toISOString().split("T")[0]
-            : null,
+          transcriptionDate: normalizeDateForInput(studyResult.transcriptionDate),
         }
       : {
           medicalOrderId,
@@ -104,9 +102,7 @@ export function StudyResultFormSheet({
           determinationName: studyResult.determinationName || null,
           transcription: studyResult.transcription || null,
           originalPdfUri: studyResult.originalPdfUri || null,
-          transcriptionDate: studyResult.transcriptionDate
-            ? new Date(studyResult.transcriptionDate).toISOString().split("T")[0]
-            : null,
+          transcriptionDate: normalizeDateForInput(studyResult.transcriptionDate),
         });
         setCurrentPdfUri(studyResult.originalPdfUri || null);
       } else {

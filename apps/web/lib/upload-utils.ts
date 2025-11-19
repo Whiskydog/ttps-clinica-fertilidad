@@ -96,3 +96,61 @@ export function getFileUrl(fileUri: string | null | undefined): string | null {
   // Si no tiene el prefijo, agregarlo
   return `${backendUrl}/uploads/${normalizedUri}`;
 }
+
+/**
+ * Normaliza una fecha recibida del backend a formato YYYY-MM-DD
+ * evitando problemas de timezone
+ * @param dateString - String de fecha del backend (puede ser ISO string o YYYY-MM-DD)
+ * @returns String en formato YYYY-MM-DD para usar en input type="date"
+ */
+export function normalizeDateForInput(dateString: string | null | undefined): string | null {
+  if (!dateString) return null;
+
+  // Si ya es una fecha en formato YYYY-MM-DD, devolverla
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+
+  // Si es un ISO string (con T y timezone), extraer solo la parte de la fecha
+  // Esto evita problemas de timezone al parsear
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+
+  // Fallback: intentar parsear la fecha
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+
+    // Usar toISOString y extraer la parte de la fecha
+    return date.toISOString().split('T')[0];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Formatea una fecha para mostrar en la UI evitando problemas de timezone
+ * @param dateString - String de fecha del backend (puede ser ISO string o YYYY-MM-DD)
+ * @returns Fecha formateada en formato local (ej: "19/11/2025")
+ */
+export function formatDateForDisplay(dateString: string | null | undefined): string {
+  if (!dateString) return 'N/A';
+
+  // Primero normalizar a YYYY-MM-DD para evitar timezone issues
+  const normalized = normalizeDateForInput(dateString);
+  if (!normalized) return 'N/A';
+
+  // Parsear manualmente para evitar problemas de timezone
+  const [year, month, day] = normalized.split('-').map(Number);
+
+  // Crear fecha en hora local
+  const date = new Date(year, month - 1, day);
+
+  // Formatear usando toLocaleDateString
+  return date.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}

@@ -36,6 +36,7 @@ import { X } from "lucide-react";
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateMedicalOrder } from "@/app/actions/doctor/medical-orders/update-medical-order";
+import { normalizeDateForInput } from "@/lib/upload-utils";
 
 interface MedicalOrder {
   id: number;
@@ -78,7 +79,7 @@ export function MedicalOrderFormSheet({
       diagnosis: medicalOrder?.diagnosis || null,
       justification: medicalOrder?.justification || null,
       status: medicalOrder?.status || "pending",
-      completedDate: medicalOrder?.completedDate || null,
+      completedDate: normalizeDateForInput(medicalOrder?.completedDate),
     },
   });
 
@@ -91,7 +92,7 @@ export function MedicalOrderFormSheet({
         diagnosis: medicalOrder.diagnosis || null,
         justification: medicalOrder.justification || null,
         status: medicalOrder.status || "pending",
-        completedDate: medicalOrder.completedDate || null,
+        completedDate: normalizeDateForInput(medicalOrder.completedDate),
       });
       setStudies(medicalOrder.studies || []);
     }

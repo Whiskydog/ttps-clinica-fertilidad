@@ -21,7 +21,7 @@ import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { MedicalOrderFormSheet } from "@/components/doctor/medical-orders/forms/medical-order-form-sheet";
 import { StudyResultFormSheet } from "@/components/doctor/medical-orders/forms/study-result-form-sheet";
-import { getFileUrl } from "@/lib/upload-utils";
+import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 
 export default function MedicalOrderDetailPage() {
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
@@ -202,7 +202,7 @@ export default function MedicalOrderDetailPage() {
                   </label>
                   <p className="mt-1 text-foreground flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {new Date(orderData.completedDate).toLocaleDateString()}
+                    {formatDateForDisplay(orderData.completedDate)}
                   </p>
                 </div>
               )}

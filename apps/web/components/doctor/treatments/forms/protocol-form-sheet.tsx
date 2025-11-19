@@ -28,6 +28,7 @@ import {
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateMedicationProtocol } from "@/app/actions/doctor/treatments/update-protocol";
+import { normalizeDateForInput } from "@/lib/upload-utils";
 
 interface MedicationProtocol {
   id: number;
@@ -71,7 +72,7 @@ export function ProtocolFormSheet({
       dose: protocol?.dose || "",
       administrationRoute: protocol?.administrationRoute || "",
       duration: protocol?.duration || null,
-      startDate: protocol?.startDate || null,
+      startDate: normalizeDateForInput(protocol?.startDate),
     },
   });
 
@@ -85,7 +86,7 @@ export function ProtocolFormSheet({
         dose: protocol.dose || "",
         administrationRoute: protocol.administrationRoute || "",
         duration: protocol.duration || null,
-        startDate: protocol.startDate || null,
+        startDate: normalizeDateForInput(protocol.startDate),
       });
       setAdditionalMeds(protocol.additionalMedication || []);
     }

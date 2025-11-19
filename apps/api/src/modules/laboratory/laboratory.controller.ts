@@ -30,6 +30,7 @@ import { RequireRoles } from '@auth/decorators/require-roles.decorator';
 import { RoleCode, OocyteState, EmbryoDisposition } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Controller('laboratory')
 @UseGuards(JwtAuthGuard)
@@ -55,7 +56,7 @@ export class LaboratoryController {
   ) {
     const record = await this.punctureRecordService.create({
       treatment: { id: dto.treatmentId } as any,
-      punctureDateTime: new Date(dto.punctureDate),
+      punctureDateTime: parseDateFromString(dto.punctureDate),
       labTechnician: dto.labTechnicianId
         ? ({ id: dto.labTechnicianId } as any)
         : ({ id: user.id } as any),
@@ -76,7 +77,7 @@ export class LaboratoryController {
   ) {
     const recordId = Number(id);
     const updated = await this.punctureRecordService.update(recordId, {
-      punctureDateTime: dto.punctureDate ? new Date(dto.punctureDate) : undefined,
+      punctureDateTime: parseDateFromString(dto.punctureDate) ?? undefined,
       observations: dto.observations ?? undefined,
     });
     return {
@@ -187,7 +188,7 @@ export class LaboratoryController {
       oocyte: { id: dto.oocyteId } as any,
       previousState: dto.previousState ?? null,
       newState: dto.newState,
-      transitionDate: new Date(dto.changeDate),
+      transitionDate: parseDateFromString(dto.changeDate),
     });
     return {
       message: 'Historial de estado de oocito creado correctamente',
@@ -206,7 +207,7 @@ export class LaboratoryController {
     const updated = await this.oocyteStateHistoryService.update(historyId, {
       previousState: dto.previousState ?? undefined,
       newState: dto.newState ?? undefined,
-      transitionDate: dto.changeDate ? new Date(dto.changeDate) : undefined,
+      transitionDate: parseDateFromString(dto.changeDate) ?? undefined,
     });
     return {
       message: 'Historial de estado de oocito actualizado correctamente',

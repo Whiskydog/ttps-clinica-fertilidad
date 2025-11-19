@@ -37,6 +37,7 @@ import { RequireRoles } from '@auth/decorators/require-roles.decorator';
 import { CreateTreatmentResponseSchema, RoleCode } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Controller('treatments')
 @UseGuards(JwtAuthGuard)
@@ -122,7 +123,7 @@ export class TreatmentsController {
     const consent = await this.informedConsentService.create({
       treatment: { id: dto.treatmentId } as any,
       pdfUri: dto.pdfUri ?? null,
-      signatureDate: dto.signatureDate ? new Date(dto.signatureDate) : null,
+      signatureDate: parseDateFromString(dto.signatureDate),
       uploadedByUser: dto.uploadedByUserId
         ? ({ id: dto.uploadedByUserId } as any)
         : ({ id: user.id } as any),
@@ -156,7 +157,7 @@ export class TreatmentsController {
       console.log('[DEBUG] updateInformedConsent - Actualizando pdfUri a:', dto.pdfUri);
     }
     if ('signatureDate' in dto) {
-      updateData.signatureDate = dto.signatureDate ? new Date(dto.signatureDate) : null;
+      updateData.signatureDate = parseDateFromString(dto.signatureDate);
     }
 
     console.log('[DEBUG] updateInformedConsent - updateData:', JSON.stringify(updateData));
@@ -197,7 +198,7 @@ export class TreatmentsController {
       treatment: { id: dto.treatmentId } as any,
       milestoneType: dto.milestoneType,
       result: dto.result ?? null,
-      milestoneDate: dto.milestoneDate ? new Date(dto.milestoneDate) : null,
+      milestoneDate: parseDateFromString(dto.milestoneDate),
       registeredByDoctor: dto.registeredByDoctorId
         ? ({ id: dto.registeredByDoctorId } as any)
         : ({ id: user.id } as any),
@@ -219,7 +220,7 @@ export class TreatmentsController {
     const updated = await this.milestoneService.update(milestoneId, {
       milestoneType: dto.milestoneType ?? undefined,
       result: dto.result ?? undefined,
-      milestoneDate: dto.milestoneDate ? new Date(dto.milestoneDate) : undefined,
+      milestoneDate: parseDateFromString(dto.milestoneDate) ?? undefined,
     });
     return {
       message: 'Hito post-transferencia actualizado correctamente',
@@ -335,7 +336,11 @@ export class TreatmentsController {
     @Body() dto: UpdateTreatmentDto,
   ) {
     const treatmentId = Number(id);
-    const updated = await this.treatmentService.update(treatmentId, dto);
+    const updated = await this.treatmentService.update(treatmentId, {
+      ...dto,
+      startDate: (dto.startDate) ?? undefined,
+      closureDate: (dto.closureDate) ?? undefined,
+    });
     return {
       message: 'Tratamiento actualizado correctamente',
       id: updated.id,
@@ -371,7 +376,7 @@ export class TreatmentsController {
       dose: dto.dose,
       administrationRoute: dto.administrationRoute,
       duration: dto.duration,
-      startDate: dto.startDate,
+      startDate: dto.startDate ?? undefined,
       additionalMedication: dto.additionalMedication,
     });
     return {

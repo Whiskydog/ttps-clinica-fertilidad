@@ -5,6 +5,7 @@ import { Treatment } from './entities/treatment.entity';
 import { TreatmentStatus, InitialObjective } from '@repo/contracts';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
+import { parseDateFromString } from '@common/utils/date.utils';
 
 @Injectable()
 export class TreatmentService {
@@ -51,7 +52,7 @@ export class TreatmentService {
       treatment.initialObjective = dto.initialObjective as InitialObjective;
     }
     if (dto.startDate !== undefined) {
-      treatment.startDate = dto.startDate ? new Date(dto.startDate) : null;
+      treatment.startDate = parseDateFromString(dto.startDate);
     }
     if (dto.status !== undefined) {
       treatment.status = dto.status as TreatmentStatus;
@@ -60,7 +61,7 @@ export class TreatmentService {
       treatment.closureReason = dto.closureReason;
     }
     if (dto.closureDate !== undefined) {
-      treatment.closureDate = dto.closureDate ? new Date(dto.closureDate) : null;
+      treatment.closureDate = parseDateFromString(dto.closureDate);
     }
 
     return await this.treatmentRepo.save(treatment);
