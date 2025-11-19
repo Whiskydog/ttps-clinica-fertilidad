@@ -34,10 +34,17 @@ export class AvisosApiService {
       return resp.data;
     } catch (error: any) {
       if (error.response) {
-        throw new HttpException(
-          error.response.data ?? 'Error en módulo de avisos',
-          error.response.status ?? 502,
-        );
+        const responseData: string | Record<string, any> =
+          typeof error.response.data === 'string'
+            ? error.response.data
+            : error.response && typeof error.response.data === 'object'
+            ? error.response.data
+            : 'Error en módulo de avisos';
+
+        const status =
+          typeof error.response.status === 'number' ? error.response.status : 502;
+
+        throw new HttpException(responseData, status);
       }
       throw new InternalServerErrorException(
         'Error al comunicarse con el módulo de avisos (grupo 8)',
