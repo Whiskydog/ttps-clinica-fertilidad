@@ -5,13 +5,29 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class Group6ChatbotService {
   private readonly baseUrl =
-    'https://fbtoxxvhjtzdklstpkgo.supabase.co/functions/v1';
+    'https://talfxkyomlmfzbumscdm.supabase.co/functions/v1/fertility-chat';
+
+  private readonly secret =
+    process.env.CHATBOT_SECRET || 'DUMMY_CHATBOT_SECRET';
 
   constructor(private readonly http: HttpService) {}
 
-  async ask(question: string) {
-    const url = `${this.baseUrl}/chatbot`;
-    const { data } = await firstValueFrom(this.http.post(url, { question }));
-    return data;
+  private headers() {
+    return {
+      Authorization: `Bearer ${this.secret}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  preguntar(payload: {
+    patientId: number;
+    patientName: string;
+    birthDate: string;
+    gender: string;
+    messages: any[];
+  }) {
+    return firstValueFrom(
+      this.http.post(this.baseUrl, payload, { headers: this.headers() }),
+    ).then((r) => r.data);
   }
 }

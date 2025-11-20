@@ -7,19 +7,16 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
 export interface AssignOvocytePayload {
-  nro_grupo: string; // Ej: "1"
   ovocito_id: string; // Ej: "101"
 }
 
 export interface DeallocateOvocytePayload {
-  nro_grupo: string; // Ej: "1"
   ovocito_id: string; // Ej: "101"
   id_tanque: number; // Ej: 1
   id_rack: number; // Ej: 181
 }
 
 export interface GetOvocytePositionPayload {
-  nro_grupo: string; // Ej: "1"
   ovocito_id: string; // Ej: "101"
 }
 
@@ -27,6 +24,8 @@ export interface GetOvocytePositionPayload {
 export class Group9OvocytesInventoryService {
   private readonly baseUrl =
     'https://ssewaxrnlmnyizqsbzxe.supabase.co/functions/v1';
+
+  private readonly GROUP = '7';
 
   constructor(private readonly http: HttpService) {}
 
@@ -54,15 +53,33 @@ export class Group9OvocytesInventoryService {
     }
   }
 
+  // ---------------------------------------------
+  // 1) ASIGNAR OVOCITO
+  // ---------------------------------------------
   async assignOvocyte(payload: AssignOvocytePayload): Promise<any> {
-    return this.post('/assign-ovocyte', payload);
+    return this.post('/assign-ovocyte', {
+      nro_grupo: this.GROUP,
+      ...payload,
+    });
   }
 
+  // ---------------------------------------------
+  // 2) RETIRAR OVOCITO
+  // ---------------------------------------------
   async deallocateOvocyte(payload: DeallocateOvocytePayload): Promise<any> {
-    return this.post('/deallocate-ovocyte', payload);
+    return this.post('/deallocate-ovocyte', {
+      nro_grupo: this.GROUP,
+      ...payload,
+    });
   }
 
+  // ---------------------------------------------
+  // 3) CONSULTAR POSICIÓN
+  // ---------------------------------------------
   async getOvocytePosition(payload: GetOvocytePositionPayload): Promise<any> {
-    return this.post('/get-ovocito-posicion', payload);
+    return this.post('/get-ovocito-posicion', {
+      nro_grupo: this.GROUP,
+      ...payload,
+    });
   }
 }

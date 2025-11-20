@@ -5,28 +5,48 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class Group4SemenCryoService {
   private readonly baseUrl =
-    'https://hrqzwqkhpxvoogskrfue.supabase.co/functions/v1';
+    'https://bmcgxbtbcmlzoetyqajn.supabase.co/functions/v1';
+
+  private readonly token = process.env.SEMEN_CRYO_TOKEN || 'token-grupo-4';
 
   constructor(private readonly http: HttpService) {}
 
-  async listarMuestras() {
-    const url = `${this.baseUrl}/muestras`;
-    const { data } = await firstValueFrom(this.http.get(url));
+  private headers() {
+    return {
+      token: this.token,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async crearTanque(body: { group_id: number }) {
+    const url = `${this.baseUrl}/crear-tanque`;
+    const { data } = await firstValueFrom(
+      this.http.post(url, body, { headers: this.headers() }),
+    );
     return data;
   }
 
-  async buscarPorDni(dni: string) {
-    const url = `${this.baseUrl}/buscar_muestras`;
-    const { data } = await firstValueFrom(this.http.post(url, { dni }));
+  async congelar(body: { group_id: number; dni: string }) {
+    const url = `${this.baseUrl}/congelar-semen`;
+    const { data } = await firstValueFrom(
+      this.http.post(url, body, { headers: this.headers() }),
+    );
     return data;
   }
 
-  async registrarDisposicion(payload: {
-    muestra_id: number;
-    nueva_disposicion: string;
-  }) {
-    const url = `${this.baseUrl}/registrar_disposicion`;
-    const { data } = await firstValueFrom(this.http.post(url, payload));
+  async descongelar(body: { group_id: number; dni: string }) {
+    const url = `${this.baseUrl}/descongelar-semen`;
+    const { data } = await firstValueFrom(
+      this.http.post(url, body, { headers: this.headers() }),
+    );
+    return data;
+  }
+
+  async dniTieneMuestra(body: { group_id: number; dni: string }) {
+    const url = `${this.baseUrl}/dni-tiene-muestra`;
+    const { data } = await firstValueFrom(
+      this.http.post(url, body, { headers: this.headers() }),
+    );
     return data;
   }
 }

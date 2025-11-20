@@ -1,8 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import type {
-  Group10TelegramBotService,
-  TelegramBotSendPayload,
-} from './group10-telegram-bot.service';
+import { Group10TelegramBotService } from './group10-telegram-bot.service';
+import type { TelegramBotSendPayload } from './group10-telegram-bot.service';
 
 @Controller('external/grupo10/telegram')
 export class Group10TelegramBotController {
