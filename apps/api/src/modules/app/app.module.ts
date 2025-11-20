@@ -9,6 +9,7 @@ import { LaboratoryModule } from '@modules/laboratory/laboratory.module';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { MedicalOrdersModule } from '@modules/medical-orders/medical-orders.module';
+import { SchedulerModule } from '@modules/scheduler/scheduler.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
 import { UsersModule } from '@modules/users/users.module';
@@ -29,6 +30,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     MedicalInsurancesModule,
     UploadsModule,
     DoctorModule,
+    SchedulerModule,
   ],
   controllers: [],
   providers: [
