@@ -9,6 +9,7 @@ import Link from "next/link";
 import { HabitsSection } from "@/components/patient/medical-history/habits-section";
 import { FenotypeSection } from "@/components/patient/medical-history/fenotype-section";
 import { BackgroundsSection } from "@/components/patient/medical-history/backgrounds-section";
+import { EmptyState } from "@/components/patient/empty-state";
 
 export default function MedicalHistorySummary() {
   const { data, error, isLoading } = useQuery({
@@ -17,9 +18,30 @@ export default function MedicalHistorySummary() {
       getMedicalHistory().then((res) => res.data as MedicalHistoryResponse),
   });
 
-  if (isLoading) return <div>Cargando...</div>;
-  if (error) return <div>Error: {(error as Error).message}</div>;
-  if (!data) return <div>No hay historia clínica disponible.</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Cargando historia clínica...</div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="page-container">
+        <Link href="/patient">
+          <Button variant="link">← Volver a inicio</Button>
+        </Link>
+        <EmptyState
+          icon="medical-history"
+          title="No hay historia clínica disponible"
+          description="Aún no tienes una historia clínica registrada. Para comenzar tu tratamiento, primero debes sacar un turno con uno de nuestros especialistas."
+          showAppointmentButton={true}
+          showHomeButton={true}
+        />
+      </div>
+    );
+  }
 
   const {
     patient,

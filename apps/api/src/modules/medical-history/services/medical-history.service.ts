@@ -11,6 +11,7 @@ import { HabitsService } from './habits.service';
 import { FenotypeService } from './fenotype.service';
 import { BackgroundService } from './background.service';
 import { PatientsService } from '../../users/services/patients.service';
+import { BiologicalSex } from '@repo/contracts';
 
 @Injectable()
 export class MedicalHistoryService {
@@ -147,6 +148,26 @@ export class MedicalHistoryService {
       saved.id,
       patient.id,
     );
+
+    // Crear entidades relacionadas vacías para facilitar la edición posterior
+    // Crear Habits vacío
+    await this.habitsService.create({
+      medicalHistory: saved,
+    });
+
+    // Crear Fenotype vacío (para el paciente, no para pareja)
+    await this.fenotypeService.create({
+      medicalHistory: saved,
+    });
+
+    // Crear GynecologicalHistory vacío solo si el paciente es femenino
+    if (patient.biologicalSex === BiologicalSex.FEMALE) {
+      const gyneRecord = this.gyneRepo.create({
+        medicalHistory: saved,
+      });
+      await this.gyneRepo.save(gyneRecord);
+    }
+
     return saved;
   }
 
