@@ -138,9 +138,6 @@ export class MedicalOrdersController {
     @Body() dto: CreateStudyResultDto,
     @CurrentUser() user: User,
   ) {
-    console.log('[DEBUG] createStudyResult - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] createStudyResult - originalPdfUri:', dto.originalPdfUri);
-
     const result = await this.studyResultService.create({
       medicalOrder: { id: dto.medicalOrderId } as any,
       studyName: dto.studyName ?? null,
@@ -152,8 +149,6 @@ export class MedicalOrdersController {
         : ({ id: user.id } as any),
       transcriptionDate: parseDateFromString(dto.transcriptionDate),
     });
-
-    console.log('[DEBUG] createStudyResult - Resultado creado:', JSON.stringify(result));
 
     return {
       message: 'Resultado de estudio creado correctamente',
@@ -169,10 +164,7 @@ export class MedicalOrdersController {
     @Body() dto: UpdateStudyResultDto,
   ) {
     const resultId = Number(id);
-    console.log('[DEBUG] updateStudyResult - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] updateStudyResult - originalPdfUri:', dto.originalPdfUri);
 
-    // Preparar datos para actualización, manteniendo null si está presente
     const updateData: Partial<any> = {};
 
     if ('studyName' in dto) updateData.studyName = dto.studyName;
@@ -183,11 +175,7 @@ export class MedicalOrdersController {
       updateData.transcriptionDate = parseDateFromString(dto.transcriptionDate);
     }
 
-    console.log('[DEBUG] updateStudyResult - Datos a actualizar:', JSON.stringify(updateData));
-
     const updated = await this.studyResultService.update(resultId, updateData);
-
-    console.log('[DEBUG] updateStudyResult - Resultado actualizado:', JSON.stringify(updated));
 
     return {
       message: 'Resultado de estudio actualizado correctamente',
