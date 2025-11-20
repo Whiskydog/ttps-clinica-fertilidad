@@ -16,6 +16,7 @@ import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { ExternalModule } from '@external/external.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     UploadsModule,
     DoctorModule,
     SchedulerModule,
+    ExternalModule,
   ],
   controllers: [],
   providers: [
