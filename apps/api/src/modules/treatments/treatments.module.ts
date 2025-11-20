@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { Monitoring } from '@modules/treatments/entities/monitoring.entity';
@@ -13,8 +13,11 @@ import { TreatmentsService } from '@modules/treatments/treatments.service';
 import { InformedConsentService } from '@modules/treatments/services/informed-consent.service';
 import { PostTransferMilestoneService } from '@modules/treatments/services/post-transfer-milestone.service';
 import { MedicalCoverageService } from '@modules/treatments/services/medical-coverage.service';
+import { DoctorNoteService } from '@modules/treatments/services/doctor-note.service';
+import { MedicationProtocolService } from '@modules/treatments/services/medication-protocol.service';
 import { TreatmentsController } from '@modules/treatments/treatments.controller';
 import { MedicalHistoryModule } from '../medical-history/medical-history.module';
+import { UploadsModule } from '@modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -29,6 +32,7 @@ import { MedicalHistoryModule } from '../medical-history/medical-history.module'
       MedicalHistory,
     ]),
     MedicalHistoryModule,
+    UploadsModule,
   ],
   providers: [
     TreatmentService,
@@ -36,6 +40,8 @@ import { MedicalHistoryModule } from '../medical-history/medical-history.module'
     InformedConsentService,
     PostTransferMilestoneService,
     MedicalCoverageService,
+    DoctorNoteService,
+    MedicationProtocolService,
   ],
   controllers: [TreatmentsController],
   exports: [

@@ -72,7 +72,7 @@ export const CreateStudyResultSchema = z.object({
   transcription: z.string().nullable().optional(),
   originalPdfUri: z.string().nullable().optional(),
   transcribedByLabTechnicianId: z.number().nullable().optional(),
-  transcriptionDate: z.iso.datetime().nullable().optional(),
+  transcriptionDate: z.string().nullable().optional(),
 });
 
 export const UpdateStudyResultSchema = CreateStudyResultSchema.partial().extend({
@@ -81,6 +81,31 @@ export const UpdateStudyResultSchema = CreateStudyResultSchema.partial().extend(
 
 export type CreateStudyResultInput = z.infer<typeof CreateStudyResultSchema>;
 export type UpdateStudyResultInput = z.infer<typeof UpdateStudyResultSchema>;
+
+// ============================================
+// Input/Upsert Schemas for Medical Orders
+// ============================================
+
+export const CreateMedicalOrderSchema = z.object({
+  patientId: z.number(),
+  doctorId: z.number(),
+  treatmentId: z.number().nullable().optional(),
+  category: z.string().min(1).max(100),
+  description: z.string().nullable().optional(),
+  studies: z.array(StudySchema).nullable().optional(),
+  diagnosis: z.string().nullable().optional(),
+  justification: z.string().nullable().optional(),
+});
+
+export const UpdateMedicalOrderSchema = CreateMedicalOrderSchema.partial().extend({
+  id: z.number(),
+  status: MedicalOrderStatusSchema.optional(),
+  completedDate: z.string().nullable().optional(),
+  results: z.string().nullable().optional(),
+});
+
+export type CreateMedicalOrderInput = z.infer<typeof CreateMedicalOrderSchema>;
+export type UpdateMedicalOrderInput = z.infer<typeof UpdateMedicalOrderSchema>;
 
 // Orden médica con relaciones (para detalle)
 export const MedicalOrderDetailSchema = z.object({

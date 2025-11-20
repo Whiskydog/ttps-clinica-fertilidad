@@ -49,25 +49,23 @@ export class TreatmentsService {
     return treatment;
   }
 
-  async getTreatmentDetail(treatmentId: number, patientId: number) {
-    const medicalHistory = await this.medicalHistoryRepository.findOne({
-      where: { patient: { id: patientId } },
-    });
-
-    if (!medicalHistory) {
-      throw new NotFoundException('Medical history not found');
-    }
-
+  async getTreatmentDetail(treatmentId: number, userId: number) {
+    // First, try to find the treatment with all its relations
     const treatment = await this.treatmentRepository.findOne({
-      where: {
-        id: treatmentId,
-        medicalHistory: { id: medicalHistory.id },
-      },
-      relations: ['initialDoctor'],
+      where: { id: treatmentId },
+      relations: ['initialDoctor', 'medicalHistory', 'medicalHistory.patient'],
     });
 
     if (!treatment) {
       throw new NotFoundException('Treatment not found');
+    }
+
+    // Verify access: user must be either the patient or the doctor of this treatment
+    const isPatient = treatment.medicalHistory?.patient?.id === userId;
+    const isDoctor = treatment.initialDoctor?.id === userId;
+
+    if (!isPatient && !isDoctor) {
+      throw new NotFoundException('Treatment not found'); // Don't reveal existence
     }
 
     const monitorings = await this.monitoringRepository.find({

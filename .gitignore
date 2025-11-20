@@ -60,3 +60,7 @@ pnpm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+# Uploads (keep folders with .gitkeep but ignore uploaded files)
+apps/api/uploads/**
+!apps/api/uploads/**/.gitkeep

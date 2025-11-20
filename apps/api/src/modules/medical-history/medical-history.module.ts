@@ -16,6 +16,8 @@ import { FenotypeService } from '@modules/medical-history/services/fenotype.serv
 import { BackgroundService } from '@modules/medical-history/services/background.service';
 import { AuditModule } from '@modules/audit/audit.module';
 import { UsersModule } from '@modules/users/users.module';
+import { HttpModule } from '@nestjs/axios';
+import { MedicalTermsService } from './services/medical-terms.service';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { UsersModule } from '@modules/users/users.module';
     ]),
     AuditModule,
     UsersModule,
+    HttpModule,
   ],
   providers: [
     MedicalHistoryService,
@@ -38,6 +41,7 @@ import { UsersModule } from '@modules/users/users.module';
     HabitsService,
     FenotypeService,
     BackgroundService,
+    MedicalTermsService,
     Logger,
   ],
   controllers: [MedicalHistoryController],

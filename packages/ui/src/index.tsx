@@ -7,3 +7,9 @@ export { cn } from './lib/utils';
 export { useIsMobile } from './hooks/use-mobile';
 
 export { toast };
+
+// Re-export checkbox component
+export * from './ui/checkbox';
+
+// Re-export form components
+export * from './ui/form';

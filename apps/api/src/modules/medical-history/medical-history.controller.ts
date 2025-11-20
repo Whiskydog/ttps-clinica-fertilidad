@@ -12,6 +12,7 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import {
   UpdateMedicalHistoryDto,
@@ -33,7 +34,7 @@ import { User } from '@users/entities/user.entity';
 import { formatMedicalHistoryForResponse } from './utils';
 import { MedicalHistoryValidators } from './validators';
 import { MedicalHistoryHandlers } from './handlers';
-
+import { MedicalTermsService } from './services/medical-terms.service';
 @Controller('medical-history')
 export class MedicalHistoryController {
   private handlers: MedicalHistoryHandlers;
@@ -43,8 +44,22 @@ export class MedicalHistoryController {
     private readonly habitsService: HabitsService,
     private readonly fenotypeService: FenotypeService,
     private readonly backgroundService: BackgroundService,
+    private readonly medicalTermsService: MedicalTermsService,
   ) {
     this.handlers = new MedicalHistoryHandlers(medicalHistoryService);
+  }
+
+  @Get('terms')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async searchMedicalTerms(
+    @Query('q') q: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<any> {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Number(limit) : 10;
+    return this.medicalTermsService.searchTerms(q, pageNum, limitNum);
   }
 
   @Post('update')
@@ -188,7 +203,9 @@ export class MedicalHistoryController {
   async createFenotype(@Body() dto: CreateFenotypeDto) {
     const fenotype = await this.fenotypeService.create({
       medicalHistory: { id: dto.medicalHistoryId } as any,
-      partnerData: dto.partnerDataId ? ({ id: dto.partnerDataId } as any) : null,
+      partnerData: dto.partnerDataId
+        ? ({ id: dto.partnerDataId } as any)
+        : null,
       eyeColor: dto.eyeColor ?? null,
       hairColor: dto.hairColor ?? null,
       hairType: dto.hairType ?? null,
@@ -205,7 +222,10 @@ export class MedicalHistoryController {
   @Patch('fenotype/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.DOCTOR)
-  async updateFenotype(@Param('id') id: string, @Body() dto: UpdateFenotypeDto) {
+  async updateFenotype(
+    @Param('id') id: string,
+    @Body() dto: UpdateFenotypeDto,
+  ) {
     const fenotypeId = Number(id);
     const updated = await this.fenotypeService.update(fenotypeId, {
       eyeColor: dto.eyeColor ?? undefined,
