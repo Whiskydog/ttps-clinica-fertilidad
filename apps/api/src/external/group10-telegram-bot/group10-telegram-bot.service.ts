@@ -11,7 +11,7 @@ export interface TelegramBotSendPayload {
 }
 
 @Injectable()
-export class TelegramBotApiService {
+export class Group10TelegramBotService {
   private readonly url =
     'https://dryvmlqcysuushbmofqg.supabase.co/functions/v1/dynamic-responder/send';
 
@@ -30,9 +30,10 @@ export class TelegramBotApiService {
     } catch (error: any) {
       if (error.response) {
         throw new HttpException(
-          (typeof error.response.data === 'string' || typeof error.response.data === 'object'
+          typeof error.response.data === 'string' ||
+          typeof error.response.data === 'object'
             ? error.response.data
-            : 'Error en módulo Bot Telegram (grupo 10)'),
+            : 'Error en módulo Bot Telegram (grupo 10)',
           error.response.status ?? 502,
         );
       }

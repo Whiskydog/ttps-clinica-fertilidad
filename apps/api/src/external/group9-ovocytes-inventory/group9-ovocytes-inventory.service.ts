@@ -24,7 +24,7 @@ export interface GetOvocytePositionPayload {
 }
 
 @Injectable()
-export class OvocytesInventoryApiService {
+export class Group9OvocytesInventoryService {
   private readonly baseUrl =
     'https://ssewaxrnlmnyizqsbzxe.supabase.co/functions/v1';
 

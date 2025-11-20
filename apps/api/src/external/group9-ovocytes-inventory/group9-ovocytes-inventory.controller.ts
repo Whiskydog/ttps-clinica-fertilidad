@@ -4,12 +4,12 @@ import type {
   DeallocateOvocytePayload,
   GetOvocytePositionPayload,
 } from './group9-ovocytes-inventory.service';
-import { OvocytesInventoryApiService } from './group9-ovocytes-inventory.service';
+import { Group9OvocytesInventoryService } from './group9-ovocytes-inventory.service';
 
 @Controller('external/grupo9/ovocytes')
-export class OvocytesInventoryApiController {
+export class Group9OvocytesInventoryController {
   constructor(
-    private readonly ovocytesInventoryApiService: OvocytesInventoryApiService,
+    private readonly group9OvocytesInventoryService: Group9OvocytesInventoryService,
   ) {}
 
   /**
@@ -18,7 +18,7 @@ export class OvocytesInventoryApiController {
    */
   @Post('assign')
   async assign(@Body() body: AssignOvocytePayload) {
-    const data = await this.ovocytesInventoryApiService.assignOvocyte(body);
+    const data = await this.group9OvocytesInventoryService.assignOvocyte(body);
     return {
       statusCode: 200,
       message: 'Ovocito asignado correctamente (grupo 9)',
@@ -32,7 +32,8 @@ export class OvocytesInventoryApiController {
    */
   @Post('deallocate')
   async deallocate(@Body() body: DeallocateOvocytePayload) {
-    const data = await this.ovocytesInventoryApiService.deallocateOvocyte(body);
+    const data =
+      await this.group9OvocytesInventoryService.deallocateOvocyte(body);
     return {
       statusCode: 200,
       message: 'Ovocito liberado correctamente (grupo 9)',
@@ -47,7 +48,7 @@ export class OvocytesInventoryApiController {
   @Post('position')
   async getPosition(@Body() body: GetOvocytePositionPayload) {
     const data =
-      await this.ovocytesInventoryApiService.getOvocytePosition(body);
+      await this.group9OvocytesInventoryService.getOvocytePosition(body);
     return {
       statusCode: 200,
       message: 'Posición del ovocito obtenida (grupo 9)',

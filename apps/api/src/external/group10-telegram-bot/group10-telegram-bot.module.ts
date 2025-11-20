@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { TelegramBotApiService } from './group10-telegram-bot.service';
-import { TelegramBotApiController } from './group10-telegram-bot.controller';
+import { Group10TelegramBotService } from './group10-telegram-bot.service';
+import { Group10TelegramBotController } from './group10-telegram-bot.controller';
 
 @Module({
   imports: [HttpModule],
-  providers: [TelegramBotApiService],
-  controllers: [TelegramBotApiController],
-  exports: [TelegramBotApiService],
+  providers: [Group10TelegramBotService],
+  controllers: [Group10TelegramBotController],
+  exports: [Group10TelegramBotService],
 })
-export class TelegramBotApiModule {}
+export class Group10TelegramBotModule {}

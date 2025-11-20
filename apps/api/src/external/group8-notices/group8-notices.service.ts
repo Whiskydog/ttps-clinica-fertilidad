@@ -7,14 +7,14 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
 export interface SendAvisoEmailPayload {
-  group: number; 
+  group: number;
   toEmails: string[]; // destinatarios
   subject: string; // asunto
   htmlBody: string; // cuerpo HTML
 }
 
 @Injectable()
-export class AvisosApiService {
+export class Group8NoticesService {
   private readonly baseUrl =
     'https://mvvuegssraetbyzeifov.supabase.co/functions/v1';
 
@@ -38,11 +38,13 @@ export class AvisosApiService {
           typeof error.response.data === 'string'
             ? error.response.data
             : error.response && typeof error.response.data === 'object'
-            ? error.response.data
-            : 'Error en módulo de avisos';
+              ? error.response.data
+              : 'Error en módulo de avisos';
 
         const status =
-          typeof error.response.status === 'number' ? error.response.status : 502;
+          typeof error.response.status === 'number'
+            ? error.response.status
+            : 502;
 
         throw new HttpException(responseData, status);
       }

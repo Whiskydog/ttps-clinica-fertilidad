@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, catchError } from 'rxjs';
 
 @Injectable()
-export class GametesApiService {
+export class Group7GametBankService {
   private readonly BASE_URL =
     'https://omtalaimckjolwtkgqjw.supabase.co/functions/v1';
   private readonly GROUP_NUMBER = 7; // Fijo para el grupo 7
@@ -59,7 +59,6 @@ export class GametesApiService {
     });
   }
 
-
   findCompatibleGamete(payload: {
     patient_id: number;
     required_traits: Record<string, any>;
@@ -84,9 +83,6 @@ export class GametesApiService {
   }
 
   getEnums() {
-    return this.request(
-      `/fenotipos?group_number=${this.GROUP_NUMBER}`,
-      'GET',
-    );
+    return this.request(`/fenotipos?group_number=${this.GROUP_NUMBER}`, 'GET');
   }
 }
