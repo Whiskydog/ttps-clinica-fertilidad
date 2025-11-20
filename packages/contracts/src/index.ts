@@ -4,6 +4,7 @@ export * from "./auth/schemas";
 export * from "./auth/types";
 export * from "./common/api";
 export * from "./cryopreservation/schemas";
+export * from "./doctor/schemas";
 export * from "./laboratory/enums";
 export * from "./laboratory/schemas";
 export * from "./medical-insurances/schemas";
@@ -70,3 +71,16 @@ export type {
 export type {
   StudyResult,
 } from "./medical-orders/schemas";
+
+// Exportar tipos específicos de doctor dashboard
+export type {
+  DashboardKPIs,
+  MonthlyStats,
+  AlertType,
+  DoctorAlert,
+  DashboardAlerts,
+  RecentTreatment,
+  RecentTreatmentsResponse,
+  TodayAppointment,
+  TodayAppointmentsResponse,
+} from "./doctor/schemas";

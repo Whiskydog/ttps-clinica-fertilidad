@@ -4,6 +4,7 @@ import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@modules/config/config.module';
+import { DoctorModule } from '@modules/doctor/doctor.module';
 import { LaboratoryModule } from '@modules/laboratory/laboratory.module';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
@@ -27,6 +28,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     AppointmentsModule,
     MedicalInsurancesModule,
     UploadsModule,
+    DoctorModule,
   ],
   controllers: [],
   providers: [
