@@ -1,7 +1,9 @@
 "use client";
 
 import { signUp } from "@/app/actions/auth";
+import { getMedicalInsurances, MedicalInsurance } from "@/app/actions/medical-insurances";
 import { setValidationErrors } from "@/utils/rhf-utils";
+import { DateOfBirthInput } from "@/components/ui/date-of-birth-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BiologicalSex,
@@ -22,12 +24,25 @@ import {
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [medicalInsurances, setMedicalInsurances] = useState<MedicalInsurance[]>([]);
+  const [isLoadingInsurances, setIsLoadingInsurances] = useState(true);
+
+  useEffect(() => {
+    async function loadInsurances() {
+      setIsLoadingInsurances(true);
+      const insurances = await getMedicalInsurances();
+      setMedicalInsurances(insurances);
+      setIsLoadingInsurances(false);
+    }
+    loadInsurances();
+  }, []);
+
   const form = useForm<PatientSignUp>({
     resolver: zodResolver(PatientSignUpSchema),
     defaultValues: {
@@ -57,7 +72,11 @@ export default function RegisterPage() {
     startTransition(async () => {
       const res = await signUp(data);
       if ("errors" in res) {
+        // Validation errors
         setValidationErrors(res.errors, form.setError, true);
+      } else if ("error" in res) {
+        // General error (e.g., "Obra social inválida")
+        toast.error(res.message || "Error en el registro");
       } else {
         router.push("/login");
         toast.success(res.message || "Registro exitoso");
@@ -186,12 +205,10 @@ export default function RegisterPage() {
                         >
                           Fecha de Nacimiento: *
                         </FieldLabel>
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          placeholder="DD-MM-AAAA"
-                          autoComplete="off"
-                          className="bg-white border-gray-300 text-gray-900"
+                        <DateOfBirthInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isPending}
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -376,19 +393,23 @@ export default function RegisterPage() {
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
+                          disabled={isLoadingInsurances}
                         >
                           <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                            <SelectValue placeholder="Seleccione..." />
+                            <SelectValue placeholder={isLoadingInsurances ? "Cargando..." : "Seleccione..."} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="osde">OSDE</SelectItem>
-                            <SelectItem value="swiss-medical">
-                              Swiss Medical
-                            </SelectItem>
-                            <SelectItem value="galeno">Galeno</SelectItem>
-                            <SelectItem value="medicus">Medicus</SelectItem>
-                            <SelectItem value="pami">PAMI</SelectItem>
-                            <SelectItem value="otra">Otra</SelectItem>
+                            {medicalInsurances.length === 0 && !isLoadingInsurances ? (
+                              <div className="px-2 py-1.5 text-sm text-gray-500">
+                                No hay obras sociales disponibles
+                              </div>
+                            ) : (
+                              medicalInsurances.map((insurance) => (
+                                <SelectItem key={insurance.id} value={insurance.name}>
+                                  {insurance.name}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         {fieldState.invalid && (

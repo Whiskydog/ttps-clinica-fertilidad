@@ -27,6 +27,8 @@ export async function getMedicalHistory(): Promise<MedicalHistoryResponse> {
 
   const payload = await resp.json().catch(() => null);
 
+  console.log(JSON.stringify(payload))
+  
   if (!resp.ok) {
     const message = payload?.message || `Request failed: ${resp.status}`;
     throw new Error(message);

@@ -1,15 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from 'next/link';
-import { Button } from '@repo/ui/button';
-import { Card, CardContent } from '@repo/ui/card';
-import { AlertTriangle } from 'lucide-react';
-import { ProductsSummary } from '@/components/patient/cryopreserved/products-summary';
-import { OvulesList } from '@/components/patient/cryopreserved/ovules-list';
-import { EmbryosList } from '@/components/patient/cryopreserved/embryos-list';
-import { getCryopreservationSummary } from '@/app/actions/patients/cryopreservation/get-summary';
-import type { CryopreservationSummary } from '@repo/contracts';
+import Link from "next/link";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent } from "@repo/ui/card";
+import { AlertTriangle } from "lucide-react";
+import { ProductsSummary } from "@/components/patient/cryopreserved/products-summary";
+import { OvulesList } from "@/components/patient/cryopreserved/ovules-list";
+import { EmbryosList } from "@/components/patient/cryopreserved/embryos-list";
+import { EmptyState } from "@/components/patient/empty-state";
+import { getCryopreservationSummary } from "@/app/actions/patients/cryopreservation/get-summary";
+import type { CryopreservationSummary } from "@repo/contracts";
 
 export default function CryopreservedPage() {
   const { data: response, isLoading } = useQuery({
@@ -18,28 +19,42 @@ export default function CryopreservedPage() {
   });
 
   const defaultData: CryopreservationSummary = {
-    summary: {
-      ovules: {
-        total: 0,
-        cryoDate: new Date(),
-      },
-      embryos: {
-        total: 0,
-        lastUpdate: new Date(),
-      },
-    },
-    ovules: [],
-    embryos: []
+    oocytes: [],
+    embryos: [],
   };
 
-  
-
-  const cryoData = (response?.data as CryopreservationSummary | null) ?? defaultData;
+  const cryoData =
+    (response?.data as CryopreservationSummary | null) ?? defaultData;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando productos criopreservados...</div>
+        <div className="text-lg text-gray-600">
+          Cargando productos criopreservados...
+        </div>
+      </div>
+    );
+  }
+
+  const hasNoProducts =
+    cryoData.oocytes.length === 0 && cryoData.embryos.length === 0;
+
+  if (hasNoProducts) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href="/patient">
+            <Button variant="link">← Volver al Dashboard</Button>
+          </Link>
+        </div>
+
+        <EmptyState
+          icon="cryopreserved"
+          title="No tienes productos criopreservados"
+          description="Aún no tienes óvulos ni embriones criopreservados. Estos se generan durante el proceso de tratamiento de fertilidad."
+          showAppointmentButton={true}
+          showHomeButton={true}
+        />
       </div>
     );
   }
@@ -52,19 +67,22 @@ export default function CryopreservedPage() {
         </Link>
       </div>
 
-      <ProductsSummary summary={cryoData.summary} />
+      <ProductsSummary
+        ovulesTotal={cryoData.oocytes?.length || 0}
+        embryosTotal={cryoData.embryos?.length || 0}
+      />
 
-      <OvulesList ovules={cryoData.ovules?? []} />
+      <OvulesList ovules={cryoData.oocytes ?? []} />
 
-      <EmbryosList embryos={cryoData.embryos?? []  } />
+      <EmbryosList embryos={cryoData.embryos ?? []} />
 
       <Card className="bg-amber-100 border-amber-300">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-900">
-              <span className="font-semibold">Nota:</span> Cualquier acción sobre productos
-              criopreservados requiere autorización médica
+              <span className="font-semibold">Nota:</span> Cualquier acción
+              sobre productos criopreservados requiere autorización médica
             </p>
           </div>
         </CardContent>

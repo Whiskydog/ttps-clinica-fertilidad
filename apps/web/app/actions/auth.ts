@@ -15,8 +15,8 @@ import {
 
 export async function signUp(
   data: PatientSignUp
-): Promise<ApiResponse<PatientResponse> | ApiValidationErrorResponse> {
-  
+): Promise<ApiResponse<PatientResponse> | ApiValidationErrorResponse | ApiErrorResponse> {
+
   const response = await fetch(`${process.env.BACKEND_URL}/patients`, {
     method: "POST",
     headers: {
@@ -25,7 +25,14 @@ export async function signUp(
     body: JSON.stringify(data),
   });
 
-  return await response.json();
+  const payload = await response.json();
+
+  // If response is not ok, return the error response
+  if (!response.ok) {
+    return payload as ApiValidationErrorResponse | ApiErrorResponse;
+  }
+
+  return payload as ApiResponse<PatientResponse>;
 }
 
 export async function signInPatient(

@@ -320,4 +320,31 @@ export class LaboratoryController {
   ) {
     return this.embryoService.findByDisposition(disposition);
   }
+
+  // endpoints para el resumen de criopreservación para el paciente
+  @Get('patient/summary')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getPatientSummary(@CurrentUser() user: User) {
+
+    const oocytes = await this.oocyteService.findByPatientId(user.id);
+    const embryos = await this.embryoService.findByPatientId(user.id);
+    return {
+      oocytes,
+      embryos,
+    };
+  }
+
+  @Get('patient/oocyte/:id')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getOocyteDetail(@Param('id') id: string) {
+    const oocyteIdNum = Number(id);
+    return this.oocyteService.findOne(oocyteIdNum);
+  }
+
+  @Get('patient/embryo/:id')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getEmbryoDetail(@Param('id') id: string) {
+    const embryoIdNum = Number(id);
+    return this.embryoService.findOne(embryoIdNum);
+  }
 }

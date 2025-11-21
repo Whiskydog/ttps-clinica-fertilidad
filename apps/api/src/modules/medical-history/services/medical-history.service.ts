@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalHistory } from '../entities/medical-history.entity';
@@ -11,6 +11,7 @@ import { HabitsService } from './habits.service';
 import { FenotypeService } from './fenotype.service';
 import { BackgroundService } from './background.service';
 import { PatientsService } from '../../users/services/patients.service';
+import { BiologicalSex } from '@repo/contracts';
 
 @Injectable()
 export class MedicalHistoryService {
@@ -58,6 +59,7 @@ export class MedicalHistoryService {
   }
 
   constructor(
+    private readonly logger: Logger,
     @InjectRepository(MedicalHistory)
     private readonly medicalHistoryRepo: Repository<MedicalHistory>,
     @InjectRepository(GynecologicalHistory)
@@ -72,29 +74,42 @@ export class MedicalHistoryService {
   ) {}
 
   async findByUserId(userId: number) {
+
+    //info paciente
     const patient = await this.patientsService.findPatientById(userId);
+    this.logger.log(`Patient found: ${JSON.stringify(patient)}`);
     if (!patient) return null;
+    
+    // historia clínica
     const mh = await this.medicalHistoryRepo.findOne({
       where: { patient: { id: patient.id } },
       relations: ['patient'],
     });
+    this.logger.log(`MH found: ${JSON.stringify(mh)}`);
     if (!mh) return null;
-
-    // traer explícitamente los datos de la pareja y el historial ginecológico
+    
+    // traer datos de la pareja
     const partners = await this.partnerDataService.findByMedicalHistory(mh.id);
+    this.logger.log(`Partners found: ${JSON.stringify(partners)}`);
 
-    // para el historial ginecológico hay que consultar de forma distinta
+    // datos del historial ginecológico
     const gynecologicalHistory = await this.gyneRepo.find({
       where: { medicalHistory: { id: mh.id } },
       relations: ['partnerData'],
       order: { id: 'DESC' },
     });
+    this.logger.log(`Gynecological history found: ${JSON.stringify(gynecologicalHistory)}`);
 
-    // Fetch new related data
+    // habitos
     const habits = await this.habitsService.findByMedicalHistoryId(mh.id);
+    this.logger.log(`Habits found: ${JSON.stringify(habits)}`);
+    // fenotipos
     const fenotypes = await this.fenotypeService.findByMedicalHistoryId(mh.id);
+    this.logger.log(`Fenotypes found: ${JSON.stringify(fenotypes)}`);
+    // antecedentes
     const backgrounds = await this.backgroundService.findByMedicalHistoryId(mh.id);
-
+    this.logger.log(`Backgrounds found: ${JSON.stringify(backgrounds)}`);
+    
     // adjuntar la pareja más relevante (la última) y la lista de historiales ginecológicos
     return {
       ...mh,
@@ -133,6 +148,26 @@ export class MedicalHistoryService {
       saved.id,
       patient.id,
     );
+
+    // Crear entidades relacionadas vacías para facilitar la edición posterior
+    // Crear Habits vacío
+    await this.habitsService.create({
+      medicalHistory: saved,
+    });
+
+    // Crear Fenotype vacío (para el paciente, no para pareja)
+    await this.fenotypeService.create({
+      medicalHistory: saved,
+    });
+
+    // Crear GynecologicalHistory vacío solo si el paciente es femenino
+    if (patient.biologicalSex === BiologicalSex.FEMALE) {
+      const gyneRecord = this.gyneRepo.create({
+        medicalHistory: saved,
+      });
+      await this.gyneRepo.save(gyneRecord);
+    }
+
     return saved;
   }
 

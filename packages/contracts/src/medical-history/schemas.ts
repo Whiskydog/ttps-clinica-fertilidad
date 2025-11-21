@@ -48,8 +48,8 @@ export const HabitsSchema = z.object({
   packDaysValue: z.number().nullable(), // decimal 6,2
   alcoholConsumption: z.string().nullable(),
   recreationalDrugs: z.string().max(255).nullable(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type Habits = z.infer<typeof HabitsSchema>;
@@ -65,8 +65,8 @@ export const FenotypeSchema = z.object({
   height: z.number().nullable(), // decimal 5,2
   complexion: z.string().max(20).nullable(),
   ethnicity: z.string().max(100).nullable(),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type Fenotype = z.infer<typeof FenotypeSchema>;
@@ -77,8 +77,8 @@ export const BackgroundSchema = z.object({
   medicalHistoryId: z.number(),
   termCode: z.string().max(50).nullable(),
   backgroundType: z.nativeEnum(BackgroundType),
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type Background = z.infer<typeof BackgroundSchema>;

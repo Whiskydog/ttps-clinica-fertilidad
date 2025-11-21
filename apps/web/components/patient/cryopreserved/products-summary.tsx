@@ -3,11 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import type { CryopreservationSummary } from '@repo/contracts';
 
-interface ProductsSummaryProps {
-  summary: CryopreservationSummary["summary"];
-}
 
-export function ProductsSummary({ summary }: ProductsSummaryProps) {
+export function ProductsSummary({ ovulesTotal, embryosTotal }: {ovulesTotal: number, embryosTotal: number}) {
   return (
     <Card>
       <CardHeader className="bg-slate-500">
@@ -18,21 +15,14 @@ export function ProductsSummary({ summary }: ProductsSummaryProps) {
           <div className="border-2 border-green-500 rounded-lg p-6 text-center">
             <div className="text-green-500 font-bold text-sm mb-2">ÓVULOS</div>
             <div className="text-green-500 text-4xl font-bold mb-2">
-              Total: {summary.ovules.total}
-            </div>
-            <div className="text-sm text-gray-600">
-              Fecha congelación: {new Date(summary.ovules.cryoDate).toLocaleDateString('es-AR')}
+              Total: {ovulesTotal}
             </div>
           </div>
 
           <div className="border-2 border-blue-500 rounded-lg p-6 text-center">
             <div className="text-blue-500 font-bold text-sm mb-2">EMBRIONES</div>
             <div className="text-blue-500 text-4xl font-bold mb-2">
-              Total: {summary.embryos.total}
-            </div>
-            <div className="text-sm text-gray-600">
-              Última actualización:{' '}
-              {new Date(summary.embryos.lastUpdate).toLocaleDateString('es-AR')}
+              Total: {embryosTotal}
             </div>
           </div>
         </div>

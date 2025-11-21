@@ -46,6 +46,26 @@ export class EmbryoService {
     return embryo;
   }
 
+async findByPatientId(patientId: number): Promise<Embryo[]> {
+    return this.embryoRepository.find({
+      where: {
+        oocyteOrigin: {
+          puncture: {
+            treatment: {
+              medicalHistory: {
+                patient: {
+                  id: patientId,
+                },
+              },
+            },
+          },
+        },
+      },
+      relations: ['oocyteOrigin', 'oocyteOrigin.puncture', 'oocyteOrigin.puncture.treatment', 'oocyteOrigin.puncture.treatment.medicalHistory', 'oocyteOrigin.puncture.treatment.medicalHistory.patient'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async create(embryoData: Partial<Embryo>): Promise<Embryo> {
     const embryo = this.embryoRepository.create(embryoData);
     return this.embryoRepository.save(embryo);
