@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 
 @Injectable()
 export class Group1StudiesService {

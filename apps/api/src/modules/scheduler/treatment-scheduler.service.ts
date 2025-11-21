@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { TreatmentService } from '../treatments/treatment.service';
+import { Group10TelegramBotService } from '@external/group10-telegram-bot/group10-telegram-bot.service';
+import { Group8NoticesService } from '@external/group8-notices/group8-notices.service';
 
 @Injectable()
 export class TreatmentSchedulerService {
   private readonly logger = new Logger(TreatmentSchedulerService.name);
 
-  constructor(private readonly treatmentService: TreatmentService) {}
+  constructor(
+    private readonly treatmentService: TreatmentService,
+    private readonly telegramService: Group10TelegramBotService,
+    private readonly emailService: Group8NoticesService,
+  ) {}
 
   /**
    * Cron job que se ejecuta diariamente a medianoche
@@ -76,27 +82,58 @@ export class TreatmentSchedulerService {
         `${daysSinceActivity} días sin actividad - Se cerrará en ${daysRemaining} días`,
     );
 
-    // TODO: Integrar con módulo de Notificaciones cuando esté disponible
-    // Enviar notificación al paciente:
-    // await this.notificationsService.send({
-    //   userId: treatment.medicalHistory.patient.id,
-    //   type: 'treatment_inactivity_warning',
-    //   title: 'Aviso de inactividad de tratamiento',
-    //   message: `Su tratamiento será cerrado automáticamente en ${daysRemaining} días por inactividad. ` +
-    //            `Por favor, contacte a su médico si desea continuar con el tratamiento.`,
-    //   channel: 'all',
-    //   metadata: { treatmentId: treatment.id, daysRemaining }
-    // });
+    // Enviar notificaciones al paciente
+    const patientEmail = treatment.medicalHistory?.patient?.email;
+    if (patientEmail) {
+      try {
+        await this.emailService.sendEmail({
+          group: 9,
+          toEmails: [patientEmail],
+          subject: 'Aviso de inactividad de tratamiento',
+          htmlBody: `
+            <h2>Aviso de inactividad de tratamiento</h2>
+            <p>Estimado/a ${patientName},</p>
+            <p>Su tratamiento será cerrado automáticamente en <strong>${daysRemaining} días</strong> por inactividad.</p>
+            <p>Por favor, contacte a su médico si desea continuar con el tratamiento.</p>
+            <p>Saludos cordiales,<br>Clínica de Fertilidad</p>
+          `,
+        });
+        this.logger.log(`Email de advertencia enviado al paciente: ${patientEmail}`);
+      } catch (error) {
+        this.logger.error(`Error enviando email al paciente ${patientEmail}:`, error);
+      }
+    }
 
-    // TODO: Enviar notificación al doctor:
-    // await this.notificationsService.send({
-    //   userId: treatment.initialDoctor?.id,
-    //   type: 'treatment_inactivity_warning',
-    //   title: 'Aviso de tratamiento por cerrar',
-    //   message: `El tratamiento del paciente ${patientName} será cerrado en ${daysRemaining} días por inactividad.`,
-    //   channel: 'email',
-    //   metadata: { treatmentId: treatment.id, patientId: treatment.medicalHistory.patient.id }
-    // });
+    // Enviar alerta a Telegram
+    try {
+      await this.telegramService.sendAlert({
+        text: `⚠️ ADVERTENCIA: Tratamiento ${treatment.id} del paciente ${patientName} será cerrado en ${daysRemaining} días por inactividad.`,
+      });
+    } catch (error) {
+      this.logger.error('Error enviando alerta a Telegram:', error);
+    }
+
+    // Enviar notificación al doctor
+    const doctorEmail = treatment.initialDoctor?.email;
+    if (doctorEmail) {
+      try {
+        await this.emailService.sendEmail({
+          group: 9,
+          toEmails: [doctorEmail],
+          subject: 'Aviso de tratamiento por cerrar',
+          htmlBody: `
+            <h2>Aviso de tratamiento por cerrar</h2>
+            <p>Estimado/a Dr/a. ${doctorName},</p>
+            <p>El tratamiento del paciente <strong>${patientName}</strong> será cerrado en <strong>${daysRemaining} días</strong> por inactividad.</p>
+            <p>Por favor, contacte al paciente si considera necesario continuar con el tratamiento.</p>
+            <p>ID Tratamiento: ${treatment.id}</p>
+          `,
+        });
+        this.logger.log(`Email de advertencia enviado al doctor: ${doctorEmail}`);
+      } catch (error) {
+        this.logger.error(`Error enviando email al doctor ${doctorEmail}:`, error);
+      }
+    }
   }
 
   /**
@@ -117,26 +154,57 @@ export class TreatmentSchedulerService {
         `${daysSinceActivity} días sin actividad`,
     );
 
-    // TODO: Integrar con módulo de Notificaciones cuando esté disponible
-    // Enviar notificación de cierre al paciente:
-    // await this.notificationsService.send({
-    //   userId: treatment.medicalHistory.patient.id,
-    //   type: 'treatment_closed_inactivity',
-    //   title: 'Tratamiento cerrado por inactividad',
-    //   message: `Su tratamiento ha sido cerrado automáticamente debido a ${daysSinceActivity} días de inactividad. ` +
-    //            `Si desea reabrir el tratamiento, por favor contacte a su médico.`,
-    //   channel: 'all',
-    //   metadata: { treatmentId: treatment.id }
-    // });
+    // Enviar notificación de cierre al paciente por email
+    const patientEmail = treatment.medicalHistory?.patient?.email;
+    if (patientEmail) {
+      try {
+        await this.emailService.sendEmail({
+          group: 9,
+          toEmails: [patientEmail],
+          subject: 'Tratamiento cerrado por inactividad',
+          htmlBody: `
+            <h2>Tratamiento cerrado por inactividad</h2>
+            <p>Estimado/a ${patientName},</p>
+            <p>Su tratamiento ha sido cerrado automáticamente debido a <strong>${daysSinceActivity} días de inactividad</strong>.</p>
+            <p>Si desea reabrir el tratamiento, por favor contacte a su médico.</p>
+            <p>Saludos cordiales,<br>Clínica de Fertilidad</p>
+          `,
+        });
+        this.logger.log(`Email de cierre enviado al paciente: ${patientEmail}`);
+      } catch (error) {
+        this.logger.error(`Error enviando email de cierre al paciente ${patientEmail}:`, error);
+      }
+    }
 
-    // TODO: Enviar notificación de cierre al doctor:
-    // await this.notificationsService.send({
-    //   userId: treatment.initialDoctor?.id,
-    //   type: 'treatment_closed_inactivity',
-    //   title: 'Tratamiento cerrado automáticamente',
-    //   message: `El tratamiento del paciente ${patientName} ha sido cerrado por ${daysSinceActivity} días de inactividad.`,
-    //   channel: 'email',
-    //   metadata: { treatmentId: treatment.id, patientId: treatment.medicalHistory.patient.id }
-    // });
+    // Enviar alerta de cierre a Telegram
+    try {
+      await this.telegramService.sendAlert({
+        text: `🔴 CIERRE AUTOMÁTICO: Tratamiento ${treatment.id} del paciente ${patientName} ha sido cerrado por ${daysSinceActivity} días de inactividad.`,
+      });
+    } catch (error) {
+      this.logger.error('Error enviando alerta de cierre a Telegram:', error);
+    }
+
+    // Enviar notificación de cierre al doctor por email
+    const doctorEmail = treatment.initialDoctor?.email;
+    if (doctorEmail) {
+      try {
+        await this.emailService.sendEmail({
+          group: 9,
+          toEmails: [doctorEmail],
+          subject: 'Tratamiento cerrado automáticamente',
+          htmlBody: `
+            <h2>Tratamiento cerrado automáticamente</h2>
+            <p>Estimado/a Dr/a. ${doctorName},</p>
+            <p>El tratamiento del paciente <strong>${patientName}</strong> ha sido cerrado automáticamente por <strong>${daysSinceActivity} días de inactividad</strong>.</p>
+            <p>Si considera necesario reabrir el tratamiento, puede hacerlo desde el sistema.</p>
+            <p>ID Tratamiento: ${treatment.id}</p>
+          `,
+        });
+        this.logger.log(`Email de cierre enviado al doctor: ${doctorEmail}`);
+      } catch (error) {
+        this.logger.error(`Error enviando email de cierre al doctor ${doctorEmail}:`, error);
+      }
+    }
   }
 }
