@@ -221,65 +221,57 @@ export class MedicalOrdersService {
     const tipoEstudio = categoryToTipoEstudio[order.category] || 'estudios_hormonales';
     this.logger.log(`Categoría: ${order.category} -> tipo_estudio: ${tipoEstudio}`);
 
-    // Construir payload para el servicio externo
-    // Acceder a propiedades específicas con type assertion
-    const patientDni = (order.patient as any).dni || order.patient.id;
-    const doctorLicense = (order.doctor as any).licenseNumber || order.doctor.id;
+    // Construir payload según el formato esperado por la API externa
+    // La API espera: medico, paciente, tipo_estudio, determinaciones
+    const patientDni = (order.patient as any).dni || String(order.patient.id);
+    const doctorDni = (order.doctor as any).dni || (order.doctor as any).licenseNumber || String(order.doctor.id);
+
+    // Convertir estudios al formato de determinaciones esperado por la API
+    // Formato: [{ nombre: "estudio1" }, { nombre: "estudio2" }]
+    const determinaciones = order.studies
+      ?.filter(s => s.checked)
+      .map(s => ({ nombre: s.name })) || [];
 
     const payload = {
-      codigo_orden: order.code,
-      fecha_emision: order.issueDate,
+      medico: {
+        nombre: `${order.doctor.firstName} ${order.doctor.lastName}`,
+        dni: doctorDni,
+      },
       paciente: {
         nombre: `${order.patient.firstName} ${order.patient.lastName}`,
         dni: patientDni,
       },
-      medico: {
-        nombre: `${order.doctor.firstName} ${order.doctor.lastName}`,
-        matricula: doctorLicense,
-      },
       tipo_estudio: tipoEstudio,
-      estudios: order.studies?.filter(s => s.checked).map(s => s.name) || [],
-      diagnostico: order.diagnosis,
-      justificacion: order.justification,
+      determinaciones: determinaciones,
     };
 
+    this.logger.log(`Payload para API externa: ${JSON.stringify(payload)}`);
+
     try {
-      const result = await this.group1StudiesService.generarOrdenMedica(
+      const pdfBuffer = await this.group1StudiesService.generarOrdenMedica(
         payload,
         doctorSignature,
       );
 
-      // Determinar si el resultado es una URL o el contenido del PDF
-      let pdfUrl: string;
+      // La API devuelve el PDF como Buffer binario
+      this.logger.log(`PDF recibido como buffer de ${pdfBuffer.length} bytes`);
 
-      if (result.url || result.pdf_url || result.pdfUrl) {
-        // El API devolvió una URL
-        pdfUrl = result.url || result.pdf_url || result.pdfUrl;
-        this.logger.log(`PDF URL recibida: ${pdfUrl}`);
-      } else if (typeof result === 'string' && result.startsWith('%PDF')) {
-        // El API devolvió el contenido del PDF directamente
-        this.logger.log(`PDF content recibido, guardando como archivo...`);
-
-        // Crear directorio si no existe
-        const uploadDir = './uploads/medical-orders';
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        // Generar nombre único para el archivo
-        const filename = `${order.code}-${Date.now()}.pdf`;
-        const filepath = path.join(uploadDir, filename);
-
-        // Guardar el PDF como binario
-        fs.writeFileSync(filepath, result, 'binary');
-
-        // Generar URL relativa
-        pdfUrl = `/uploads/medical-orders/${filename}`;
-        this.logger.log(`PDF guardado en: ${pdfUrl}`);
-      } else {
-        this.logger.warn(`Respuesta inesperada del API: ${JSON.stringify(result).substring(0, 200)}`);
-        throw new Error('El servicio externo no devolvió un PDF válido');
+      // Crear directorio si no existe
+      const uploadDir = './uploads/medical-orders';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
+
+      // Generar nombre único para el archivo
+      const filename = `${order.code.replace(/\//g, '-')}-${Date.now()}.pdf`;
+      const filepath = path.join(uploadDir, filename);
+
+      // Guardar el PDF como buffer binario
+      fs.writeFileSync(filepath, pdfBuffer);
+
+      // Generar URL relativa
+      const pdfUrl = `/uploads/medical-orders/${filename}`;
+      this.logger.log(`PDF guardado en: ${pdfUrl}`);
 
       order.pdfUrl = pdfUrl;
       order.pdfGeneratedAt = new Date();
