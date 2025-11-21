@@ -40,6 +40,25 @@ export class OocyteService {
     return oocyte;
   }
 
+  async findByPatientId(patientId: number): Promise<Oocyte[]> {
+    return this.oocyteRepository.find({
+      where: {
+        puncture: {
+          treatment: {
+            medicalHistory: {
+              patient: {
+                id: patientId,
+              },
+            },
+          },
+        },
+      },
+      relations: ['puncture', 'puncture.treatment', 'puncture.treatment.medicalHistory', 'puncture.treatment.medicalHistory.patient'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+    
+
   async create(oocyteData: Partial<Oocyte>): Promise<Oocyte> {
     const oocyte = this.oocyteRepository.create(oocyteData);
     return this.oocyteRepository.save(oocyte);

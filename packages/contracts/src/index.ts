@@ -35,10 +35,7 @@ export type {
 
 // Exportar tipos específicos de criopreservación
 export type {
-  ProductType,
   JourneyStep,
-  CryopreservedProduct,
-  CryopreservedProductDetail,
   CryopreservationSummary,
 } from "./cryopreservation/schemas";
 

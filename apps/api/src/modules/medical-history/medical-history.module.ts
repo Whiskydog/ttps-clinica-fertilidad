@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
 import { PartnerData } from '@modules/medical-history/entities/partner-data.entity';
@@ -42,6 +42,7 @@ import { MedicalTermsService } from './services/medical-terms.service';
     FenotypeService,
     BackgroundService,
     MedicalTermsService,
+    Logger,
   ],
   controllers: [MedicalHistoryController],
   exports: [
