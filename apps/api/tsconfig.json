@@ -9,7 +9,7 @@
       "@auth/*": ["./src/modules/auth/*"],
       "@users/*": ["./src/modules/users/*"],
       "@common/*": ["./src/common/*"],
-      "@external/*": ["./src/external/*"]
+      "@external/*": ["./src/modules/external/*"]
     }
   }
 }
