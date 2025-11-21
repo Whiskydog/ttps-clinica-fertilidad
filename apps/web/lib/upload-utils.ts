@@ -8,9 +8,6 @@ export async function uploadPDF(
   file: File,
   type: 'study-result' | 'informed-consent' = 'study-result'
 ): Promise<string> {
-  console.log('[DEBUG uploadPDF] Iniciando upload de archivo:', file.name);
-  console.log('[DEBUG uploadPDF] Tipo:', type);
-
   // Validar que sea un PDF
   if (file.type !== 'application/pdf') {
     throw new Error('Solo se permiten archivos PDF');
@@ -29,32 +26,24 @@ export async function uploadPDF(
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const url = `${backendUrl}/v1/api/uploads/pdf${queryParam}`;
 
-  console.log('[DEBUG uploadPDF] URL:', url);
-
   try {
     const response = await fetch(url, {
       method: 'POST',
       body: formData,
-      credentials: 'include', // Para enviar cookies de autenticación
+      credentials: 'include',
     });
-
-    console.log('[DEBUG uploadPDF] Response status:', response.status);
-    console.log('[DEBUG uploadPDF] Response ok:', response.ok);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[DEBUG uploadPDF] Error response:', errorData);
       throw new Error(
         errorData.message || `Error al subir archivo: ${response.status}`
       );
     }
 
     const data = await response.json();
-    console.log('[DEBUG uploadPDF] Response data:', data);
 
     // El backend envuelve la respuesta en { statusCode, message, data }
     const fileUri = data.data?.fileUri || data.fileUri;
-    console.log('[DEBUG uploadPDF] fileUri:', fileUri);
 
     if (!fileUri) {
       throw new Error('No se recibió la URI del archivo del servidor');
@@ -62,7 +51,6 @@ export async function uploadPDF(
 
     return fileUri;
   } catch (error) {
-    console.error('[DEBUG uploadPDF] Error al subir:', error);
     if (error instanceof Error) {
       throw error;
     }

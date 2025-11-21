@@ -20,6 +20,12 @@ export class StudyResult extends BaseEntity {
   })
   determinationName?: string | null; // FSH, LH, Estradiol, etc.
 
+  @Column({ name: 'study_type', type: 'varchar', length: 50, nullable: true })
+  studyType?: string | null; // perfil_hormonal, hemograma, ecografia_transvaginal, etc.
+
+  @Column({ name: 'structured_values', type: 'jsonb', nullable: true })
+  structuredValues?: Record<string, string | number | null> | null; // Valores estructurados según el tipo de estudio
+
   @Column({ name: 'transcription', type: 'text', nullable: true })
   transcription?: string | null;
 

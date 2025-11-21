@@ -28,14 +28,6 @@ export class UploadsController {
       throw new BadRequestException('No se proporcionó ningún archivo');
     }
 
-    console.log('[DEBUG] uploadPdf - file.filename:', file.filename);
-    console.log('[DEBUG] uploadPdf - file.path:', file.path);
-    console.log('[DEBUG] uploadPdf - type:', type);
-
-    const result = this.uploadsService.generateFileUri(file, type);
-
-    console.log('[DEBUG] uploadPdf - result:', JSON.stringify(result));
-
-    return result;
+    return this.uploadsService.generateFileUri(file, type);
   }
 }

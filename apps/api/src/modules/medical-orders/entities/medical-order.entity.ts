@@ -46,6 +46,12 @@ export class MedicalOrder extends BaseEntity {
   @Column({ name: 'completed_date', type: 'date', nullable: true })
   completedDate: Date;
 
+  @Column({ name: 'pdf_url', type: 'text', nullable: true })
+  pdfUrl: string | null;
+
+  @Column({ name: 'pdf_generated_at', type: 'timestamp', nullable: true })
+  pdfGeneratedAt: Date | null;
+
   @OneToMany(() => StudyResult, (studyResult) => studyResult.medicalOrder)
   studyResults: StudyResult[];
 

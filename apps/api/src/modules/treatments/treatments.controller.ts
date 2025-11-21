@@ -117,9 +117,6 @@ export class TreatmentsController {
     @Body() dto: CreateInformedConsentDto,
     @CurrentUser() user: User,
   ) {
-    console.log('[DEBUG] createInformedConsent - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] createInformedConsent - pdfUri:', dto.pdfUri);
-
     const consent = await this.informedConsentService.create({
       treatment: { id: dto.treatmentId } as any,
       pdfUri: dto.pdfUri ?? null,
@@ -128,8 +125,6 @@ export class TreatmentsController {
         ? ({ id: dto.uploadedByUserId } as any)
         : ({ id: user.id } as any),
     });
-
-    console.log('[DEBUG] createInformedConsent - Consentimiento creado:', JSON.stringify(consent));
 
     return {
       message: 'Consentimiento informado creado correctamente',
@@ -145,26 +140,17 @@ export class TreatmentsController {
     @Body() dto: UpdateInformedConsentDto,
   ) {
     const consentId = Number(id);
-    console.log('[DEBUG] updateInformedConsent - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] updateInformedConsent - pdfUri:', dto.pdfUri);
-    console.log('[DEBUG] updateInformedConsent - "pdfUri" in dto:', 'pdfUri' in dto);
 
-    // Preparar datos para actualización, manteniendo null si está presente
     const updateData: Partial<any> = {};
 
     if ('pdfUri' in dto) {
       updateData.pdfUri = dto.pdfUri;
-      console.log('[DEBUG] updateInformedConsent - Actualizando pdfUri a:', dto.pdfUri);
     }
     if ('signatureDate' in dto) {
       updateData.signatureDate = parseDateFromString(dto.signatureDate);
     }
 
-    console.log('[DEBUG] updateInformedConsent - updateData:', JSON.stringify(updateData));
-
     const updated = await this.informedConsentService.update(consentId, updateData);
-
-    console.log('[DEBUG] updateInformedConsent - Consentimiento actualizado:', JSON.stringify(updated));
 
     return {
       message: 'Consentimiento informado actualizado correctamente',

@@ -8,6 +8,8 @@ import { InformedConsent } from '@modules/treatments/entities/informed-consent.e
 import { PostTransferMilestone } from '@modules/treatments/entities/post-transfer-milestone.entity';
 import { MedicalCoverage } from '@modules/treatments/entities/medical-coverage.entity';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
+import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
+import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
 import { TreatmentService } from '@modules/treatments/treatment.service';
 import { TreatmentsService } from '@modules/treatments/treatments.service';
 import { InformedConsentService } from '@modules/treatments/services/informed-consent.service';
@@ -30,6 +32,8 @@ import { UploadsModule } from '@modules/uploads/uploads.module';
       PostTransferMilestone,
       MedicalCoverage,
       MedicalHistory,
+      MedicalOrder,
+      PunctureRecord,
     ]),
     MedicalHistoryModule,
     UploadsModule,
