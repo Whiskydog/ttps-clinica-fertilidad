@@ -19,6 +19,24 @@ export class InformedConsentService {
     });
   }
 
+  /**
+   * Verifica si un tratamiento tiene un consentimiento informado válido (subido y firmado)
+   * @returns true si existe consentimiento con PDF y fecha de firma
+   */
+  async hasValidConsent(treatmentId: number): Promise<boolean> {
+    const consent = await this.informedConsentRepository.findOne({
+      where: { treatment: { id: treatmentId } },
+      select: ['id', 'pdfUri', 'signatureDate'],
+    });
+
+    if (!consent) {
+      return false;
+    }
+
+    // El consentimiento es válido si tiene PDF subido Y fecha de firma
+    return !!(consent.pdfUri && consent.signatureDate);
+  }
+
   async findOne(id: number): Promise<InformedConsent> {
     const consent = await this.informedConsentRepository.findOne({
       where: { id },

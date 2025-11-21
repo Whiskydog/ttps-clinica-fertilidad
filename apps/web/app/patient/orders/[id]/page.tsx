@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@repo/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 import { Badge } from '@repo/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, Download, FileText } from 'lucide-react';
 import { getMedicalOrderDetail } from '@/app/actions/patients/medical-orders/get-detail';
 import type { MedicalOrderDetail, MedicalOrderStatus } from '@repo/contracts';
 import { StudyResultsSection } from '@/components/patient/orders/study-results-section';
@@ -56,12 +56,64 @@ export default function OrderDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>ESTADO: {order.status?.toUpperCase()}</CardTitle>
-            <Badge className={`${statusColors[order.status] || 'bg-gray-600'} text-white`}>
-              {order.status?.toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {order.pdfUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+                    const pdfUrl = order.pdfUrl!.startsWith("http")
+                      ? order.pdfUrl!
+                      : `${apiUrl}${order.pdfUrl}`;
+                    window.open(pdfUrl, "_blank");
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar PDF
+                </Button>
+              )}
+              <Badge className={`${statusColors[order.status] || 'bg-gray-600'} text-white`}>
+                {order.status?.toUpperCase()}
+              </Badge>
+            </div>
           </div>
         </CardHeader>
       </Card>
+
+      {/* PDF Section */}
+      {order.pdfUrl && (
+        <Card>
+          <CardHeader className="bg-blue-500">
+            <CardTitle className="text-white flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              DOCUMENTO PDF
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Orden Médica #{order.code}</p>
+                <p className="text-xs text-muted-foreground">
+                  PDF generado y disponible para descarga
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+                  const pdfUrl = order.pdfUrl!.startsWith("http")
+                    ? order.pdfUrl!
+                    : `${apiUrl}${order.pdfUrl}`;
+                  window.open(pdfUrl, "_blank");
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Descargar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="bg-slate-500">

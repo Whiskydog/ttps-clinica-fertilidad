@@ -1,16 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalOrder, MedicalOrderStatus, Study } from './entities/medical-order.entity';
 import { StudyResultService } from './services/study-result.service';
+import { InformedConsentService } from '@modules/treatments/services/informed-consent.service';
+import { Group1StudiesService } from '@external/group1-studies/group1-studies.service';
+import { Group8NoticesService } from '@external/group8-notices/group8-notices.service';
 import { parseDateFromString } from '@common/utils/date.utils';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class MedicalOrdersService {
+  private readonly logger = new Logger(MedicalOrdersService.name);
+
   constructor(
     @InjectRepository(MedicalOrder)
     private medicalOrderRepository: Repository<MedicalOrder>,
     private readonly studyResultService: StudyResultService,
+    private readonly informedConsentService: InformedConsentService,
+    private readonly group1StudiesService: Group1StudiesService,
+    private readonly group8NoticesService: Group8NoticesService,
   ) {}
 
   async create(data: {
@@ -23,6 +33,17 @@ export class MedicalOrdersService {
     diagnosis?: string;
     justification?: string;
   }): Promise<MedicalOrder> {
+    // Verificar consentimiento si la orden está asociada a un tratamiento
+    if (data.treatmentId) {
+      const hasConsent = await this.informedConsentService.hasValidConsent(data.treatmentId);
+      if (!hasConsent) {
+        throw new ForbiddenException(
+          'No se puede crear una orden médica sin consentimiento informado firmado. ' +
+          'Por favor, suba el consentimiento firmado antes de continuar.'
+        );
+      }
+    }
+
     // Generate unique code
     const year = new Date().getFullYear();
     const count = await this.medicalOrderRepository.count();
@@ -156,5 +177,187 @@ export class MedicalOrdersService {
       ...order,
       studyResults,
     };
+  }
+
+  /**
+   * Genera el PDF de la orden médica usando el servicio externo
+   * Requiere la firma del médico en formato PNG
+   */
+  async generatePdf(
+    orderId: number,
+    doctorSignature: Express.Multer.File,
+  ): Promise<MedicalOrder> {
+    this.logger.log(`Buscando orden médica con ID: ${orderId}`);
+
+    const order = await this.medicalOrderRepository.findOne({
+      where: { id: orderId },
+      relations: ['doctor', 'patient'],
+    });
+
+    if (!order) {
+      this.logger.warn(`Orden médica con ID ${orderId} no encontrada`);
+      throw new NotFoundException(`Orden médica con ID ${orderId} no encontrada`);
+    }
+
+    this.logger.log(`Orden encontrada: ${order.code}, paciente: ${order.patient?.firstName} ${order.patient?.lastName}`);
+
+    // Mapear categoría al tipo_estudio esperado por la API externa
+    const categoryToTipoEstudio: Record<string, string> = {
+      // Valores exactos del selector del frontend
+      'Estudios Hormonales': 'estudios_hormonales',
+      'Estudios Ginecológicos': 'estudios_ginecologicos',
+      'Estudios de Semen': 'estudios_semen',
+      'Estudios Prequirúrgicos': 'estudios_prequirurgicos',
+      // Valores legacy por compatibilidad
+      'semen': 'estudios_semen',
+      'hormonal': 'estudios_hormonales',
+      'hormonales': 'estudios_hormonales',
+      'prequirurgico': 'estudios_prequirurgicos',
+      'prequirurgicos': 'estudios_prequirurgicos',
+      'ginecologico': 'estudios_ginecologicos',
+      'ginecologicos': 'estudios_ginecologicos',
+    };
+
+    const tipoEstudio = categoryToTipoEstudio[order.category] || 'estudios_hormonales';
+    this.logger.log(`Categoría: ${order.category} -> tipo_estudio: ${tipoEstudio}`);
+
+    // Construir payload para el servicio externo
+    // Acceder a propiedades específicas con type assertion
+    const patientDni = (order.patient as any).dni || order.patient.id;
+    const doctorLicense = (order.doctor as any).licenseNumber || order.doctor.id;
+
+    const payload = {
+      codigo_orden: order.code,
+      fecha_emision: order.issueDate,
+      paciente: {
+        nombre: `${order.patient.firstName} ${order.patient.lastName}`,
+        dni: patientDni,
+      },
+      medico: {
+        nombre: `${order.doctor.firstName} ${order.doctor.lastName}`,
+        matricula: doctorLicense,
+      },
+      tipo_estudio: tipoEstudio,
+      estudios: order.studies?.filter(s => s.checked).map(s => s.name) || [],
+      diagnostico: order.diagnosis,
+      justificacion: order.justification,
+    };
+
+    try {
+      const result = await this.group1StudiesService.generarOrdenMedica(
+        payload,
+        doctorSignature,
+      );
+
+      // Determinar si el resultado es una URL o el contenido del PDF
+      let pdfUrl: string;
+
+      if (result.url || result.pdf_url || result.pdfUrl) {
+        // El API devolvió una URL
+        pdfUrl = result.url || result.pdf_url || result.pdfUrl;
+        this.logger.log(`PDF URL recibida: ${pdfUrl}`);
+      } else if (typeof result === 'string' && result.startsWith('%PDF')) {
+        // El API devolvió el contenido del PDF directamente
+        this.logger.log(`PDF content recibido, guardando como archivo...`);
+
+        // Crear directorio si no existe
+        const uploadDir = './uploads/medical-orders';
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        // Generar nombre único para el archivo
+        const filename = `${order.code}-${Date.now()}.pdf`;
+        const filepath = path.join(uploadDir, filename);
+
+        // Guardar el PDF como binario
+        fs.writeFileSync(filepath, result, 'binary');
+
+        // Generar URL relativa
+        pdfUrl = `/uploads/medical-orders/${filename}`;
+        this.logger.log(`PDF guardado en: ${pdfUrl}`);
+      } else {
+        this.logger.warn(`Respuesta inesperada del API: ${JSON.stringify(result).substring(0, 200)}`);
+        throw new Error('El servicio externo no devolvió un PDF válido');
+      }
+
+      order.pdfUrl = pdfUrl;
+      order.pdfGeneratedAt = new Date();
+
+      await this.medicalOrderRepository.save(order);
+
+      this.logger.log(`PDF generado para orden ${order.code}: ${order.pdfUrl}`);
+
+      // Enviar email al paciente con el PDF
+      if (order.patient.email && order.pdfUrl) {
+        try {
+          await this.group8NoticesService.sendEmail({
+            group: 1, // Grupo de la clínica
+            toEmails: [order.patient.email],
+            subject: `Orden Médica ${order.code} - PDF Disponible`,
+            htmlBody: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Clínica de Fertilidad Amelia</h2>
+                <p>Estimado/a <strong>${order.patient.firstName} ${order.patient.lastName}</strong>,</p>
+                <p>Le informamos que su orden médica <strong>${order.code}</strong> ha sido generada y está disponible para su descarga.</p>
+                <p><strong>Detalles de la orden:</strong></p>
+                <ul>
+                  <li><strong>Código:</strong> ${order.code}</li>
+                  <li><strong>Categoría:</strong> ${order.category}</li>
+                  <li><strong>Médico:</strong> Dr. ${order.doctor.firstName} ${order.doctor.lastName}</li>
+                  <li><strong>Fecha de emisión:</strong> ${new Date(order.issueDate).toLocaleDateString('es-AR')}</li>
+                </ul>
+                <p>Puede descargar el PDF de su orden médica desde el siguiente enlace:</p>
+                <p style="text-align: center;">
+                  <a href="${order.pdfUrl}"
+                     style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    Descargar PDF
+                  </a>
+                </p>
+                <p>También puede acceder a su orden desde el portal de pacientes.</p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                <p style="color: #6b7280; font-size: 12px;">
+                  Este es un mensaje automático, por favor no responda a este correo.
+                </p>
+              </div>
+            `,
+          });
+
+          this.logger.log(`Email enviado al paciente ${order.patient.email} para orden ${order.code}`);
+        } catch (emailError) {
+          // Log error but don't fail the PDF generation
+          this.logger.error(
+            `Error enviando email para orden ${order.code}: ${JSON.stringify(emailError)}`,
+            emailError,
+          );
+        }
+      }
+
+      return order;
+    } catch (error) {
+      this.logger.error(`Error generando PDF para orden ${order.code}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene la URL del PDF de una orden médica
+   */
+  async getPdfUrl(orderId: number, patientId?: number): Promise<string | null> {
+    const where: any = { id: orderId };
+    if (patientId) {
+      where.patientId = patientId;
+    }
+
+    const order = await this.medicalOrderRepository.findOne({
+      where,
+      select: ['id', 'pdfUrl'],
+    });
+
+    if (!order) {
+      throw new NotFoundException('Orden médica no encontrada');
+    }
+
+    return order.pdfUrl;
   }
 }
