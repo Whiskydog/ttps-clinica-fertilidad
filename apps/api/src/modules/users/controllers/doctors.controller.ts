@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { DoctorsService } from '@users/services/doctors.service';
 import { Doctor } from '@users/entities/doctor.entity';
+import { DoctorsService } from '@users/services/doctors.service';
+import { ZodSerializerDto } from 'nestjs-zod';
+import { DoctorsResponseDto } from '../dto';
 
 @Controller('doctors')
 export class DoctorsController {
@@ -12,6 +14,7 @@ export class DoctorsController {
   }
 
   @Get()
+  @ZodSerializerDto(DoctorsResponseDto)
   async getDoctors(): Promise<Doctor[]> {
     return this.doctorsService.getDoctors();
   }

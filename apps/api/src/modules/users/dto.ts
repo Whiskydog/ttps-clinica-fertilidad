@@ -1,19 +1,24 @@
 import {
   AdminUserCreateSchema,
   AdminUserUpdateSchema,
+  DoctorResponseSchema,
+  DoctorsResponseSchema,
   PatientCreateSchema,
   PatientResponseSchema,
-  PatientsQuerySchema,
   PatientsPaginatedResponseSchema,
+  PatientsQuerySchema,
   ResetPasswordSchema,
-  ToggleUserStatusSchema,
   StaffUsersListResponseSchema,
+  ToggleUserStatusSchema,
   UserResponseSchema,
 } from '@repo/contracts';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 export class UserResponseDto extends createZodDto(UserResponseSchema) {}
+
+export class DoctorResponseDto extends createZodDto(DoctorResponseSchema) {}
+export class DoctorsResponseDto extends createZodDto(DoctorsResponseSchema) {}
 
 // Patient DTOs
 export class PatientCreateDto extends createZodDto(PatientCreateSchema) {}

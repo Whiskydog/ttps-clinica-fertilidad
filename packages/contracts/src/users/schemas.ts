@@ -20,6 +20,16 @@ export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
+export const DoctorEntitySchema = UserEntitySchema.extend({
+  specialty: z.string().max(100),
+  licenseNumber: z.string().max(50),
+});
+export type Doctor = z.infer<typeof DoctorEntitySchema>;
+
+export const DoctorResponseSchema = ApiResponseSchema(DoctorEntitySchema);
+export const DoctorsResponseSchema = ApiResponseSchema(z.array(DoctorEntitySchema));
+export type DoctorResponse = z.infer<typeof DoctorResponseSchema>;
+export type DoctorsResponse = z.infer<typeof DoctorsResponseSchema>;
 
 // =====================
 
