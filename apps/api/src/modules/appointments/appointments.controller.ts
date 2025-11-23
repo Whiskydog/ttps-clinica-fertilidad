@@ -67,10 +67,18 @@ export class AppointmentsController {
 
   // Listar turnos disponibles de un médico
   @Get('doctor/:id/available')
-  getAvailableDoctorSlots(@Param('id', ParseIntPipe) id: number, @Query('date', new ParseDatePipe()) date?: Date) {
+  getAvailableDoctorSlots(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
+  ) {
     if (date) {
-      this.logger.log(`Fetching available doctor slots for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`);
-      return this.appointmentsService.getDoctorAvailableSlotsByDate(id, moment.utc(date).format('YYYY-MM-DD'));
+      this.logger.log(
+        `Fetching available doctor slots for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,
+      );
+      return this.appointmentsService.getDoctorAvailableSlotsByDate(
+        id,
+        moment.utc(date).format('YYYY-MM-DD'),
+      );
     }
     this.logger.log(`Fetching all available slots for doctorId=${id}`);
     return this.appointmentsService.getDoctorAvailableSlots(id);
@@ -78,10 +86,18 @@ export class AppointmentsController {
 
   // Listar turnos de un médico
   @Get('doctor/:id')
-  getDoctorAppointments(@Param('id', ParseIntPipe) id: number, @Query('date', new ParseDatePipe()) date?: Date) {
+  getDoctorAppointments(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('date', new ParseDatePipe()) date?: Date,
+  ) {
     if (date) {
-      this.logger.log(`Fetching doctor appointments for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`);
-      return this.appointmentsService.getDoctorAppointmentsByDate(id, moment.utc(date).format('YYYY-MM-DD'));
+      this.logger.log(
+        `Fetching doctor appointments for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,
+      );
+      return this.appointmentsService.getDoctorAppointmentsByDate(
+        id,
+        moment.utc(date).format('YYYY-MM-DD'),
+      );
     }
     this.logger.log(`Fetching all appointments for doctorId=${id}`);
     return this.appointmentsService.getDoctorAppointments(id);
