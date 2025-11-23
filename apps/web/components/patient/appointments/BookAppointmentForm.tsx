@@ -4,6 +4,7 @@ import { useDoctors } from "@/hooks/doctor/useDoctors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/button";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@repo/ui/field";
+import { CodeBlock, CodeBlockCode } from "@repo/ui/code-block";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
 import { Spinner } from "@repo/ui/spinner";
 import { CircleX } from "lucide-react";
@@ -12,6 +13,7 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import AppointmentPicker from "./AppointmentPicker";
+import { toast } from "@repo/ui";
 
 export default function BookAppointmentForm() {
   const { doctors, isLoading, isError, error } = useDoctors();
@@ -56,9 +58,20 @@ export default function BookAppointmentForm() {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    console.log("Form submitted:", data);
+    toast.custom(() => (
+      <div className="ring-1 ring-black/5 w-full items-center p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <CircleX className="h-5 w-5 text-blue-600" />
+          <span className="font-medium">Datos del turno reservado:</span>
+        </div>
+        <CodeBlock className="max-w-full">
+          <CodeBlockCode
+            code={JSON.stringify(data, null, 2)}
+            theme="github-dark"
+          />
+        </CodeBlock>
+      </div>
+    ));
   };
 
   useEffect(() => {
