@@ -42,6 +42,7 @@ export default function BookAppointmentForm() {
       appointment: null,
     },
   });
+  const watchReason = form.watch("reason");
   const watchDoctorId = form.watch("doctorId");
   const watchAppointment = form.watch("appointment");
 
@@ -57,6 +58,8 @@ export default function BookAppointmentForm() {
       });
       return;
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     toast.custom(() => (
       <div className="ring-1 ring-black/5 w-full items-center p-4">
@@ -234,13 +237,13 @@ export default function BookAppointmentForm() {
           </p>
           <p>
             <span className="font-bold">Motivo: </span>
-            {form.getValues("reason") === "initial-consultation"
+            {watchReason === "initial-consultation"
               ? "Primera consulta"
-              : form.getValues("reason") === "stimulation-monitoring"
+              : watchReason === "stimulation-monitoring"
                 ? "Monitoreo de estimulación"
-                : form.getValues("reason") === "egg-retrieval"
+                : watchReason === "egg-retrieval"
                   ? "Punción ovárica"
-                  : form.getValues("reason") === "embryo-transfer"
+                  : watchReason === "embryo-transfer"
                     ? "Transferencia de embriones"
                     : "No seleccionado"}
           </p>
