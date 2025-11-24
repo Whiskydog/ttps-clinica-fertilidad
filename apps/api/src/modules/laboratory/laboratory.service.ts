@@ -1,10 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { PunctureRecord } from './entities/puncture-record.entity';
 import { Oocyte } from './entities/oocyte.entity';
 import { OocyteStateHistory } from './entities/oocyte-state-history.entity';
 import { Embryo } from './entities/embryo.entity';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
+import { Patient } from '@users/entities/patient.entity';
+import { OocyteState } from '@repo/contracts';
 
 @Injectable()
 export class LaboratoryService {
@@ -17,7 +26,133 @@ export class LaboratoryService {
     private oocyteStateHistoryRepository: Repository<OocyteStateHistory>,
     @InjectRepository(Embryo)
     private embryoRepository: Repository<Embryo>,
+    @InjectRepository(Treatment)
+    private treatmentRepository: Repository<Treatment>,
+    @InjectRepository(Patient)
+    private patientRepository: Repository<Patient>,
+    private httpService: HttpService,
   ) {}
 
-  // aca CRUD 
+  generateOocyteId(
+    date: Date,
+    lastName: string,
+    firstName: string,
+    nn: number,
+  ): string {
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const apeNom = `${lastName.slice(0, 3).toUpperCase()}${firstName.slice(0, 3).toUpperCase()}`;
+    const nnStr = nn.toString().padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+    return `ovo_${dateStr}_${apeNom}_${nnStr}_${random}`;
+  }
+
+  generateEmbryoId(
+    date: Date,
+    lastName: string,
+    firstName: string,
+    nn: number,
+  ): string {
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const apeNom = `${lastName.slice(0, 3).toUpperCase()}${firstName.slice(0, 3).toUpperCase()}`;
+    const nnStr = nn.toString().padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+    return `emb_${dateStr}_${apeNom}_${nnStr}_${random}`;
+  }
+
+  async getCompatibleSemenId(phenotypeData: any): Promise<string> {
+    const groupNumber = process.env.GROUP_NUMBER || '1';
+    const url = `${process.env.GAMETE_BANK_URL}/gametos-compatibilidad`;
+    const response = await firstValueFrom(
+      this.httpService.post(url, { group: groupNumber, ...phenotypeData }),
+    );
+    return response.data.donationId;
+  }
+
+  async cryopreserveOocyte(
+    oocyteId: number,
+  ): Promise<{ tank: string; rack: string }> {
+    const oocyte = await this.oocyteRepository.findOne({
+      where: { id: oocyteId },
+      relations: [
+        'puncture',
+        'puncture.treatment',
+        'puncture.treatment.medicalHistory',
+        'puncture.treatment.medicalHistory.patient',
+      ],
+    });
+    if (!oocyte) throw new NotFoundException('Oocyte not found');
+    if (oocyte.currentState !== OocyteState.MATURE) {
+      throw new BadRequestException(
+        'Solo se pueden criopreservar ovocitos maduros',
+      );
+    }
+    // Llamar al servicio externo de criopreservación
+    const url = `${process.env.GAMETE_BANK_URL}/criopreservacion`; // asumir endpoint
+    const response = await firstValueFrom(
+      this.httpService.post(url, { oocyteId }),
+    );
+    const { tank, rack } = response.data;
+    oocyte.isCryopreserved = true;
+    oocyte.cryoTank = tank;
+    oocyte.cryoRack = rack;
+    await this.oocyteRepository.save(oocyte);
+    return { tank, rack };
+  }
+
+  async findTreatmentsByPatientDni(dni: string): Promise<Treatment[]> {
+    const patient = await this.patientRepository.findOne({ where: { dni } });
+    if (!patient) return [];
+    return this.treatmentRepository
+      .createQueryBuilder('treatment')
+      .leftJoinAndSelect('treatment.medicalHistory', 'medicalHistory')
+      .leftJoinAndSelect('medicalHistory.patient', 'patient')
+      .where('patient.id = :patientId', { patientId: patient.id })
+      .getMany();
+  }
+
+  async findAllPunctureRecords(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<PunctureRecord[]> {
+    const skip = (page - 1) * limit;
+    return this.punctureRecordRepository.find({
+      relations: [
+        'treatment',
+        'treatment.medicalHistory',
+        'treatment.medicalHistory.patient',
+        'labTechnician',
+      ],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+  }
+
+  async findAllOocytes(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<Oocyte[]> {
+    const skip = (page - 1) * limit;
+    return this.oocyteRepository.find({
+      relations: [
+        'puncture',
+        'puncture.treatment',
+        'puncture.treatment.medicalHistory',
+        'puncture.treatment.medicalHistory.patient',
+      ],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
+  }
+
+  async findMatureNonCryopreservedOocytes(): Promise<Oocyte[]> {
+    return this.oocyteRepository.find({
+      where: { currentState: OocyteState.MATURE, isCryopreserved: false },
+      relations: ['puncture'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  // aca CRUD
 }

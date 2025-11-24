@@ -2,6 +2,7 @@ export enum OocyteState {
   VERY_IMMATURE = "very_immature",
   IMMATURE = "immature",
   MATURE = "mature",
+  DISCARDED = "discarded",
 }
 
 export enum FertilizationTechnique {
