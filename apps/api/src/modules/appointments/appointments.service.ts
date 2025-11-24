@@ -1,3 +1,4 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
@@ -5,12 +6,13 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { catchError, map } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
+import { AppointmentDetail, TurnoRaw } from '@repo/contracts';
+import { firstValueFrom, Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { mapRawAppointments } from './dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -53,27 +55,74 @@ export class AppointmentsService {
     );
   }
 
-  getDoctorAppointments(idDoctor: number): Observable<unknown> {
-    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${idDoctor}`;
-    const headers = this.buildAuthHeaders();
-    return this.httpService.get(url, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
+  async getDoctorAvailableSlots(doctorId: number) {
+    const appointmentsAndSlots =
+      await this.getDoctorAppointmentsAndSlots(doctorId);
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId === null,
     );
   }
 
-  getDoctorAppointmentsByDate(
-    idDoctor: number,
+  async getDoctorAvailableSlotsByDate(doctorId: number, date: string) {
+    const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
+      doctorId,
+      date,
+    );
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId === null,
+    );
+  }
+
+  async getDoctorAppointments(doctorId: number): Promise<AppointmentDetail[]> {
+    const appointmentsAndSlots =
+      await this.getDoctorAppointmentsAndSlots(doctorId);
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId !== null,
+    );
+  }
+
+  async getDoctorAppointmentsByDate(
+    doctorId: number,
     date: string,
-  ): Observable<unknown> {
-    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${idDoctor}&fecha=${encodeURIComponent(
+  ): Promise<AppointmentDetail[]> {
+    const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
+      doctorId,
+      date,
+    );
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId !== null,
+    );
+  }
+
+  private async getDoctorAppointmentsAndSlots(doctorId: number) {
+    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${doctorId}`;
+    const headers = this.buildAuthHeaders();
+    const appointmentsObservable = this.httpService
+      .get<{ data: TurnoRaw[] }>(url, { headers })
+      .pipe(
+        map((resp) => mapRawAppointments(resp.data.data)),
+        catchError((err) => this.handleAxiosError(err)),
+      );
+
+    return await firstValueFrom(appointmentsObservable);
+  }
+
+  private async getDoctorAppointmentsAndSlotsByDate(
+    doctorId: number,
+    date: string,
+  ): Promise<AppointmentDetail[]> {
+    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${doctorId}&fecha=${encodeURIComponent(
       date,
     )}`;
     const headers = this.buildAuthHeaders();
-    return this.httpService.get(url, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
-    );
+    const appointmentsObservable = this.httpService
+      .get<{ data: TurnoRaw[] }>(url, { headers })
+      .pipe(
+        map((resp) => mapRawAppointments(resp.data.data)),
+        catchError((err) => this.handleAxiosError(err)),
+      );
+
+    return await firstValueFrom(appointmentsObservable);
   }
 
   private buildAuthHeaders(json: boolean = false) {
