@@ -1,0 +1,15 @@
+{
+  "extends": "@repo/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "paths": {
+      "@config/*": ["./src/config/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@auth/*": ["./src/modules/auth/*"],
+      "@users/*": ["./src/modules/users/*"],
+      "@common/*": ["./src/common/*"],
+      "@external/*": ["./src/external/*"]
+    }
+  }
+}
