@@ -412,6 +412,22 @@ export default function OocytesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
+                        {oocyte.currentState === "very_immature" && (
+                          <Button
+                            onClick={() =>
+                              setCultivateModal({
+                                open: true,
+                                oocyteId: oocyte.id,
+                                date: "",
+                              })
+                            }
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 h-8 px-2"
+                            title="Cultivar"
+                          >
+                            Cultivar
+                          </Button>
+                        )}
                         {oocyte.currentState === "mature" &&
                           !oocyte.isCryopreserved && (
                             <Button
@@ -430,7 +446,7 @@ export default function OocytesPage() {
                           className="h-8 px-2 border-blue-300"
                           title="Ver detalles"
                         >
-                          <Eye className="w-3 h-3" />
+                          Ver detalles
                         </Button>
                         {oocyte.currentState !== "discarded" && (
                           <Button
@@ -447,22 +463,6 @@ export default function OocytesPage() {
                             title="Descartar"
                           >
                             <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
-                        {oocyte.currentState === "very_immature" && (
-                          <Button
-                            onClick={() =>
-                              setCultivateModal({
-                                open: true,
-                                oocyteId: oocyte.id,
-                                date: "",
-                              })
-                            }
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 h-8 px-2"
-                            title="Cultivar"
-                          >
-                            <FlaskConical className="w-3 h-3" />
                           </Button>
                         )}
                       </div>
@@ -558,7 +558,7 @@ export default function OocytesPage() {
                 variant="destructive"
                 className="flex-1"
               >
-                🗑️ Confirmar Descarte
+                Confirmar Descarte
               </Button>
             </div>
           </div>
@@ -630,7 +630,7 @@ export default function OocytesPage() {
                 disabled={!cultivateModal.date}
                 className="bg-green-600 hover:bg-green-700 flex-1"
               >
-                🌱 Iniciar Cultivo
+                Iniciar Cultivo
               </Button>
             </div>
           </div>

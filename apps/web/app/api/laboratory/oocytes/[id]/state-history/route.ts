@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const cookieStore = await cookies();
   const token =
     request.headers.get("authorization")?.replace("Bearer ", "") ||
