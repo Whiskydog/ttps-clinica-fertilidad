@@ -68,6 +68,28 @@ export class LaboratoryService {
     return response.data.donationId;
   }
 
+  async markSemenAsUsed(phenotype: any): Promise<string | null> {
+    const groupNumber = process.env.GROUP_NUMBER || '7';
+    const url = `${process.env.GAMETE_BANK_URL}/gametos-compatibilidad`;
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(url, {
+          group_number: Number(groupNumber),
+          type: 'esperma',
+          phenotype: phenotype,
+        }),
+      );
+      console.log(response);
+      if (response.data.success && response.data.gamete) {
+        return response.data.gamete.id;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error marking semen as used:', error);
+      return null;
+    }
+  }
+
   async cryopreserveOocyte(
     oocyteId: number,
   ): Promise<{ tank: string; rack: string }> {
@@ -87,16 +109,21 @@ export class LaboratoryService {
       );
     }
     // Llamar al servicio externo de criopreservación
-    const url = `${process.env.GAMETE_BANK_URL}/criopreservacion`; // asumir endpoint
+    const url = `${process.env.GAMETE_BANK_URL}/assign-ovocyte`;
     const response = await firstValueFrom(
-      this.httpService.post(url, { oocyteId }),
+      this.httpService.post(url, {
+        nro_grupo: '7',
+        ovocito_id: oocyte.uniqueIdentifier,
+      }),
     );
-    const { tank, rack } = response.data;
+    const data = response.data[0]; // respuesta es array
+    const { tanque_id, rack_id, posicion_id } = data;
     oocyte.isCryopreserved = true;
-    oocyte.cryoTank = tank;
-    oocyte.cryoRack = rack;
+    oocyte.cryoTank = tanque_id.toString();
+    oocyte.cryoRack = rack_id.toString();
+    oocyte.cryoTube = posicion_id.toString();
     await this.oocyteRepository.save(oocyte);
-    return { tank, rack };
+    return { tank: tanque_id.toString(), rack: rack_id.toString() };
   }
 
   async findTreatmentsByPatientDni(dni: string): Promise<Treatment[]> {

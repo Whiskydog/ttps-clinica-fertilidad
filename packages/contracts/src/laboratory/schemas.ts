@@ -67,8 +67,17 @@ export const EmbryoSchema = z.object({
   qualityScore: z.number().min(1).max(6).nullable(), // 1-6
   semenSource: z.nativeEnum(SemenSource).nullable(),
   donationIdUsed: z.string().nullable(),
-  pgtDecisionSuggested: z.string().nullable(),
-  pgtResult: z.nativeEnum(PgtResult).nullable(),
+  donationPhenotype: z
+    .object({
+      height: z.number().optional(),
+      ethnicity: z.string().optional(),
+      eye_color: z.string().optional(),
+      hair_type: z.string().optional(),
+      complexion: z.string().optional(),
+      hair_color: z.string().optional(),
+    })
+    .optional(),
+  pgtResult: z.nativeEnum(PgtResult).nullable().optional(),
   finalDisposition: z.nativeEnum(EmbryoDisposition).nullable(),
   cryoTank: z.string().nullable(),
   cryoRack: z.string().nullable(),
@@ -189,13 +198,25 @@ export type UpdateOocyteStateHistoryInput = z.infer<
 // Embryo Input Schemas
 export const CreateEmbryoSchema = z.object({
   oocyteOriginId: z.number(),
-  uniqueIdentifier: z.string().max(50),
+  uniqueIdentifier: z.string().max(50).optional(),
+  fertilizationDate: z.string().optional(),
   fertilizationTechnique: z
     .nativeEnum(FertilizationTechnique)
     .nullable()
     .optional(),
   qualityScore: z.number().int().min(1).max(6).nullable().optional(),
   semenSource: z.nativeEnum(SemenSource).nullable().optional(),
+  donationIdUsed: z.string().nullable().optional(),
+  donationPhenotype: z
+    .object({
+      height: z.number().optional(),
+      ethnicity: z.string().optional(),
+      eye_color: z.string().optional(),
+      hair_type: z.string().optional(),
+      complexion: z.string().optional(),
+      hair_color: z.string().optional(),
+    })
+    .optional(),
   pgtResult: z.nativeEnum(PgtResult).nullable().optional(),
   finalDisposition: z.nativeEnum(EmbryoDisposition).nullable().optional(),
   cryopreservationDate: z.iso.datetime().nullable().optional(),

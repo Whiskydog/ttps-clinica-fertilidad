@@ -321,21 +321,27 @@ export class LaboratoryController {
   @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
   async createEmbryo(@Body() dto: CreateEmbryoDto, @CurrentUser() user: User) {
-    const embryo = await this.embryoService.create({
-      oocyteOrigin: { id: dto.oocyteOriginId } as any,
-      uniqueIdentifier: dto.uniqueIdentifier,
-      fertilizationTechnique: dto.fertilizationTechnique ?? null,
-      qualityScore: dto.qualityScore ?? null,
-      semenSource: dto.semenSource ?? null,
-      pgtResult: dto.pgtResult ?? null,
-      finalDisposition: dto.finalDisposition ?? null,
-      cryoTank: dto.tankNumber ?? null,
-      cryoRack: dto.canisterNumber ?? null,
-      cryoTube: dto.caneNumber ?? null,
-      technician: dto.labTechnicianId
-        ? ({ id: dto.labTechnicianId } as any)
-        : ({ id: user.id } as any),
-    });
+    const embryo = await this.embryoService.create(
+      {
+        oocyteOrigin: { id: dto.oocyteOriginId } as any,
+        fertilizationDate: dto.fertilizationDate
+          ? parseDateFromString(dto.fertilizationDate as string)
+          : undefined,
+        fertilizationTechnique: dto.fertilizationTechnique ?? null,
+        qualityScore: dto.qualityScore ?? null,
+        semenSource: dto.semenSource ?? null,
+        donationIdUsed: dto.donationIdUsed ?? null,
+        pgtResult: dto.pgtResult ?? null,
+        finalDisposition: dto.finalDisposition ?? null,
+        cryoTank: dto.tankNumber ?? null,
+        cryoRack: dto.canisterNumber ?? null,
+        cryoTube: dto.caneNumber ?? null,
+        technician: dto.labTechnicianId
+          ? ({ id: dto.labTechnicianId } as any)
+          : ({ id: user.id } as any),
+      },
+      dto.donationPhenotype,
+    );
     return {
       message: 'Embrión creado correctamente',
       id: embryo.id,
@@ -480,5 +486,52 @@ export class LaboratoryController {
     const donationId =
       await this.laboratoryService.getCompatibleSemenId(phenotypeData);
     return { donationId };
+  }
+
+  // ============================================
+  // Embryo Management Endpoints
+  // ============================================
+
+  @Get('embryos')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async getEmbryos(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    return this.embryoService.findPaginated(pageNum, limitNum);
+  }
+
+  @Post('embryos/:id/cryopreserve')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async cryopreserveEmbryo(
+    @Param('id') id: string,
+    @Body() body: { tank: string; rack: string; tube: string },
+  ) {
+    const embryoId = Number(id);
+    return this.embryoService.cryopreserve(
+      embryoId,
+      body.tank,
+      body.rack,
+      body.tube,
+    );
+  }
+
+  @Post('embryos/:id/transfer')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async transferEmbryo(@Param('id') id: string) {
+    const embryoId = Number(id);
+    return this.embryoService.transfer(embryoId);
+  }
+
+  @Patch('embryos/:id/discard')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async discardEmbryo(
+    @Param('id') id: string,
+    @Body() body: { cause: string },
+  ) {
+    const embryoId = Number(id);
+    return this.embryoService.discard(embryoId, body.cause);
   }
 }

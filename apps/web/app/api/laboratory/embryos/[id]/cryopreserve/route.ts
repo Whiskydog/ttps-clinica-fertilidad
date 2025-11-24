@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -19,14 +19,17 @@ export async function PATCH(
   try {
     const body = await request.json();
     const backendUrl = process.env.BACKEND_URL;
-    const response = await fetch(`${backendUrl}/laboratory/oocytes/${id}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${backendUrl}/laboratory/embryos/${id}/cryopreserve`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -36,7 +39,7 @@ export async function PATCH(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error updating oocyte:", error);
+    console.error("Error cryopreserving embryo:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

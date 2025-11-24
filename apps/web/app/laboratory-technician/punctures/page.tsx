@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
+import { toast } from "@repo/ui";
 import {
   Table,
   TableBody,
@@ -21,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 
 export default function PuncturesPage() {
   const router = useRouter();
@@ -114,168 +116,231 @@ export default function PuncturesPage() {
       headers,
       body: JSON.stringify(body),
     });
-    if (res.ok) alert("Punción registrada");
-    else alert("Error");
+    if (res.ok) {
+      toast.success("Punción registrada exitosamente");
+      // Optionally refetch or reset form
+    } else {
+      toast.error("Error al registrar punción");
+    }
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Registrar Punción</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="patientDni">DNI del Paciente</Label>
-          <Input
-            id="patientDni"
-            value={patientDni}
-            onChange={(e) => setPatientDni(e.target.value)}
-            required
-          />
-          <Button
-            type="button"
-            onClick={fetchTreatments}
-            className="mt-2"
-            disabled={isLoading}
-          >
-            {isLoading ? "Buscando..." : "Buscar Tratamientos"}
-          </Button>
-        </div>
-        <div>
-          <Label htmlFor="treatmentId">Tratamiento</Label>
-          <Select
-            value={form.treatmentId}
-            onValueChange={(value) => setForm({ ...form, treatmentId: value })}
-          >
-            <SelectTrigger>
-              <SelectValue
-                placeholder={
-                  treatments.length > 0
-                    ? `Seleccione un tratamiento (${treatments.length} encontrados)`
-                    : "Seleccione un tratamiento"
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-orange-800">
+          Registro de Punciones
+        </h1>
+        <Button
+          onClick={() => router.push("/laboratory-technician")}
+          variant="outline"
+        >
+          ← Volver al Dashboard
+        </Button>
+      </div>
+
+      {/* Formulario de Registro */}
+      <Card className="bg-orange-50 border-orange-200">
+        <CardHeader>
+          <CardTitle className="text-orange-800">
+            Registrar Nueva Punción
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="patientDni" className="text-orange-700">
+                  DNI del Paciente
+                </Label>
+                <Input
+                  id="patientDni"
+                  type="text"
+                  value={patientDni}
+                  onChange={(e) => setPatientDni(e.target.value)}
+                  placeholder="Ingrese DNI"
+                  className="border-orange-300 focus:border-orange-500"
+                  required
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  onClick={fetchTreatments}
+                  disabled={!patientDni || isLoading}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {isLoading ? "Buscando..." : "Buscar Tratamientos"}
+                </Button>
+              </div>
+            </div>
+
+            {treatments.length > 0 && (
+              <div>
+                <Label htmlFor="treatmentId" className="text-orange-700">
+                  Tratamiento
+                </Label>
+                <Select
+                  value={form.treatmentId}
+                  onValueChange={(value) =>
+                    setForm({ ...form, treatmentId: value })
+                  }
+                >
+                  <SelectTrigger className="border-orange-300 focus:border-orange-500">
+                    <SelectValue placeholder="Seleccione un tratamiento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {treatments.map((treatment) => (
+                      <SelectItem
+                        key={treatment.id}
+                        value={treatment.id.toString()}
+                      >
+                        {treatment.id} - {treatment.initialObjective}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="punctureDate" className="text-orange-700">
+                  Fecha y Hora de Punción
+                </Label>
+                <Input
+                  id="punctureDate"
+                  type="datetime-local"
+                  value={form.punctureDate}
+                  onChange={(e) =>
+                    setForm({ ...form, punctureDate: e.target.value })
+                  }
+                  className="border-orange-300 focus:border-orange-500"
+                  required
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="operatingRoomNumber"
+                  className="text-orange-700"
+                >
+                  Número de Quirófano
+                </Label>
+                <Input
+                  id="operatingRoomNumber"
+                  type="number"
+                  value={form.operatingRoomNumber}
+                  onChange={(e) =>
+                    setForm({ ...form, operatingRoomNumber: e.target.value })
+                  }
+                  placeholder="Ej: 101"
+                  className="border-orange-300 focus:border-orange-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="observations" className="text-orange-700">
+                Observaciones
+              </Label>
+              <Textarea
+                id="observations"
+                value={form.observations}
+                onChange={(e) =>
+                  setForm({ ...form, observations: e.target.value })
                 }
+                placeholder="Observaciones adicionales..."
+                className="border-orange-300 focus:border-orange-500"
+                rows={3}
               />
-            </SelectTrigger>
-            <SelectContent>
-              {treatments.map((treatment) => (
-                <SelectItem key={treatment.id} value={treatment.id.toString()}>
-                  Tratamiento {treatment.id} - {treatment.initialObjective} -
-                  Inicio: {treatment.startDate} - Estado: {treatment.status} -
-                  Paciente: {treatment.medicalHistory?.patient?.firstName}{" "}
-                  {treatment.medicalHistory?.patient?.lastName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {patientDni && treatments.length > 0 && (
-            <p className="text-green-600 mt-2">
-              Se encontraron {treatments.length} tratamientos para el DNI{" "}
-              {patientDni}.
-            </p>
-          )}
-          {patientDni && treatments.length === 0 && !isLoading && (
-            <p className="text-red-600 mt-2">
-              No se encontraron tratamientos para el DNI {patientDni}.
-            </p>
-          )}
-        </div>
-        <div>
-          <Label htmlFor="punctureDate">Fecha y Hora de Punción</Label>
-          <Input
-            id="punctureDate"
-            type="datetime-local"
-            value={form.punctureDate}
-            onChange={(e) => setForm({ ...form, punctureDate: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="operatingRoomNumber">Número de Quirófano</Label>
-          <Input
-            id="operatingRoomNumber"
-            type="number"
-            value={form.operatingRoomNumber}
-            onChange={(e) =>
-              setForm({ ...form, operatingRoomNumber: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="observations">Observaciones</Label>
-          <Textarea
-            id="observations"
-            value={form.observations}
-            onChange={(e) => setForm({ ...form, observations: e.target.value })}
-          />
-        </div>
-        <Button type="submit">Registrar</Button>
-      </form>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-orange-600 hover:bg-orange-700"
+            >
+              {isLoading ? "Registrando..." : "Registrar Punción"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Lista de Punciones */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Punciones Registradas</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Fecha de Punción</TableHead>
-              <TableHead>Paciente</TableHead>
-              <TableHead>Quirófano</TableHead>
-              <TableHead>Observaciones</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {punctures.map((puncture) => (
-              <TableRow key={puncture.id}>
-                <TableCell>{puncture.id}</TableCell>
-                <TableCell>
-                  {puncture.punctureDateTime
-                    ? new Date(puncture.punctureDateTime).toLocaleString()
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  {puncture.treatment?.medicalHistory?.patient
-                    ? `${puncture.treatment.medicalHistory.patient.firstName} ${puncture.treatment.medicalHistory.patient.lastName}`
-                    : "N/A"}
-                </TableCell>
-                <TableCell>{puncture.operatingRoomNumber || "N/A"}</TableCell>
-                <TableCell>{puncture.observations || "N/A"}</TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() =>
-                      router.push(
-                        `/laboratory-technician/oocytes?punctureId=${puncture.id}`
-                      )
-                    }
-                  >
-                    Registrar Ovocitos
-                  </Button>
-                </TableCell>
+      <Card className="bg-orange-50 border-orange-200">
+        <CardHeader>
+          <CardTitle className="text-orange-800">
+            Punciones Registradas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Fecha de Punción</TableHead>
+                <TableHead>Paciente</TableHead>
+                <TableHead>Quirófano</TableHead>
+                <TableHead>Observaciones</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {/* Paginación simple */}
-        <div className="flex justify-between mt-4">
-          <Button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </Button>
-          <span>
-            Página {currentPage} de {totalPages}
-          </span>
-          <Button
-            onClick={() =>
-              setCurrentPage(Math.min(totalPages, currentPage + 1))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Siguiente
-          </Button>
-        </div>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {punctures.map((puncture) => (
+                <TableRow key={puncture.id}>
+                  <TableCell>{puncture.id}</TableCell>
+                  <TableCell>
+                    {puncture.punctureDateTime
+                      ? new Date(puncture.punctureDateTime).toLocaleString()
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {puncture.treatment?.medicalHistory?.patient
+                      ? `${puncture.treatment.medicalHistory.patient.firstName} ${puncture.treatment.medicalHistory.patient.lastName}`
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>{puncture.operatingRoomNumber || "N/A"}</TableCell>
+                  <TableCell>{puncture.observations || "N/A"}</TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={() =>
+                        router.push(
+                          `/laboratory-technician/oocytes?punctureId=${puncture.id}`
+                        )
+                      }
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      Registrar Ovocitos
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {/* Paginación simple */}
+          <div className="flex justify-between mt-4">
+            <Button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              variant="outline"
+            >
+              Anterior
+            </Button>
+            <span className="text-orange-700">
+              Página {currentPage} de {totalPages}
+            </span>
+            <Button
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
+              variant="outline"
+            >
+              Siguiente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

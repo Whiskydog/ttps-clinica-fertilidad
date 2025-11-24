@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { Embryo } from '../entities/embryo.entity';
 import { Oocyte } from '../entities/oocyte.entity';
 import { EmbryoDisposition } from '@repo/contracts';
+import { LaboratoryService } from '../laboratory.service';
 
 @Injectable()
 export class EmbryoService {
   constructor(
     @InjectRepository(Embryo)
     private readonly embryoRepository: Repository<Embryo>,
+    private readonly laboratoryService: LaboratoryService,
   ) {}
 
   generateEmbryoId(
@@ -84,7 +86,19 @@ export class EmbryoService {
     });
   }
 
-  async create(embryoData: Partial<Embryo>): Promise<Embryo> {
+  async create(
+    embryoData: Partial<Embryo>,
+    donationPhenotype?: any,
+  ): Promise<Embryo> {
+    // Si es semen donado, marcar como utilizado en el banco externo
+    if (embryoData.semenSource === 'donated' && donationPhenotype) {
+      const reservedId =
+        await this.laboratoryService.markSemenAsUsed(donationPhenotype);
+      if (reservedId) {
+        embryoData.donationIdUsed = reservedId;
+      }
+    }
+
     // Generar uniqueIdentifier automáticamente
     const oocyte = await this.embryoRepository.manager
       .getRepository(Oocyte)
@@ -138,5 +152,45 @@ export class EmbryoService {
   async remove(id: number): Promise<void> {
     const embryo = await this.findOne(id);
     await this.embryoRepository.remove(embryo);
+  }
+
+  async findPaginated(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ embryos: Embryo[]; total: number }> {
+    const [embryos, total] = await this.embryoRepository.findAndCount({
+      relations: ['oocyteOrigin', 'technician'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+    return { embryos, total };
+  }
+
+  async cryopreserve(
+    id: number,
+    tank: string,
+    rack: string,
+    tube: string,
+  ): Promise<Embryo> {
+    const embryo = await this.findOne(id);
+    embryo.finalDisposition = EmbryoDisposition.CRYOPRESERVED;
+    embryo.cryoTank = tank;
+    embryo.cryoRack = rack;
+    embryo.cryoTube = tube;
+    return this.embryoRepository.save(embryo);
+  }
+
+  async transfer(id: number): Promise<Embryo> {
+    const embryo = await this.findOne(id);
+    embryo.finalDisposition = EmbryoDisposition.TRANSFERRED;
+    return this.embryoRepository.save(embryo);
+  }
+
+  async discard(id: number, cause: string): Promise<Embryo> {
+    const embryo = await this.findOne(id);
+    embryo.finalDisposition = EmbryoDisposition.DISCARDED;
+    embryo.discardCause = cause;
+    return this.embryoRepository.save(embryo);
   }
 }

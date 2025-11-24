@@ -34,6 +34,7 @@
     "@types/form-data": "^2.5.2",
     "argon2": "^0.44.0",
     "cookie-parser": "^1.4.7",
+    "form-data": "^4.0.5",
     "moment": "^2.30.1",
     "multer": "^2.0.2",
     "nestjs-zod": "^5.0.1",

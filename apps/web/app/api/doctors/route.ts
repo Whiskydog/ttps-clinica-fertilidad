@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const backendUrl = process.env.BACKEND_URL;
-    const response = await fetch(`${backendUrl}/laboratory/oocytes/mature`, {
+    const response = await fetch(`${backendUrl}/doctors`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch mature oocytes" },
+        { error: "Failed to fetch doctors" },
         { status: response.status }
       );
     }
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Error fetching mature oocytes:", error);
+    console.error("Error fetching doctors:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
