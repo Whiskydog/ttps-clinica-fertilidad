@@ -26,6 +26,15 @@ export const TurnoSchema = z.object({
     ),
 });
 
+export type TurnoRaw = z.infer<typeof TurnoSchema>;
+
+export type AppointmentDetail = {
+  id: number;
+  doctorId: number;
+  patientId: number | null;
+  dateTime: string;
+}
+
 export const ReservaSchema = z.object({
   message: z.string(),
   turno: TurnoSchema,
