@@ -1,19 +1,20 @@
 import { BaseEntity } from '@common/entities/base.entity';
-import {
-  Entity,
-  Column,
-  OneToMany,
-  Unique,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
-import { Patient } from '../../users/entities/patient.entity';
-import { Habits } from './habits.entity';
-import { Fenotype } from './fenotype.entity';
+import { Patient } from '@modules/users/entities/patient.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  Unique,
+} from 'typeorm';
 import { Background } from './background.entity';
-import { PartnerData } from './partner-data.entity';
+import { Fenotype } from './fenotype.entity';
 import { GynecologicalHistory } from './gynecological-history.entity';
+import { Habits } from './habits.entity';
+import { PartnerData } from './partner-data.entity';
 
 @Entity('medical_histories')
 @Unique(['patient'])
@@ -39,6 +40,12 @@ export class MedicalHistory extends BaseEntity {
     (treatment: Treatment) => treatment.medicalHistory,
   )
   treatments: Treatment[];
+
+  @OneToOne(() => Treatment, (treatment) => treatment.medicalHistory, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'current_treatment_id', referencedColumnName: 'id' })
+  currentTreatment: Treatment;
 
   @OneToMany(() => Habits, (habits) => habits.medicalHistory)
   habits: Habits[];
