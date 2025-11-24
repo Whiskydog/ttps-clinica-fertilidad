@@ -21,7 +21,7 @@ export class Appointment extends BaseEntity {
   @Column({
     type: 'enum',
     enum: ReasonForVisit,
-    enumName: 'reason_for_appointment',
+    enumName: 'reason_for_visit',
     default: ReasonForVisit.InitialConsultation,
   })
   reason: ReasonForVisit;
