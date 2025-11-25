@@ -1,4 +1,5 @@
 export * from "./appointments/schemas";
+export * from "./appointments/enums";
 export * from "./audit/schemas";
 export * from "./auth/schemas";
 export * from "./auth/types";
