@@ -5,7 +5,6 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
   OneToMany,
   OneToOne,
   Unique,
@@ -19,7 +18,7 @@ import { PartnerData } from './partner-data.entity';
 @Entity('medical_histories')
 @Unique(['patient'])
 export class MedicalHistory extends BaseEntity {
-  @ManyToOne(() => Patient, { eager: true, nullable: false })
+  @OneToOne(() => Patient, { eager: true, nullable: false })
   @JoinColumn({ name: 'patient_id', referencedColumnName: 'id' })
   patient: Patient;
 
