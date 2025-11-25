@@ -1,43 +1,37 @@
 "use client";
 
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { useDoctors } from "@/hooks/doctor/useDoctors";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BookAppointmentSchema, ReasonForVisit } from "@repo/contracts";
+import { toast } from "@repo/ui";
 import { Button } from "@repo/ui/button";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@repo/ui/field";
-import { CodeBlock, CodeBlockCode } from "@repo/ui/code-block";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
 import { Spinner } from "@repo/ui/spinner";
 import { CircleX } from "lucide-react";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import AppointmentPicker from "./AppointmentPicker";
-import { toast } from "@repo/ui";
 
 export default function BookAppointmentForm() {
+  const router = useRouter();
   const { doctors, isLoading, isError, error } = useDoctors();
+  const { bookAppointmentMutation } = useAppointments();
 
   const formSchema = z.object({
     doctorId: z.string().optional(),
-    reason: z.enum([
-      "initial-consultation",
-      "stimulation-monitoring",
-      "egg-retrieval",
-      "embryo-transfer",
-    ]),
-    appointment: z
-      .object({
-        id: z.number(),
-        dateTime: z.string(),
-      })
-      .nullable(),
+    reason: BookAppointmentSchema.shape.reason,
+    appointment: BookAppointmentSchema.shape.appointment.nullable(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      reason: "initial-consultation",
+      reason: ReasonForVisit.InitialConsultation,
       doctorId: "-1",
       appointment: null,
     },
@@ -52,29 +46,28 @@ export default function BookAppointmentForm() {
       return;
     }
     if (!data.appointment) {
-      console.log("No appointment selected");
       form.setError("appointment", {
         message: "Por favor seleccione una cita disponible",
       });
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    toast.custom(() => (
-      <div className="ring-1 ring-black/5 w-full items-center p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <CircleX className="h-5 w-5 text-blue-600" />
-          <span className="font-medium">Datos del turno reservado:</span>
-        </div>
-        <CodeBlock className="max-w-full">
-          <CodeBlockCode
-            code={JSON.stringify(data, null, 2)}
-            theme="github-dark"
-          />
-        </CodeBlock>
-      </div>
-    ));
+    await bookAppointmentMutation.mutateAsync(
+      {
+        doctorId: Number(data.doctorId),
+        reason: data.reason,
+        appointment: data.appointment,
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data.message);
+          router.push("/patient");
+        },
+        onError: (error: Error) => {
+          toast.error(error.message);
+        },
+      }
+    );
   };
 
   useEffect(() => {
@@ -103,7 +96,7 @@ export default function BookAppointmentForm() {
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-initial-consultation"
-                      value={"initial-consultation"}
+                      value={ReasonForVisit.InitialConsultation}
                     />
                     <FieldLabel htmlFor={`reason-initial-consultation`}>
                       Primera consulta
@@ -112,7 +105,7 @@ export default function BookAppointmentForm() {
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-stimulation-monitoring"
-                      value={"stimulation-monitoring"}
+                      value={ReasonForVisit.StimulationMonitoring}
                     />
                     <FieldLabel htmlFor={`reason-stimulation-monitoring`}>
                       Monitoreo de estimulación
@@ -121,7 +114,7 @@ export default function BookAppointmentForm() {
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-egg-retrieval"
-                      value={"egg-retrieval"}
+                      value={ReasonForVisit.EggRetrieval}
                     />
                     <FieldLabel htmlFor={`reason-egg-retrieval`}>
                       Punción ovárica
@@ -130,7 +123,7 @@ export default function BookAppointmentForm() {
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-embryo-transfer"
-                      value={"embryo-transfer"}
+                      value={ReasonForVisit.EmbryoTransfer}
                     />
                     <FieldLabel htmlFor={`reason-embryo-transfer`}>
                       Transferencia de embriones
