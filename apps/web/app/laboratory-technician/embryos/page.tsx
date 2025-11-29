@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@repo/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 import { Badge } from "@repo/ui/badge";
@@ -68,6 +70,30 @@ export default function EmbryosPage() {
   const [loadingSperms, setLoadingSperms] = useState(false);
   const itemsPerPage = 10;
 
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [discardCause, setDiscardCause] = useState("");
+
+  const fetchOocytes = async () => {
+    const res = await fetch("/api/laboratory/oocytes/mature", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setOocytes(data);
+    }
+  };
+
+  const fetchDoctors = async () => {
+    const res = await fetch("/api/doctors", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setDoctors(data);
+    }
+  };
+
   const [form, setForm] = useState({
     oocyteOriginId: "",
     fertilizationDate: "",
@@ -81,24 +107,6 @@ export default function EmbryosPage() {
 
   useEffect(() => {
     fetchEmbryos();
-    const fetchOocytes = async () => {
-      const res = await fetch("/api/laboratory/oocytes/mature", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setOocytes(data);
-      }
-    };
-    const fetchDoctors = async () => {
-      const res = await fetch("/api/doctors", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDoctors(data);
-      }
-    };
     fetchOocytes();
     fetchDoctors();
   }, [currentPage]);
@@ -184,23 +192,7 @@ export default function EmbryosPage() {
   };
 
   const handleTransfer = async () => {
-    if (!selectedEmbryo) return;
-    if (confirm("Are you sure you want to transfer this embryo?")) {
-      const res = await fetch(
-        `/api/laboratory/embryos/${selectedEmbryo.id}/transfer`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      if (res.ok) {
-        toast.success("Embryo transferred successfully");
-        setIsModalOpen(false);
-        fetchEmbryos();
-      } else {
-        toast.error("Failed to transfer embryo");
-      }
-    }
+    setShowTransferModal(true);
   };
 
   const handleDiscard = async (cause: string) => {
@@ -254,6 +246,7 @@ export default function EmbryosPage() {
     if (res.ok) {
       toast.success("Embrión registrado exitosamente");
       fetchEmbryos();
+      fetchOocytes();
       setForm({
         oocyteOriginId: "",
         fertilizationDate: "",
@@ -860,12 +853,7 @@ export default function EmbryosPage() {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => {
-                          const cause = prompt("Causa del descarte:");
-                          if (cause && cause.trim()) {
-                            handleDiscard(cause.trim());
-                          }
-                        }}
+                        onClick={() => setShowDiscardModal(true)}
                         className="h-12"
                       >
                         Descartar
@@ -987,6 +975,79 @@ export default function EmbryosPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Transferencia</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de que desea transferir este embrión? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTransferModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={async () => {
+              setShowTransferModal(false);
+              if (!selectedEmbryo) return;
+              const res = await fetch(
+                `/api/laboratory/embryos/${selectedEmbryo.id}/transfer`,
+                {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                }
+              );
+              if (res.ok) {
+                toast.success("Embryo transferred successfully");
+                setIsModalOpen(false);
+                fetchEmbryos();
+              } else {
+                toast.error("Failed to transfer embryo");
+              }
+            }}>
+              Transferir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDiscardModal} onOpenChange={setShowDiscardModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Descartar Embrión</DialogTitle>
+            <DialogDescription>
+              Proporcione la causa del descarte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="discard-cause">Causa</Label>
+            <Input
+              id="discard-cause"
+              value={discardCause}
+              onChange={(e) => setDiscardCause(e.target.value)}
+              placeholder="Ingrese la causa del descarte"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDiscardModal(false);
+              setDiscardCause("");
+            }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              if (discardCause.trim()) {
+                handleDiscard(discardCause.trim());
+                setShowDiscardModal(false);
+                setDiscardCause("");
+              }
+            }}>
+              Descartar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

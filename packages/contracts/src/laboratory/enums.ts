@@ -2,6 +2,8 @@ export enum OocyteState {
   VERY_IMMATURE = "very_immature",
   IMMATURE = "immature",
   MATURE = "mature",
+  CULTIVATED = "cultivated",
+  USED = "used",
   DISCARDED = "discarded",
 }
 

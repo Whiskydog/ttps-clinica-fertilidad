@@ -179,12 +179,12 @@ export class OocyteService {
       );
     }
     const oldState = oocyte.currentState;
-    oocyte.currentState = OocyteState.IMMATURE;
+    oocyte.currentState = OocyteState.CULTIVATED;
     await this.oocyteRepository.save(oocyte);
     await this.oocyteStateHistoryService.create({
       oocyte: oocyte,
       previousState: oldState,
-      newState: OocyteState.IMMATURE,
+      newState: OocyteState.CULTIVATED,
       transitionDate: new Date(),
     });
   }

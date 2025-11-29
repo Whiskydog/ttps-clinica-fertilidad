@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Embryo } from '../entities/embryo.entity';
 import { Oocyte } from '../entities/oocyte.entity';
-import { EmbryoDisposition } from '@repo/contracts';
+import { OocyteStateHistory } from '../entities/oocyte-state-history.entity';
+import { EmbryoDisposition, OocyteState } from '@repo/contracts';
 import { LaboratoryService } from '../laboratory.service';
 
 @Injectable()
@@ -11,6 +12,10 @@ export class EmbryoService {
   constructor(
     @InjectRepository(Embryo)
     private readonly embryoRepository: Repository<Embryo>,
+    @InjectRepository(Oocyte)
+    private readonly oocyteRepository: Repository<Oocyte>,
+    @InjectRepository(OocyteStateHistory)
+    private readonly oocyteStateHistoryRepository: Repository<OocyteStateHistory>,
     private readonly laboratoryService: LaboratoryService,
   ) {}
 
@@ -140,7 +145,23 @@ export class EmbryoService {
       ...embryoData,
       uniqueIdentifier,
     });
-    return this.embryoRepository.save(embryo);
+    const savedEmbryo = await this.embryoRepository.save(embryo);
+
+    // Marcar el ovocito como usado
+    const originOocyte = await this.oocyteRepository.findOne({ where: { id: embryoData.oocyteOrigin!.id } });
+    if (originOocyte) {
+      const oldState = originOocyte.currentState;
+      originOocyte.currentState = OocyteState.USED;
+      await this.oocyteRepository.save(originOocyte);
+      await this.oocyteStateHistoryRepository.save({
+        oocyte: originOocyte,
+        previousState: oldState,
+        newState: OocyteState.USED,
+        transitionDate: new Date(),
+      });
+    }
+
+    return savedEmbryo;
   }
 
   async update(id: number, embryoData: Partial<Embryo>): Promise<Embryo> {

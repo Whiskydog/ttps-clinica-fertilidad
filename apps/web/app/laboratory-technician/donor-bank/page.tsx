@@ -23,6 +23,14 @@ import {
 } from "@repo/ui/table";
 import { Badge } from "@repo/ui/badge";
 import { toast } from "@repo/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/dialog";
 
 interface PhenotypeEnums {
   eye_color: { values: string[]; label: string; description: string };
@@ -104,6 +112,8 @@ export default function DonorBankPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [selectedType, setSelectedType] = useState("");
+
+  const [showCleanModal, setShowCleanModal] = useState(false);
 
   const [tankForm, setTankForm] = useState<TankForm>({
     type: "",
@@ -286,21 +296,7 @@ export default function DonorBankPage() {
   };
 
   const handleClean = async () => {
-    if (!confirm("¿Está seguro de limpiar todos los datos del grupo?")) return;
-    try {
-      const response = await fetch(`${API_BASE}/limpiar?group_number=7`, {
-        method: "DELETE",
-      });
-      const data = await response.json();
-      if (data.message) {
-        toast.success(data.message);
-        fetchStorage();
-      } else {
-        toast.error(data.error || "Error al limpiar datos");
-      }
-    } catch (error) {
-      toast.error("Error de conexión");
-    }
+    setShowCleanModal(true);
   };
 
   if (!enums) return <div>Cargando...</div>;
@@ -836,6 +832,41 @@ export default function DonorBankPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={showCleanModal} onOpenChange={setShowCleanModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Limpieza</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de limpiar todos los datos del grupo? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCleanModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={async () => {
+              setShowCleanModal(false);
+              try {
+                const response = await fetch(`${API_BASE}/limpiar?group_number=7`, {
+                  method: "DELETE",
+                });
+                const data = await response.json();
+                if (data.message) {
+                  toast.success(data.message);
+                  fetchStorage();
+                } else {
+                  toast.error(data.error || "Error al limpiar datos");
+                }
+              } catch (error) {
+                toast.error("Error de conexión");
+              }
+            }}>
+              Limpiar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

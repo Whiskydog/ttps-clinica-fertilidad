@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@repo/ui/dialog";
 import { Textarea } from "@repo/ui/textarea";
 import { Input } from "@repo/ui/input";
@@ -56,6 +58,8 @@ const translateState = (state: string): string => {
     very_immature: "Muy inmaduro",
     immature: "Inmaduro",
     mature: "Maduro",
+    cultivated: "Cultivado",
+    used: "Usado",
     discarded: "Descartado",
     cryopreserved: "Criopreservado",
   };
@@ -90,6 +94,9 @@ export default function OocytesPage() {
     history: HistoryEntry[];
   }>({ open: false, history: [] });
 
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
   useEffect(() => {
     const fetchPunctures = async () => {
       const res = await fetch("/api/laboratory/puncture-records", {
@@ -111,6 +118,15 @@ export default function OocytesPage() {
   useEffect(() => {
     fetchOocytes();
   }, [currentPage]);
+
+  // Polling para actualizar estados en tiempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchOocytes();
+    }, 30000); // Actualizar cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchOocytes = async () => {
     const res = await fetch(
@@ -160,7 +176,8 @@ export default function OocytesPage() {
     if (res.ok) {
       fetchOocytes();
     } else {
-      alert("Error cambiando estado");
+      setAlertMessage("Error cambiando estado");
+      setShowAlertModal(true);
     }
   };
 
@@ -175,10 +192,12 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      alert("Ovocito criopreservado");
+      setAlertMessage("Ovocito criopreservado");
+      setShowAlertModal(true);
       fetchOocytes();
     } else {
-      alert("Error");
+      setAlertMessage("Error");
+      setShowAlertModal(true);
     }
   };
 
@@ -196,11 +215,13 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      alert("Ovocito descartado");
+      setAlertMessage("Ovocito descartado");
+      setShowAlertModal(true);
       setDiscardModal({ open: false, oocyteId: null, cause: "" });
       fetchOocytes();
     } else {
-      alert("Error");
+      setAlertMessage("Error");
+      setShowAlertModal(true);
     }
   };
 
@@ -218,11 +239,13 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      alert("Ovocito cultivado");
+      setAlertMessage("Ovocito cultivado");
+      setShowAlertModal(true);
       setCultivateModal({ open: false, oocyteId: null, date: "" });
       fetchOocytes();
     } else {
-      alert("Error");
+      setAlertMessage("Error");
+      setShowAlertModal(true);
     }
   };
 
@@ -240,7 +263,8 @@ export default function OocytesPage() {
         history: Array.isArray(history) ? history : [],
       });
     } else {
-      alert("Error obteniendo historial");
+      setAlertMessage("Error obteniendo historial");
+      setShowAlertModal(true);
     }
   };
 
@@ -371,12 +395,20 @@ export default function OocytesPage() {
                     </TableCell>
                     <TableCell>
                       {oocyte.currentState === "discarded" ||
+                      oocyte.currentState === "cultivated" ||
+                      oocyte.currentState === "used" ||
                       oocyte.isCryopreserved ? (
                         <Badge
-                          variant={
-                            oocyte.isCryopreserved ? "secondary" : "destructive"
-                          }
-                          className="text-xs"
+                          variant="outline"
+                          className={`text-xs font-medium ${
+                            oocyte.isCryopreserved
+                              ? "bg-blue-500 text-white border-blue-500"
+                              : oocyte.currentState === "cultivated"
+                              ? "bg-green-500 text-white border-green-500"
+                              : oocyte.currentState === "used"
+                              ? "bg-gray-600 text-white border-gray-600"
+                              : "bg-red-500 text-white border-red-500"
+                          }`}
                         >
                           {oocyte.isCryopreserved
                             ? "Criopreservado"
@@ -448,7 +480,8 @@ export default function OocytesPage() {
                         >
                           Ver detalles
                         </Button>
-                        {oocyte.currentState !== "discarded" && (
+                        {oocyte.currentState !== "discarded" &&
+                        oocyte.currentState !== "used" && (
                           <Button
                             onClick={() =>
                               setDiscardModal({
@@ -708,6 +741,18 @@ export default function OocytesPage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAlertModal} onOpenChange={setShowAlertModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notificación</DialogTitle>
+            <DialogDescription>{alertMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowAlertModal(false)}>OK</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

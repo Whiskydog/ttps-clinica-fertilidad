@@ -109,7 +109,7 @@ export class LaboratoryService {
       );
     }
     // Llamar al servicio externo de criopreservación
-    const url = `${process.env.GAMETE_BANK_URL}/assign-ovocyte`;
+    const url = `${process.env.OOCYTE_BANK_URL}/assign-ovocyte`;
     const response = await firstValueFrom(
       this.httpService.post(url, {
         nro_grupo: '7',
@@ -174,11 +174,14 @@ export class LaboratoryService {
   }
 
   async findMatureNonCryopreservedOocytes(): Promise<Oocyte[]> {
-    return this.oocyteRepository.find({
-      where: { currentState: OocyteState.MATURE, isCryopreserved: false },
-      relations: ['puncture'],
-      order: { createdAt: 'DESC' },
-    });
+    return this.oocyteRepository
+      .createQueryBuilder('oocyte')
+      .leftJoinAndSelect('oocyte.puncture', 'puncture')
+      .where('oocyte.currentState = :mature', { mature: OocyteState.MATURE })
+      .andWhere('oocyte.isCryopreserved = :false', { false: false })
+      .andWhere('oocyte.currentState != :used', { used: OocyteState.USED })
+      .orderBy('oocyte.createdAt', 'DESC')
+      .getMany();
   }
 
   // aca CRUD

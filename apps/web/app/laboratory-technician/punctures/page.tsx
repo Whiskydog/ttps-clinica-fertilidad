@@ -23,6 +23,14 @@ import {
   TableRow,
 } from "@repo/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/dialog";
 
 export default function PuncturesPage() {
   const router = useRouter();
@@ -41,6 +49,9 @@ export default function PuncturesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   // Fetch punciones al cargar
   useEffect(() => {
@@ -84,11 +95,13 @@ export default function PuncturesPage() {
       if (Array.isArray(data)) {
         setTreatments(data);
       } else {
-        alert("Error: invalid data received");
+        setAlertMessage("Error: invalid data received");
+        setShowAlertModal(true);
         setTreatments([]);
       }
     } else {
-      alert("Error fetching treatments");
+      setAlertMessage("Error fetching treatments");
+      setShowAlertModal(true);
       setTreatments([]);
     }
     setIsLoading(false);
@@ -118,7 +131,16 @@ export default function PuncturesPage() {
     });
     if (res.ok) {
       toast.success("Punción registrada exitosamente");
-      // Optionally refetch or reset form
+      // Reset form and refetch list
+      setForm({
+        treatmentId: "",
+        punctureDate: "",
+        operatingRoomNumber: "",
+        observations: "",
+      });
+      setPatientDni("");
+      setTreatments([]);
+      fetchPunctures();
     } else {
       toast.error("Error al registrar punción");
     }
@@ -341,6 +363,18 @@ export default function PuncturesPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showAlertModal} onOpenChange={setShowAlertModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{alertMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowAlertModal(false)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
