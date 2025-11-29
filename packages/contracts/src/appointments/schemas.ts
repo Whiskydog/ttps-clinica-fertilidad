@@ -1,7 +1,13 @@
 import { z } from "zod";
+import { ReasonForVisit } from "./enums";
 
-export const ConfirmAppointmentSchema = z.object({
-  id_turno: z.number().int().positive(),
+export const BookAppointmentSchema = z.object({
+  doctorId: z.number().int().positive(),
+  reason: z.enum(ReasonForVisit),
+  appointment: z.object({
+    id: z.number().int().positive(),
+    dateTime: z.iso.datetime({ offset: true }),
+  }),
 });
 
 export const PostTurnosSchema = z.object({
@@ -11,7 +17,7 @@ export const PostTurnosSchema = z.object({
   dia_semana: z.number().int().min(0).max(6),
 });
 
-export type ConfirmAppointment = z.infer<typeof ConfirmAppointmentSchema>;
+export type BookAppointment = z.infer<typeof BookAppointmentSchema>;
 export type PostTurnos = z.infer<typeof PostTurnosSchema>;
 
 export const TurnoSchema = z.object({
@@ -33,7 +39,7 @@ export type AppointmentDetail = {
   doctorId: number;
   patientId: number | null;
   dateTime: string;
-}
+};
 
 export const ReservaSchema = z.object({
   message: z.string(),

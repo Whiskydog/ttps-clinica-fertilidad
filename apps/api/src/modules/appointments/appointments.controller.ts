@@ -1,17 +1,13 @@
-import {
-  ConfirmAppointmentDto,
-  PostTurnosDto,
-} from '@modules/appointments/dto';
+import { BookAppointmentDto, PostTurnosDto } from '@modules/appointments/dto';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
+import { Patient } from '@modules/users/entities/patient.entity';
 import { User } from '@modules/users/entities/user.entity';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Logger,
   Param,
   ParseDatePipe,
@@ -20,36 +16,32 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ReservaResponseSchema } from '@repo/contracts';
+import { RoleCode } from '@repo/contracts';
 import moment from 'moment';
-import { firstValueFrom } from 'rxjs';
 import { AppointmentsService } from './appointments.service';
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 
 @Controller('appointments')
 export class AppointmentsController {
   private readonly logger = new Logger(AppointmentsController.name);
 
-  constructor(
-    private readonly appointmentsService: AppointmentsService,
-    private readonly medicalHistory: MedicalHistoryService,
-  ) {}
+  constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  @Post('confirm')
+  @Post()
   @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async confirmAndCreateMedicalHistory(
-    @Body() dto: ConfirmAppointmentDto,
+  @EnvelopeMessage('Turno reservado con éxito.')
+  async bookAppointment(
+    @Body() dto: BookAppointmentDto,
     @CurrentUser() user: User,
   ) {
-    const reserva = await firstValueFrom(
-      this.appointmentsService.reserveAppointment(user.id, dto.id_turno),
-    );
+    if (user.role.code !== RoleCode.PATIENT) {
+      this.logger.warn(
+        `User with id=${user.id} and role=${user.role} attempted to book an appointment.`,
+      );
+      throw new BadRequestException('Solo pacientes pueden reservar turnos.');
+    }
 
-    const medical_history = await this.medicalHistory.createForPatient(user.id);
-
-    const result = { reserva, medical_history };
-
-    return ReservaResponseSchema.parse(result);
+    await this.appointmentsService.bookAppointment(user as Patient, dto);
   }
 
   // Obtener turnos del paciente autenticado
@@ -88,7 +80,7 @@ export class AppointmentsController {
   @Get('doctor/:id')
   getDoctorAppointments(
     @Param('id', ParseIntPipe) id: number,
-    @Query('date', new ParseDatePipe()) date?: Date,
+    @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
   ) {
     if (date) {
       this.logger.log(
