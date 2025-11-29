@@ -95,6 +95,18 @@ export class MedicalHistoryController {
     return mh;
   }
 
+  @Post('patient/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async createForPatient(@Param('id') id: string) {
+    const patientId = Number(id);
+    const mh = await this.medicalHistoryService.createForPatient(patientId);
+    return {
+      message: 'Historia clínica creada exitosamente',
+      medicalHistory: mh,
+    };
+  }
+
   @Post('partner')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.DOCTOR)

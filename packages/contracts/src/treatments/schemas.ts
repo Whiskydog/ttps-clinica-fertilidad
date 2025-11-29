@@ -1,13 +1,18 @@
 import { z } from "zod";
-import { InitialObjective, TreatmentStatus, MilestoneType, MilestoneResult } from "./enums";
+import {
+  InitialObjective,
+  TreatmentStatus,
+  MilestoneType,
+  MilestoneResult,
+} from "./enums";
 import { UserEntitySchema } from "../users";
 
 export const InitialObjectiveEnum = z.enum(
-  Object.values(InitialObjective) as [string, ...string[]],
+  Object.values(InitialObjective) as [string, ...string[]]
 );
 
 export const TreatmentStatusEnum = z.enum(
-  Object.values(TreatmentStatus) as [string, ...string[]],
+  Object.values(TreatmentStatus) as [string, ...string[]]
 );
 
 export const CreateTreatmentSchema = z.object({
@@ -20,7 +25,10 @@ export const CreateTreatmentResponseSchema = z.object({
   id: z.number(),
   initialObjective: InitialObjectiveEnum,
   status: TreatmentStatusEnum,
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
 });
 
 export type CreateTreatmentResponseDtoType = z.infer<
@@ -135,10 +143,12 @@ export const MedicalCoverageSchema = z.object({
   coveragePercentage: z.number().nullable(), // decimal 5,2
   patientDue: z.number().nullable(), // decimal 10,2
   insuranceDue: z.number().nullable(), // decimal 10,2
-  medicalInsurance: z.object({
-    id: z.number(),
-    name: z.string(),
-  }).optional(),
+  medicalInsurance: z
+    .object({
+      id: z.number(),
+      name: z.string(),
+    })
+    .optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -170,12 +180,17 @@ export const CreateInformedConsentSchema = z.object({
   uploadedByUserId: z.number().nullable().optional(),
 });
 
-export const UpdateInformedConsentSchema = CreateInformedConsentSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateInformedConsentSchema =
+  CreateInformedConsentSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreateInformedConsentInput = z.infer<typeof CreateInformedConsentSchema>;
-export type UpdateInformedConsentInput = z.infer<typeof UpdateInformedConsentSchema>;
+export type CreateInformedConsentInput = z.infer<
+  typeof CreateInformedConsentSchema
+>;
+export type UpdateInformedConsentInput = z.infer<
+  typeof UpdateInformedConsentSchema
+>;
 
 // Post Transfer Milestone Input Schemas
 export const CreatePostTransferMilestoneSchema = z.object({
@@ -186,12 +201,17 @@ export const CreatePostTransferMilestoneSchema = z.object({
   registeredByDoctorId: z.number().nullable().optional(),
 });
 
-export const UpdatePostTransferMilestoneSchema = CreatePostTransferMilestoneSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdatePostTransferMilestoneSchema =
+  CreatePostTransferMilestoneSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreatePostTransferMilestoneInput = z.infer<typeof CreatePostTransferMilestoneSchema>;
-export type UpdatePostTransferMilestoneInput = z.infer<typeof UpdatePostTransferMilestoneSchema>;
+export type CreatePostTransferMilestoneInput = z.infer<
+  typeof CreatePostTransferMilestoneSchema
+>;
+export type UpdatePostTransferMilestoneInput = z.infer<
+  typeof UpdatePostTransferMilestoneSchema
+>;
 
 // Medical Coverage Input Schemas
 export const CreateMedicalCoverageSchema = z.object({
@@ -202,12 +222,17 @@ export const CreateMedicalCoverageSchema = z.object({
   insuranceDue: z.number().nullable().optional(),
 });
 
-export const UpdateMedicalCoverageSchema = CreateMedicalCoverageSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateMedicalCoverageSchema =
+  CreateMedicalCoverageSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreateMedicalCoverageInput = z.infer<typeof CreateMedicalCoverageSchema>;
-export type UpdateMedicalCoverageInput = z.infer<typeof UpdateMedicalCoverageSchema>;
+export type CreateMedicalCoverageInput = z.infer<
+  typeof CreateMedicalCoverageSchema
+>;
+export type UpdateMedicalCoverageInput = z.infer<
+  typeof UpdateMedicalCoverageSchema
+>;
 
 // Doctor Note Input Schemas
 export const CreateDoctorNoteSchema = z.object({
@@ -231,16 +256,25 @@ export const CreateMedicationProtocolSchema = z.object({
   dose: z.string(),
   administrationRoute: z.string(),
   duration: z.string().nullable().optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   additionalMedication: z.array(z.string()).nullable().optional(),
 });
 
-export const UpdateMedicationProtocolSchema = CreateMedicationProtocolSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateMedicationProtocolSchema =
+  CreateMedicationProtocolSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreateMedicationProtocolInput = z.infer<typeof CreateMedicationProtocolSchema>;
-export type UpdateMedicationProtocolInput = z.infer<typeof UpdateMedicationProtocolSchema>;
+export type CreateMedicationProtocolInput = z.infer<
+  typeof CreateMedicationProtocolSchema
+>;
+export type UpdateMedicationProtocolInput = z.infer<
+  typeof UpdateMedicationProtocolSchema
+>;
 
 // Monitoring Input Schemas
 export const CreateMonitoringSchema = z.object({
