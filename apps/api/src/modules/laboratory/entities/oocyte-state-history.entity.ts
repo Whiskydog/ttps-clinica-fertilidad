@@ -5,7 +5,7 @@ import { Oocyte } from './oocyte.entity';
 
 @Entity('oocyte_state_history')
 export class OocyteStateHistory extends BaseEntity {
-  @ManyToOne(() => Oocyte, { nullable: false })
+  @ManyToOne(() => Oocyte, (o) => o.stateHistory, { nullable: false })
   @JoinColumn({ name: 'oocyte_id', referencedColumnName: 'id' })
   oocyte: Oocyte;
 

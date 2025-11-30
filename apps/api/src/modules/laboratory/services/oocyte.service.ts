@@ -74,4 +74,22 @@ export class OocyteService {
     const oocyte = await this.findOne(id);
     await this.oocyteRepository.remove(oocyte);
   }
+
+  async findOneWithHistory(id: number) {
+    return this.oocyteRepository.findOne({
+      where: { id },
+      relations: {
+        stateHistory: true,
+        puncture: {
+          labTechnician: true,
+          treatment: true,
+        },
+      },
+      order: {
+        stateHistory: {
+          transitionDate: 'ASC',
+        },
+      },
+    });
+  }
 }

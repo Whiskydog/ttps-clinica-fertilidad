@@ -31,11 +31,13 @@ export function OvulesList({ ovules }: OvulesListProps) {
               {ovules.length > 0 ? (
                 ovules?.map((ovule) => (
                   <div
-                    key={ovule.id}
+                    key={ovule.uniqueIdentifier}
                     className="border-2 border-green-500 rounded-lg p-4 bg-white"
                   >
                     <div className="space-y-2">
-                      <p className="font-bold text-sm">ID: {ovule.id}</p>
+                      <p className="font-bold text-sm">
+                        ID: {ovule.uniqueIdentifier}
+                      </p>
                       <p className="text-sm">
                         <span className="font-semibold">Estado:</span>{" "}
                         {ovule.currentState}

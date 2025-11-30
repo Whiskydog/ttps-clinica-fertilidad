@@ -11,6 +11,22 @@ export class EmbryoService {
     private readonly embryoRepository: Repository<Embryo>,
   ) {}
 
+  async findOneWithHistory(id: number) {
+    const data = await this.embryoRepository.findOne({
+      where: { id },
+      relations: {
+        oocyteOrigin: {
+          stateHistory: true,
+          puncture: { labTechnician: true },
+        },
+        technician: true,
+      },
+    });
+
+    console.log('🧬 RESULT BACKEND =>', JSON.stringify(data, null, 2));
+    return data;
+  }
+
   async findByOocyteOriginId(oocyteId: number): Promise<Embryo[]> {
     return this.embryoRepository.find({
       where: { oocyteOrigin: { id: oocyteId } },
@@ -33,17 +49,18 @@ export class EmbryoService {
     return this.findByDisposition(EmbryoDisposition.CRYOPRESERVED);
   }
 
-  async findOne(id: number): Promise<Embryo> {
-    const embryo = await this.embryoRepository.findOne({
+  async findOne(id: number) {
+    return this.embryoRepository.findOne({
       where: { id },
-      relations: ['oocyteOrigin', 'technician'],
+      relations: {
+        oocyteOrigin: {
+          puncture: {
+            labTechnician: true, 
+          },
+        },
+        technician: true, 
+      },
     });
-
-    if (!embryo) {
-      throw new NotFoundException(`Embryo with ID ${id} not found`);
-    }
-
-    return embryo;
   }
 
 async findByPatientId(patientId: number): Promise<Embryo[]> {
