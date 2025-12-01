@@ -1,11 +1,19 @@
 import { BaseEntity } from '@common/entities/base.entity';
-import { Entity, Column, ManyToOne, JoinColumn, OneToOne, OneToMany } from 'typeorm';
-import { MedicalHistory } from '../../medical-history/entities/medical-history.entity';
+import { Appointment } from '@modules/appointments/appointment.entity';
+import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
+import { Doctor } from '@modules/users/entities/doctor.entity';
 import { InitialObjective, TreatmentStatus } from '@repo/contracts';
-import { User } from '@users/entities/user.entity';
-import { PostTransferMilestone } from './post-transfer-milestone.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { InformedConsent } from './informed-consent.entity';
 import { MedicalCoverage } from './medical-coverage.entity';
+import { PostTransferMilestone } from './post-transfer-milestone.entity';
 
 @Entity('treatments')
 export class Treatment extends BaseEntity {
@@ -27,9 +35,12 @@ export class Treatment extends BaseEntity {
   @Column({ type: 'date', nullable: true, name: 'start_date' })
   startDate: Date | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => Doctor, { nullable: true })
   @JoinColumn({ name: 'initial_doctor_id', referencedColumnName: 'id' })
-  initialDoctor?: User | null;
+  initialDoctor?: Doctor | null;
+
+  @OneToMany(() => Appointment, (appointment) => appointment.treatment)
+  appointments: Appointment[];
 
   @Column({
     type: 'enum',

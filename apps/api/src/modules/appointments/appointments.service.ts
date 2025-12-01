@@ -1,83 +1,182 @@
+import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
+import { Patient } from '@modules/users/entities/patient.entity';
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
   HttpException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { catchError, map } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
+import { AppointmentDetail, ReasonForVisit, TurnoRaw } from '@repo/contracts';
+import { firstValueFrom, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { BookAppointmentDto, mapRawAppointments } from './dto';
 
 @Injectable()
 export class AppointmentsService {
   private readonly apiUrl: string;
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(
+    private readonly medicalHistoryService: MedicalHistoryService,
     private readonly httpService: HttpService,
-    private readonly config: ConfigService,
+    private readonly configService: ConfigService,
   ) {
-    this.apiUrl = this.config.getOrThrow<string>('API_URL_TURNOS');
+    this.apiUrl = this.configService.getOrThrow<string>('API_URL_TURNOS');
   }
 
-  reserveAppointment(idPatient: number, idSlot: number): Observable<unknown> {
+  async bookAppointment(
+    patient: Patient,
+    dto: BookAppointmentDto,
+  ): Promise<void> {
+    const patientMedicalHistory = await this.medicalHistoryService.findByUserId(
+      patient.id,
+    );
+    if (!patientMedicalHistory) {
+      if (dto.reason !== ReasonForVisit.InitialConsultation) {
+        this.logger.warn(
+          `Patient with id=${patient.id} attempted to book a non-initial consultation appointment without a medical history.`,
+        );
+        throw new BadRequestException(
+          'El paciente debe tener una historia clínica y un tratamiento actual para reservar este tipo de turno.',
+        );
+      }
+
+      this.logger.log(
+        `Patient with id=${patient.id} does not have a medical history, creating...`,
+      );
+      await this.medicalHistoryService.createForPatient(patient.id);
+      this.logger.log(
+        `Medical history created for patient with id=${patient.id}`,
+      );
+    } else if (!patientMedicalHistory.currentTreatment) {
+      if (dto.reason !== ReasonForVisit.InitialConsultation) {
+        this.logger.warn(
+          `Patient with id=${patient.id} attempted to book a non-initial consultation appointment without a current treatment.`,
+        );
+        throw new BadRequestException(
+          'El paciente debe tener un tratamiento actual para reservar este tipo de turno.',
+        );
+      }
+    }
+
+    this.logger.log(
+      `Booking appointment for patient with id=${patient.id} for appointment id=${dto.appointment.id}`,
+    );
+
     const url = `${this.apiUrl}/reservar_turno`;
     const headers = this.buildAuthHeaders(true);
     const body = {
-      id_paciente: idPatient,
-      id_turno: idSlot,
+      id_paciente: patient.id,
+      id_turno: dto.appointment.id,
     };
-    return this.httpService.patch(url, body, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
+
+    await firstValueFrom(
+      this.httpService
+        .patch(url, body, { headers })
+        .pipe(catchError((err) => this.handleAxiosError(err))),
     );
   }
 
-  getPatientAppointments(idPatient: number): Observable<unknown> {
+  async getPatientAppointments(idPatient: number) {
     const url = `${this.apiUrl}/get_turnos_paciente?id_paciente=${idPatient}`;
     const headers = this.buildAuthHeaders();
-    return this.httpService.get(url, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
+    return await firstValueFrom(
+      this.httpService.get(url, { headers }).pipe(
+        map((resp) => resp.data as unknown),
+        catchError((err) => this.handleAxiosError(err)),
+      ),
     );
   }
 
-  createDoctorSlots(body: any): Observable<unknown> {
+  async createDoctorSlots(body: any) {
     const url = `${this.apiUrl}/post_turnos`;
     const headers = this.buildAuthHeaders(true);
-    return this.httpService.post(url, body, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
+    return await firstValueFrom(
+      this.httpService.post(url, body, { headers }).pipe(
+        map((resp) => resp.data as unknown),
+        catchError((err) => this.handleAxiosError(err)),
+      ),
     );
   }
 
-  getDoctorAppointments(idDoctor: number): Observable<unknown> {
-    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${idDoctor}`;
-    const headers = this.buildAuthHeaders();
-    return this.httpService.get(url, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
+  async getDoctorAvailableSlots(doctorId: number) {
+    const appointmentsAndSlots =
+      await this.getDoctorAppointmentsAndSlots(doctorId);
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId === null,
     );
   }
 
-  getDoctorAppointmentsByDate(
-    idDoctor: number,
+  async getDoctorAvailableSlotsByDate(doctorId: number, date: string) {
+    const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
+      doctorId,
+      date,
+    );
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId === null,
+    );
+  }
+
+  async getDoctorAppointments(doctorId: number): Promise<AppointmentDetail[]> {
+    const appointmentsAndSlots =
+      await this.getDoctorAppointmentsAndSlots(doctorId);
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId !== null,
+    );
+  }
+
+  async getDoctorAppointmentsByDate(
+    doctorId: number,
     date: string,
-  ): Observable<unknown> {
-    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${idDoctor}&fecha=${encodeURIComponent(
+  ): Promise<AppointmentDetail[]> {
+    const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
+      doctorId,
+      date,
+    );
+    return appointmentsAndSlots.filter(
+      (appointment) => appointment.patientId !== null,
+    );
+  }
+
+  private async getDoctorAppointmentsAndSlots(doctorId: number) {
+    const url = `${this.apiUrl}/get_turnos_medico?id_medico=${doctorId}`;
+    const headers = this.buildAuthHeaders();
+    const appointmentsObservable = this.httpService
+      .get<{ data: TurnoRaw[] }>(url, { headers })
+      .pipe(
+        map((resp) => mapRawAppointments(resp.data.data)),
+        catchError((err) => this.handleAxiosError(err)),
+      );
+
+    return await firstValueFrom(appointmentsObservable);
+  }
+
+  private async getDoctorAppointmentsAndSlotsByDate(
+    doctorId: number,
+    date: string,
+  ): Promise<AppointmentDetail[]> {
+    const url = `${this.apiUrl}/get_medico_fecha?id_medico=${doctorId}&fecha=${encodeURIComponent(
       date,
     )}`;
     const headers = this.buildAuthHeaders();
-    return this.httpService.get(url, { headers }).pipe(
-      map((resp) => resp.data as unknown),
-      catchError((err) => this.handleAxiosError(err)),
-    );
+    const appointmentsObservable = this.httpService
+      .get<{ data: TurnoRaw[] }>(url, { headers })
+      .pipe(
+        map((resp) => mapRawAppointments(resp.data.data)),
+        catchError((err) => this.handleAxiosError(err)),
+      );
+
+    return await firstValueFrom(appointmentsObservable);
   }
 
   private buildAuthHeaders(json: boolean = false) {
-    const token = this.config.get<string>('TURNOS_API_TOKEN');
+    const token = this.configService.get<string>('TURNOS_API_TOKEN');
     if (!token) {
       throw new InternalServerErrorException('TURNOS_API_TOKEN no configurado');
     }

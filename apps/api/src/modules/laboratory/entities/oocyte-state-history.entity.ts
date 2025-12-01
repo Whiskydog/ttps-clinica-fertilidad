@@ -28,4 +28,7 @@ export class OocyteStateHistory extends BaseEntity {
 
   @Column({ name: 'transition_date', type: 'timestamp' })
   transitionDate: Date;
+
+  @Column({ name: 'cause', type: 'text', nullable: true })
+  cause?: string | null;
 }
