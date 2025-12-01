@@ -154,6 +154,21 @@ export class OocyteService {
     await this.oocyteRepository.remove(oocyte);
   }
 
+  async findOneWithHistory(id: number) {
+    return this.oocyteRepository.findOne({
+      where: { id },
+      relations: {
+        stateHistory: true,
+        puncture: {
+          labTechnician: true,
+          treatment: true,
+        },
+      },
+      order: {
+        stateHistory: {
+          transitionDate: 'ASC',
+        },
+      },
   async discard(id: number, cause: string): Promise<void> {
     if (!cause) throw new BadRequestException('Causa de descarte obligatoria');
     const oocyte = await this.findOne(id);

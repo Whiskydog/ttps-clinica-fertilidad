@@ -416,15 +416,13 @@ export class LaboratoryController {
   @Get('patient/oocyte/:id')
   @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
   async getOocyteDetail(@Param('id') id: string) {
-    const oocyteIdNum = Number(id);
-    return this.oocyteService.findOne(oocyteIdNum);
+    return this.oocyteService.findOneWithHistory(+id);
   }
 
   @Get('patient/embryo/:id')
   @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
   async getEmbryoDetail(@Param('id') id: string) {
-    const embryoIdNum = Number(id);
-    return this.embryoService.findOne(embryoIdNum);
+    return this.embryoService.findOneWithHistory(+id);
   }
 
   @Post('generate-oocyte-id')

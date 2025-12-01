@@ -3,141 +3,229 @@
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
+
 import { Button } from "@repo/ui/button";
 import { Badge } from "@repo/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
-import { ProductJourney } from "@/components/patient/cryopreserved/product-journey";
-import { getEmbryoDetail } from "@/app/actions/patients/cryopreservation/get-embryo-detail";
-import { EmbryoDetail } from "@repo/contracts";
+import { Separator } from "@repo/ui/separator";
 
-export default function CryopreservedDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+import { getEmbryoDetail } from "@/app/actions/patients/cryopreservation/get-embryo-detail";
+import { UnifiedTimeline } from "@/components/patient/cryopreserved/UnifiedTimeline";
+import { TransferRequestModal } from "@/components/patient/cryopreserved/modals/TransferRequestModal";
+import { ExtendCryoModal } from "@/components/patient/cryopreserved/modals/ExtendCryoModal";
+import { DiscardEmbryoModal } from "@/components/patient/cryopreserved/modals/DiscardEmbryoModal";
+import { getOocyteDetail } from "@/app/actions/patients/cryopreservation/get-oocyte-detail";
+
+export default function EmbryoDetailPage() {
+  const { id } = useParams();
 
   const {
     data: response,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["cryopreserved-product-detail", id],
-    queryFn: () => getEmbryoDetail(id),
+    queryKey: ["embryo-detail", id],
+    queryFn: () => getEmbryoDetail(id as string),
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando detalle del producto...</div>
-      </div>
-    );
-  }
+  const [openTransfer, setOpenTransfer] = useState(false);
+  const [openExtend, setOpenExtend] = useState(false);
+  const [openDiscard, setOpenDiscard] = useState(false);
 
-  if (error || !response?.data) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-red-600">
-          Error al cargar el producto criopreservado
-        </div>
-      </div>
-    );
-  }
+  const oocyteId =
+    response?.data?.oocyteOriginId ?? response?.data?.oocyteOrigin?.id;
 
-  const product = response.data as EmbryoDetail;
+  const { data: oocyteResp } = useQuery({
+    enabled: !!oocyteId,
+    queryKey: ["oocyte-detail", oocyteId],
+    queryFn: () => getOocyteDetail(String(oocyteId)),
+  });
 
+  if (isLoading) return <div className="text-center mt-10">Cargando...</div>;
+  if (!response?.data) return <div>Error al cargar embrión</div>;
+
+  const embryo = response.data;
+  const oocyte = oocyteResp?.data;
+
+  // 🔥 DEBUG: ver si existe history
+  console.log("OOCYTE HISTORY: ", oocyte?.stateHistory);
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <Link href="/patient/cryopreserved">
-        <Button variant="link">← Volver a Productos</Button>
+        <Button variant="link">← Volver</Button>
       </Link>
-      <div className="flex flex-col items-start gap-1">
-        <h1 className="text-2xl font-bold">
-          Embrión ID: {product.uniqueIdentifier}
-        </h1>
-        <Link
-          href={`/patient/cryopreserved/oocyte/${product.oocyteOrigin?.id}`}
-          className="text-blue-500"
-        >
-          <small>
-            Óvulo Origen ID: {product.oocyteOrigin?.uniqueIdentifier}
-          </small>
-        </Link>
-      </div>
-      {JSON.stringify(product)}
+
+      <h1 className="text-3xl font-bold">
+        Embrión <span className="text-blue-600">{embryo.uniqueIdentifier}</span>
+      </h1>
+
+      {/* 🧬 INFORMACIÓN PRINCIPAL */}
       <Card>
-        <CardHeader className="bg-slate-500">
-          <CardTitle className="text-white">INFORMACIÓN GENERAL</CardTitle>
+        <CardHeader className="bg-blue-50">
+          <CardTitle className="text-blue-700">Información genética</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="mb-2 space-x-2">
-            <Badge className="bg-cyan-400 text-black text-sm px-3 py-1">
-              Estado: {product.finalDisposition}
+        <CardContent className="space-y-3 text-sm pt-3">
+          {/* Estado actual / criopreservación */}
+          <div className="flex items-center gap-2 border-t pt-4">
+            <Badge
+              className={
+                embryo.finalDisposition === "cryopreserved"
+                  ? "bg-cyan-300 text-black"
+                  : embryo.finalDisposition === "transferred"
+                    ? "bg-green-300 text-black"
+                    : embryo.finalDisposition === "discarded"
+                      ? "bg-red-300 text-black"
+                      : "bg-gray-300 text-gray-700"
+              }
+            >
+              Estado: {embryo.finalDisposition ?? "No definido"}
             </Badge>
-            <Badge className="bg-cyan-400 text-black text-sm px-3 py-1">
-              Calidad: {product.qualityScore} / 6
+
+            <Badge className="bg-indigo-200">
+              Criopreservado:{" "}
+              {embryo.finalDisposition === "cryopreserved" ? "Sí ❄️" : "No"}
             </Badge>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2 text-sm">
+          {embryo.finalDisposition === "cryopreserved" && (
+            <div className="border-t pt-3 space-y-1 text-sm">
               <p>
-                <span className="font-semibold">Fecha de fertilización:</span>{" "}
-                {product.fertilizationDate
-                  ? new Date(product.fertilizationDate).toLocaleDateString(
-                      "es-AR"
-                    )
-                  : "-"}
+                <b>Tanque:</b> {embryo.cryoTank || "-"}
               </p>
               <p>
-                <span className="font-semibold">Técnica de fertilización:</span>{" "}
-                {product.fertilizationTechnique || "-"}
+                <b>Rack:</b> {embryo.cryoRack || "-"}
               </p>
-
-              {product.discardCause && (
-                <p>
-                  <span className="font-semibold">Causa descarte:</span>{" "}
-                  {product.discardCause}
-                </p>
-              )}
+              <p>
+                <b>Tubo:</b> {embryo.cryoTube || "-"}
+              </p>
             </div>
+          )}
 
-            <div className="space-y-2 text-sm">
-              <p className="font-semibold">Ubicación física:</p>
-              <ul className="ml-4 space-y-1">
-                {product.cryoTank && <li>• Tanque: {product.cryoTank}</li>}
-                {product.cryoRack && <li>• Rack: {product.cryoRack}</li>}
-                {product.cryoTube && <li>• Tubo: {product.cryoTube}</li>}
-              </ul>
-            </div>
+          <div className="flex gap-2 flex-wrap">
+            {embryo.qualityScore && (
+              <Badge variant="outline" className="bg-cyan-200">
+                Calidad {embryo.qualityScore}/6
+              </Badge>
+            )}
+
+            {embryo.pgtResult && (
+              <Badge variant="outline" className="bg-purple-200">
+                PGT {embryo.pgtResult}
+              </Badge>
+            )}
           </div>
+
+          <p>
+            <b>Técnica de Fertilización:</b>{" "}
+            {embryo.fertilizationTechnique ?? "—"}
+          </p>
+          <p>
+            <b>Fuente semen:</b> {embryo.semenSource ?? "No registrado"}
+          </p>
+
+          {embryo.donationIdUsed && (
+            <p>
+              <b>ID Donación Seminal:</b> {embryo.donationIdUsed}
+            </p>
+          )}
+
+          {/* Descarte */}
+          {embryo.finalDisposition === "discarded" && (
+            <p className="text-sm text-red-700 border-t pt-3">
+              Embrión descartado — {embryo.discardCause}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {product.pgtResult && (
-        <Card>
-          <CardHeader className="bg-slate-500">
-            <CardTitle className="text-white">TEST GENÉTICO (PGT)</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-sm space-y-2">
-              <p>
-                <span className="font-semibold">Resultado:</span>{" "}
-                <span className="text-gray-600 font-semibold">
-                  {product.pgtResult}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold">Sugerencia:</span>{" "}
-                <span className="text-gray-600 font-semibold">
-                  {product.pgtDecisionSuggested || "-"}
-                </span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* 🔹 ORIGEN DEL ÓVULO */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Óvulo de origen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Link href={`/patient/cryopreserved/oocyte/${oocyte?.id}`}>
+            <Button size="sm" variant="secondary">
+              Ver óvulo origen
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
 
-      {/* {product.journey && product.journey.length > 0 && (
-        <ProductJourney journey={product.journey} />
-      )} */}
+      <Separator />
+
+      <Card>
+        <CardHeader className="bg-slate-50">
+          <CardTitle>Procedimiento Clínico y Laboratorio</CardTitle>
+        </CardHeader>
+
+        <CardContent className="pt-4 space-y-2 text-sm">
+          <p>
+            <b>Fecha de fertilización:</b>{" "}
+            {embryo.fertilizationDate
+              ? new Date(embryo.fertilizationDate).toLocaleDateString("es-AR")
+              : "—"}
+          </p>
+
+          <p>
+            <b>Técnica de fertilización:</b>{" "}
+            {embryo.fertilizationTechnique ?? "No registrada"}
+          </p>
+
+          {embryo.technician ? (
+            <p>
+              <b>Técnico responsable:</b> {embryo.technician.firstName}{" "}
+              {embryo.technician.lastName}
+            </p>
+          ) : (
+            <p>No se registró técnico de laboratorio</p>
+          )}
+        </CardContent>
+      </Card>
+      <Separator />
+      {/* 🔹 TIMELINE COMPLETO */}
+      <UnifiedTimeline
+        oocyteHistory={oocyte?.stateHistory}
+        puncture={oocyte?.puncture}
+        embryo={{
+          fertilizationDate: embryo.fertilizationDate,
+          fertilizationTechnique: embryo.fertilizationTechnique,
+          finalDisposition: embryo.finalDisposition,
+          pgtResult: embryo.pgtResult,
+        }}
+      />
+
+      {/* 🔹 ACCIONES */}
+      <div className="flex gap-3 flex-wrap">
+        <Button onClick={() => setOpenTransfer(true)}>
+          Solicitar Transferencia
+        </Button>
+        <Button variant="outline" onClick={() => setOpenExtend(true)}>
+          Extender Criopreservación
+        </Button>
+        <Button variant="destructive" onClick={() => setOpenDiscard(true)}>
+          Solicitar Descarte
+        </Button>
+      </div>
+
+      {/* 🔹 MODALES */}
+      <TransferRequestModal
+        open={openTransfer}
+        onOpenChange={setOpenTransfer}
+        embryoId={embryo.uniqueIdentifier}
+        quality={embryo.qualityScore}
+      />
+      <ExtendCryoModal
+        open={openExtend}
+        onOpenChange={setOpenExtend}
+        embryoId={embryo.uniqueIdentifier}
+      />
+      <DiscardEmbryoModal
+        open={openDiscard}
+        onOpenChange={setOpenDiscard}
+        embryoId={embryo.uniqueIdentifier}
+      />
     </div>
   );
 }
