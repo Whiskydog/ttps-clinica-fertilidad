@@ -71,7 +71,6 @@ export default function CryopreservedPage() {
   }, {});
 
   const cryopreservedOocytes = oocytes.filter((o) => o.isCryopreserved).length;
-  const nonCryoOocytes = oocytes.length - cryopreservedOocytes;
 
   const embryoDispositionsCount = embryos.reduce<Record<string, number>>(
     (acc, e) => {
@@ -82,10 +81,6 @@ export default function CryopreservedPage() {
     {}
   );
 
-  const cryopreservedEmbryos = embryos.filter(
-    (e) => e.finalDisposition === "cryopreserved"
-  ).length;
-
   return (
     <div className="space-y-8">
       <Link href="/patient">
@@ -93,7 +88,7 @@ export default function CryopreservedPage() {
       </Link>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 flex-1 text-center">
-          Productos criopreservados
+          Ovocitos Almacenados
         </h1>
       </div>
 
@@ -110,27 +105,38 @@ export default function CryopreservedPage() {
           </CardHeader>
           <CardContent className="pt-4 space-y-3 text-sm">
             <div className="flex flex-wrap gap-2">
-              {Object.entries(oocyteStatesCount).map(([state, count]) => (
-                <Badge
-                  key={state}
-                  className="px-3 py-1 text-xs bg-cyan-200 text-slate-900"
-                >
-                  Estado {state}:{" "}
-                  <span className="font-semibold ml-1">{count}</span>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge className="px-3 py-1 text-xs bg-emerald-200 text-slate-900">
-                Criopreservados:{" "}
-                <span className="font-semibold ml-1">
-                  {cryopreservedOocytes}
-                </span>
-              </Badge>
-              <Badge className="px-3 py-1 text-xs bg-slate-200 text-slate-900">
-                No criopreservados:{" "}
-                <span className="font-semibold ml-1">{nonCryoOocytes}</span>
-              </Badge>
+              {Object.entries(oocyteStatesCount).map(([state, count]) => {
+                const style =
+                  {
+                    very_immature: "bg-yellow-300 text-black", // 🟡
+                    immature: "bg-yellow-400 text-black", // 🟡+
+                    mature: "bg-green-300 text-black", // 🟢
+                    cultivated: "bg-blue-300 text-black", // 🔵
+                    used: "bg-orange-300 text-black", // 🟠
+                    cryopreserved: "bg-cyan-300 text-black", // ❄
+                    discarded: "bg-red-300 text-black", // 🟥
+                    fertilized: "bg-purple-300 text-black", // 🟣
+                  }[state] ?? "bg-slate-200 text-black";
+
+                const icon =
+                  {
+                    very_immature: "🌱",
+                    immature: "🟡",
+                    mature: "✨",
+                    cultivated: "🧫",
+                    used: "🔥",
+                    cryopreserved: "❄",
+                    discarded: "🗑",
+                    fertilized: "🧬",
+                  }[state] ?? "•";
+
+                return (
+                  <Badge key={state} className={`px-3 py-1 text-xs ${style}`}>
+                    {icon} {state}:{" "}
+                    <span className="font-semibold ml-1">{count}</span>
+                  </Badge>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -141,18 +147,33 @@ export default function CryopreservedPage() {
             <CardTitle>Resumen de embriones</CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3 text-sm">
-            {/* 📊 Resumen por disposición de embriones ✔ PEGAR AQUÍ */}
             <div className="flex flex-wrap gap-2">
               {Object.entries(embryoDispositionsCount).map(
-                ([disposition, count]) => (
-                  <Badge
-                    key={disposition}
-                    className="px-3 py-1 text-xs bg-purple-200 text-slate-900"
-                  >
-                    {disposition}:{" "}
-                    <span className="font-semibold ml-1">{count}</span>
-                  </Badge>
-                )
+                ([disposition, count]) => {
+                  const style =
+                    {
+                      cryopreserved: "bg-cyan-300 text-black", // ❄
+                      transferred: "bg-green-300 text-black", // 🌱
+                      discarded: "bg-red-300 text-black", // 🗑
+                    }[disposition] ?? "bg-slate-200 text-black";
+
+                  const icon =
+                    {
+                      cryopreserved: "❄",
+                      transferred: "🌱",
+                      discarded: "🗑",
+                    }[disposition] ?? "•";
+
+                  return (
+                    <Badge
+                      key={disposition}
+                      className={`px-3 py-1 text-xs ${style}`}
+                    >
+                      {icon} {disposition}:{" "}
+                      <span className="font-semibold ml-1">{count}</span>
+                    </Badge>
+                  );
+                }
               )}
             </div>
           </CardContent>
@@ -168,7 +189,7 @@ export default function CryopreservedPage() {
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-900">
               <span className="font-semibold">Nota:</span> Cualquier acción
-              sobre productos criopreservados requiere autorización médica.
+              sobre los ovocitos almacenados requiere autorización médica.
             </p>
           </div>
         </CardContent>
