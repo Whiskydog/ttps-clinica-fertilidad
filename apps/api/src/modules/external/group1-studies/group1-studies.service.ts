@@ -15,8 +15,10 @@ export class Group1StudiesService {
    * Envia multipart/form-data con:
    *  - payload (JSON stringify)
    *  - firma_medico (PNG obligatorio)
+   *
+   * Devuelve el PDF como Buffer binario
    */
-  async generarOrdenMedica(payload: any, firmaMedico: Express.Multer.File) {
+  async generarOrdenMedica(payload: any, firmaMedico: Express.Multer.File): Promise<Buffer> {
     const url = `${this.baseUrl}/generar_orden_medica`;
 
     const form = new FormData();
@@ -29,17 +31,22 @@ export class Group1StudiesService {
     const { data } = await firstValueFrom(
       this.http.post(url, form, {
         headers: form.getHeaders(),
+        responseType: 'arraybuffer', // Recibir PDF como buffer binario
       }),
     );
 
-    return data;
+    return Buffer.from(data);
   }
 
-  // Listados simples (según los nombres del PDF)
+  // Listados simples (según la documentación del API externa)
   async getSemenStudies() {
-    const url = `${this.baseUrl}/estudios_semen`;
+    const url = `${this.baseUrl}/estudio_semen`;
     try {
       const { data } = await firstValueFrom(this.http.get(url));
+      // La API devuelve array de { id, nombre }, extraemos solo los nombres
+      if (Array.isArray(data) && data.length > 0 && data[0].nombre) {
+        return data.map((item: { id: number; nombre: string }) => item.nombre);
+      }
       return data;
     } catch (error) {
       // Mock data cuando la API externa no está disponible
@@ -57,9 +64,13 @@ export class Group1StudiesService {
   }
 
   async getHormonalStudies() {
-    const url = `${this.baseUrl}/estudios_hormonales`;
+    const url = `${this.baseUrl}/estudio_hormonales`;
     try {
       const { data } = await firstValueFrom(this.http.get(url));
+      // La API devuelve array de { id, nombre }, extraemos solo los nombres
+      if (Array.isArray(data) && data.length > 0 && data[0].nombre) {
+        return data.map((item: { id: number; nombre: string }) => item.nombre);
+      }
       return data;
     } catch (error) {
       // Mock data cuando la API externa no está disponible
@@ -85,9 +96,13 @@ export class Group1StudiesService {
   }
 
   async getGynecologicalStudies() {
-    const url = `${this.baseUrl}/estudios_ginecologicos`;
+    const url = `${this.baseUrl}/estudio_ginecologico`;
     try {
       const { data } = await firstValueFrom(this.http.get(url));
+      // La API devuelve array de { id, nombre }, extraemos solo los nombres
+      if (Array.isArray(data) && data.length > 0 && data[0].nombre) {
+        return data.map((item: { id: number; nombre: string }) => item.nombre);
+      }
       return data;
     } catch (error) {
       // Mock data cuando la API externa no está disponible
@@ -109,9 +124,13 @@ export class Group1StudiesService {
   }
 
   async getPreSurgicalOrder() {
-    const url = `${this.baseUrl}/estudios_prequirurgicos`;
+    const url = `${this.baseUrl}/get-orden-estudio-prequirurgico`;
     try {
       const { data } = await firstValueFrom(this.http.get(url));
+      // La API devuelve array de { id, nombre }, extraemos solo los nombres
+      if (Array.isArray(data) && data.length > 0 && data[0].nombre) {
+        return data.map((item: { id: number; nombre: string }) => item.nombre);
+      }
       return data;
     } catch (error) {
       // Mock data cuando la API externa no está disponible
