@@ -83,6 +83,8 @@ export const MedicationProtocolSchema = z.object({
   additionalMedication: z.array(z.string()).nullable(),
   consentSigned: z.boolean().optional(),
   consentDate: z.string().nullable().optional(),
+  pdfUrl: z.string().nullable().optional(),
+  pdfGeneratedAt: z.string().nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
