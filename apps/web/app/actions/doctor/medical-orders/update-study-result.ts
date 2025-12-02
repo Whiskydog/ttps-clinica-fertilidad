@@ -4,13 +4,10 @@ import { UpdateStudyResultSchema } from "@repo/contracts";
 import { cookies } from "next/headers";
 
 export async function updateStudyResult(payload: unknown) {
-  console.log('[DEBUG SERVER ACTION] updateStudyResult - payload recibido:', JSON.stringify(payload));
-
   // Validate payload with Zod schema
   const validationResult = UpdateStudyResultSchema.safeParse(payload);
 
   if (!validationResult.success) {
-    console.log('[DEBUG SERVER ACTION] Validación falló:', validationResult.error);
     return {
       success: false,
       error: validationResult.error.errors[0]?.message || "Datos inválidos",
@@ -18,7 +15,6 @@ export async function updateStudyResult(payload: unknown) {
   }
 
   const data = validationResult.data;
-  console.log('[DEBUG SERVER ACTION] Data validada:', JSON.stringify(data));
 
   const backendUrl = process.env.BACKEND_URL;
   const cookieStore = await cookies();

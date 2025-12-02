@@ -4,10 +4,12 @@ import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@modules/config/config.module';
+import { DoctorModule } from '@modules/doctor/doctor.module';
 import { LaboratoryModule } from '@modules/laboratory/laboratory.module';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { MedicalOrdersModule } from '@modules/medical-orders/medical-orders.module';
+import { SchedulerModule } from '@modules/scheduler/scheduler.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
 import { UsersModule } from '@modules/users/users.module';
@@ -28,6 +30,8 @@ import { ExternalModule } from '@modules/external/external.module';
     AppointmentsModule,
     MedicalInsurancesModule,
     UploadsModule,
+    DoctorModule,
+    SchedulerModule,
     ExternalModule,
   ],
   controllers: [],

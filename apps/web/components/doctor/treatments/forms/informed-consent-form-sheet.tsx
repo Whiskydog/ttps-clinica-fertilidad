@@ -129,31 +129,18 @@ export function InformedConsentFormSheet({
 
   const onSubmit = async (data: FormValues) => {
     try {
-      let pdfUri: string | null = currentPdfUri; // Mantener el valor actual por defecto
-
-      console.log('[DEBUG FRONTEND] onSubmit - currentPdfUri:', currentPdfUri);
-      console.log('[DEBUG FRONTEND] onSubmit - selectedFile:', selectedFile?.name);
+      let pdfUri: string | null = currentPdfUri;
 
       if (selectedFile) {
-        // Si hay un nuevo archivo, subirlo
-        console.log('[DEBUG FRONTEND] Subiendo archivo...');
         setUploadProgress(10);
         pdfUri = await uploadPDF(selectedFile, 'informed-consent');
-        console.log('[DEBUG FRONTEND] Archivo subido, URI recibida:', pdfUri);
         setUploadProgress(100);
       }
-      // Si no hay selectedFile, pdfUri mantiene el valor de currentPdfUri
-      // (que puede ser null si se eliminó o si nunca hubo archivo)
 
-      console.log('[DEBUG FRONTEND] pdfUri final antes de enviar:', pdfUri);
-
-      // Llamada real al server action
       const finalData = {
         ...data,
         pdfUri,
       };
-
-      console.log('[DEBUG FRONTEND] finalData:', JSON.stringify(finalData));
 
       const result = isEditing
         ? await updateInformedConsent(finalData)
@@ -173,7 +160,6 @@ export function InformedConsentFormSheet({
       form.reset();
       onSuccess();
     } catch (error) {
-      console.error('[DEBUG FRONTEND] Error en onSubmit:', error);
       toast.error(
         error instanceof Error
           ? error.message
@@ -184,12 +170,9 @@ export function InformedConsentFormSheet({
   };
 
   const handleRemoveFile = () => {
-    console.log('[DEBUG FRONTEND] handleRemoveFile - Eliminando archivo');
-    console.log('[DEBUG FRONTEND] handleRemoveFile - currentPdfUri antes:', currentPdfUri);
     setSelectedFile(null);
     setCurrentPdfUri(null);
     form.setValue("pdfUri", null);
-    console.log('[DEBUG FRONTEND] handleRemoveFile - Valores seteados a null');
   };
 
   return (

@@ -9,7 +9,12 @@ import {
   Body,
   UseGuards,
   Put,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MedicalOrdersService } from './medical-orders.service';
 import { StudyResultService } from './services/study-result.service';
 import { CreateMedicalOrderDto, UpdateMedicalOrderDto, CreateStudyResultDto, UpdateStudyResultDto } from './dto';
@@ -25,6 +30,8 @@ import { parseDateFromString } from '@common/utils/date.utils';
 @Controller('medical-orders')
 @UseGuards(JwtAuthGuard)
 export class MedicalOrdersController {
+  private readonly logger = new Logger(MedicalOrdersController.name);
+
   constructor(
     private readonly medicalOrdersService: MedicalOrdersService,
     private readonly studyResultService: StudyResultService,
@@ -77,6 +84,7 @@ export class MedicalOrdersController {
   @RequireRoles(RoleCode.DOCTOR, RoleCode.LAB_TECHNICIAN)
   async getMedicalOrderDetail(@Param('id') id: string) {
     const orderId = Number(id);
+    this.logger.log(`GET /medical-orders/${orderId} - Obteniendo detalle de orden médica`);
     return this.medicalOrdersService.findOneForDoctor(orderId);
   }
 
@@ -138,13 +146,12 @@ export class MedicalOrdersController {
     @Body() dto: CreateStudyResultDto,
     @CurrentUser() user: User,
   ) {
-    console.log('[DEBUG] createStudyResult - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] createStudyResult - originalPdfUri:', dto.originalPdfUri);
-
     const result = await this.studyResultService.create({
       medicalOrder: { id: dto.medicalOrderId } as any,
       studyName: dto.studyName ?? null,
       determinationName: dto.determinationName ?? null,
+      studyType: dto.studyType ?? null,
+      structuredValues: dto.structuredValues ?? null,
       transcription: dto.transcription ?? null,
       originalPdfUri: dto.originalPdfUri ?? null,
       transcribedByLabTechnician: dto.transcribedByLabTechnicianId
@@ -152,8 +159,6 @@ export class MedicalOrdersController {
         : ({ id: user.id } as any),
       transcriptionDate: parseDateFromString(dto.transcriptionDate),
     });
-
-    console.log('[DEBUG] createStudyResult - Resultado creado:', JSON.stringify(result));
 
     return {
       message: 'Resultado de estudio creado correctamente',
@@ -167,27 +172,23 @@ export class MedicalOrdersController {
   async updateStudyResult(
     @Param('id') id: string,
     @Body() dto: UpdateStudyResultDto,
+    @CurrentUser() user: User,
   ) {
     const resultId = Number(id);
-    console.log('[DEBUG] updateStudyResult - DTO recibido:', JSON.stringify(dto));
-    console.log('[DEBUG] updateStudyResult - originalPdfUri:', dto.originalPdfUri);
 
-    // Preparar datos para actualización, manteniendo null si está presente
     const updateData: Partial<any> = {};
 
     if ('studyName' in dto) updateData.studyName = dto.studyName;
     if ('determinationName' in dto) updateData.determinationName = dto.determinationName;
+    if ('studyType' in dto) updateData.studyType = dto.studyType;
+    if ('structuredValues' in dto) updateData.structuredValues = dto.structuredValues;
     if ('transcription' in dto) updateData.transcription = dto.transcription;
     if ('originalPdfUri' in dto) updateData.originalPdfUri = dto.originalPdfUri;
     if ('transcriptionDate' in dto) {
       updateData.transcriptionDate = parseDateFromString(dto.transcriptionDate);
     }
 
-    console.log('[DEBUG] updateStudyResult - Datos a actualizar:', JSON.stringify(updateData));
-
-    const updated = await this.studyResultService.update(resultId, updateData);
-
-    console.log('[DEBUG] updateStudyResult - Resultado actualizado:', JSON.stringify(updated));
+    const updated = await this.studyResultService.update(resultId, updateData, user.id);
 
     return {
       message: 'Resultado de estudio actualizado correctamente',
@@ -211,5 +212,70 @@ export class MedicalOrdersController {
   async getStudyResultsByOrder(@Param('orderId') orderId: string) {
     const orderIdNum = Number(orderId);
     return this.studyResultService.findByMedicalOrderId(orderIdNum);
+  }
+
+  // ============================================
+  // PDF Generation Endpoints
+  // ============================================
+
+  @Post(':id/generate-pdf')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  @UseInterceptors(FileInterceptor('doctorSignature'))
+  async generatePdf(
+    @Param('id') id: string,
+    @UploadedFile() doctorSignature: Express.Multer.File,
+  ) {
+    this.logger.log(`POST /medical-orders/${id}/generate-pdf - Iniciando generación de PDF`);
+
+    const orderId = Number(id);
+
+    if (!doctorSignature) {
+      this.logger.warn(`No se recibió firma del médico para orden ${orderId}`);
+      throw new BadRequestException('Se requiere la firma del médico (campo doctorSignature)');
+    }
+
+    this.logger.log(`Firma recibida: ${doctorSignature.originalname}, ${doctorSignature.mimetype}, ${doctorSignature.size} bytes`);
+
+    if (!doctorSignature.mimetype.includes('png') && !doctorSignature.mimetype.includes('image')) {
+      throw new BadRequestException('La firma debe ser un archivo de imagen');
+    }
+
+    const order = await this.medicalOrdersService.generatePdf(orderId, doctorSignature);
+
+    return {
+      message: 'PDF generado correctamente',
+      data: {
+        orderId: order.id,
+        pdfUrl: order.pdfUrl,
+        generatedAt: order.pdfGeneratedAt,
+      },
+    };
+  }
+
+  @Get(':id/pdf')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getPdfUrl(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ) {
+    const orderId = Number(id);
+
+    // Si es paciente, verificar que la orden le pertenezca
+    const patientId = user.role.code === RoleCode.PATIENT ? user.id : undefined;
+
+    const pdfUrl = await this.medicalOrdersService.getPdfUrl(orderId, patientId);
+
+    if (!pdfUrl) {
+      return {
+        message: 'El PDF aún no ha sido generado para esta orden',
+        pdfUrl: null,
+      };
+    }
+
+    return {
+      message: 'URL del PDF obtenida correctamente',
+      pdfUrl,
+    };
   }
 }

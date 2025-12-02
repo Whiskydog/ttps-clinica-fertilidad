@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { LaboratoryService } from './laboratory.service';
@@ -13,6 +13,7 @@ import { OocyteStateHistory } from './entities/oocyte-state-history.entity';
 import { Embryo } from './entities/embryo.entity';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { Patient } from '@users/entities/patient.entity';
+import { TreatmentsModule } from '@modules/treatments/treatments.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Patient } from '@users/entities/patient.entity';
       Patient,
     ]),
     HttpModule,
+    forwardRef(() => TreatmentsModule),
   ],
   controllers: [LaboratoryController],
   providers: [
