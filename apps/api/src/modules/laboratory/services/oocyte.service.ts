@@ -169,6 +169,9 @@ export class OocyteService {
           transitionDate: 'ASC',
         },
       },
+    });
+  }
+  
   async discard(id: number, cause: string): Promise<void> {
     if (!cause) throw new BadRequestException('Causa de descarte obligatoria');
     const oocyte = await this.findOne(id);
