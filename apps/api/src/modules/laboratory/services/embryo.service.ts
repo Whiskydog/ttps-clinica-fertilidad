@@ -33,6 +33,7 @@ export class EmbryoService {
 
     console.log('🧬 RESULT BACKEND =>', JSON.stringify(data, null, 2));
     return data;
+  }
   generateEmbryoId(
     date: Date,
     lastName: string,

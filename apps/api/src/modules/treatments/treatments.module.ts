@@ -17,9 +17,11 @@ import { PostTransferMilestoneService } from '@modules/treatments/services/post-
 import { MedicalCoverageService } from '@modules/treatments/services/medical-coverage.service';
 import { DoctorNoteService } from '@modules/treatments/services/doctor-note.service';
 import { MedicationProtocolService } from '@modules/treatments/services/medication-protocol.service';
+import { MedicationPdfService } from '@modules/treatments/services/medication-pdf.service';
 import { TreatmentsController } from '@modules/treatments/treatments.controller';
 import { MedicalHistoryModule } from '../medical-history/medical-history.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
+import { Group8NoticesModule } from '../external/group8-notices/group8-notices.module';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { UploadsModule } from '@modules/uploads/uploads.module';
     ]),
     MedicalHistoryModule,
     UploadsModule,
+    Group8NoticesModule,
   ],
   providers: [
     TreatmentService,
@@ -46,6 +49,7 @@ import { UploadsModule } from '@modules/uploads/uploads.module';
     MedicalCoverageService,
     DoctorNoteService,
     MedicationProtocolService,
+    MedicationPdfService,
   ],
   controllers: [TreatmentsController],
   exports: [
