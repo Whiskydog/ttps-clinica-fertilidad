@@ -1,6 +1,7 @@
+import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
 import { MedicalInsurance } from '@modules/medical-insurances/entities/medical-insurance.entity';
 import { BiologicalSex, RoleCode } from '@repo/contracts';
-import { ChildEntity, Column, JoinColumn, ManyToOne } from 'typeorm';
+import { ChildEntity, Column, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { User } from './user.entity';
 
 @ChildEntity(RoleCode.PATIENT)
@@ -36,4 +37,9 @@ export class Patient extends User {
     nullable: true,
   })
   coverageMemberId: string | null;
+
+  @OneToOne(() => MedicalHistory, (medicalHistory) => medicalHistory.patient, {
+    nullable: true,
+  })
+  medicalHistory: MedicalHistory | null;
 }

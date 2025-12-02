@@ -1,8 +1,8 @@
 import { BaseEntity } from '@common/entities/base.entity';
 import { OocyteState } from '@repo/contracts';
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { PunctureRecord } from './puncture-record.entity';
-
+import { OocyteStateHistory } from './oocyte-state-history.entity';
 @Entity('oocytes')
 export class Oocyte extends BaseEntity {
   @Column({
@@ -42,4 +42,10 @@ export class Oocyte extends BaseEntity {
 
   @Column({ name: 'discard_date_time', type: 'timestamp', nullable: true })
   discardDateTime?: Date | null;
+
+  @OneToMany(() => OocyteStateHistory, (h) => h.oocyte, {
+    eager: false,
+    cascade: true,
+  })
+  stateHistory: OocyteStateHistory[];
 }

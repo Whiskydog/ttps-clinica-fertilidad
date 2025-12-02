@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@repo/ui/button";
-import { Card, CardContent } from "@repo/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Badge } from "@repo/ui/badge";
 import { AlertTriangle } from "lucide-react";
 import { ProductsSummary } from "@/components/patient/cryopreserved/products-summary";
 import { OvulesList } from "@/components/patient/cryopreserved/ovules-list";
@@ -36,8 +37,10 @@ export default function CryopreservedPage() {
     );
   }
 
-  const hasNoProducts =
-    cryoData.oocytes.length === 0 && cryoData.embryos.length === 0;
+  const oocytes = cryoData.oocytes ?? [];
+  const embryos = cryoData.embryos ?? [];
+
+  const hasNoProducts = oocytes.length === 0 && embryos.length === 0;
 
   if (hasNoProducts) {
     return (
@@ -59,22 +62,126 @@ export default function CryopreservedPage() {
     );
   }
 
+  // ==================  RESUMEN POR ESTADO / DISPOSICIÓN ==================
+
+  const oocyteStatesCount = oocytes.reduce<Record<string, number>>((acc, o) => {
+    const key = o.currentState ?? "sin_estado";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const cryopreservedOocytes = oocytes.filter((o) => o.isCryopreserved).length;
+
+  const embryoDispositionsCount = embryos.reduce<Record<string, number>>(
+    (acc, e) => {
+      const key = e.finalDisposition ?? "sin_disposicion";
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    },
+    {}
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/patient">
-          <Button variant="link">← Volver al Dashboard</Button>
-        </Link>
+    <div className="space-y-8">
+      <Link href="/patient">
+        <Button variant="link">← Volver al Dashboard</Button>
+      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 flex-1 text-center">
+          Ovocitos Almacenados
+        </h1>
       </div>
 
       <ProductsSummary
-        ovulesTotal={cryoData.oocytes?.length || 0}
-        embryosTotal={cryoData.embryos?.length || 0}
+        ovulesTotal={oocytes.length}
+        embryosTotal={embryos.length}
       />
 
-      <OvulesList ovules={cryoData.oocytes ?? []} />
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Ovocitos */}
+        <Card className="shadow-sm">
+          <CardHeader className="bg-slate-600 text-white">
+            <CardTitle>Resumen de óvulos</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3 text-sm">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(oocyteStatesCount).map(([state, count]) => {
+                const style =
+                  {
+                    very_immature: "bg-yellow-300 text-black", // 🟡
+                    immature: "bg-yellow-400 text-black", // 🟡+
+                    mature: "bg-green-300 text-black", // 🟢
+                    cultivated: "bg-blue-300 text-black", // 🔵
+                    used: "bg-orange-300 text-black", // 🟠
+                    cryopreserved: "bg-cyan-300 text-black", // ❄
+                    discarded: "bg-red-300 text-black", // 🟥
+                    fertilized: "bg-purple-300 text-black", // 🟣
+                  }[state] ?? "bg-slate-200 text-black";
 
-      <EmbryosList embryos={cryoData.embryos ?? []} />
+                const icon =
+                  {
+                    very_immature: "🌱",
+                    immature: "🟡",
+                    mature: "✨",
+                    cultivated: "🧫",
+                    used: "🔥",
+                    cryopreserved: "❄",
+                    discarded: "🗑",
+                    fertilized: "🧬",
+                  }[state] ?? "•";
+
+                return (
+                  <Badge key={state} className={`px-3 py-1 text-xs ${style}`}>
+                    {icon} {state}:{" "}
+                    <span className="font-semibold ml-1">{count}</span>
+                  </Badge>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Embriones */}
+        <Card className="shadow-sm">
+          <CardHeader className="bg-slate-600 text-white">
+            <CardTitle>Resumen de embriones</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3 text-sm">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(embryoDispositionsCount).map(
+                ([disposition, count]) => {
+                  const style =
+                    {
+                      cryopreserved: "bg-cyan-300 text-black", // ❄
+                      transferred: "bg-green-300 text-black", // 🌱
+                      discarded: "bg-red-300 text-black", // 🗑
+                    }[disposition] ?? "bg-slate-200 text-black";
+
+                  const icon =
+                    {
+                      cryopreserved: "❄",
+                      transferred: "🌱",
+                      discarded: "🗑",
+                    }[disposition] ?? "•";
+
+                  return (
+                    <Badge
+                      key={disposition}
+                      className={`px-3 py-1 text-xs ${style}`}
+                    >
+                      {icon} {disposition}:{" "}
+                      <span className="font-semibold ml-1">{count}</span>
+                    </Badge>
+                  );
+                }
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <OvulesList ovules={oocytes} />
+      <EmbryosList embryos={embryos} />
 
       <Card className="bg-amber-100 border-amber-300">
         <CardContent className="pt-6">
@@ -82,7 +189,7 @@ export default function CryopreservedPage() {
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-900">
               <span className="font-semibold">Nota:</span> Cualquier acción
-              sobre productos criopreservados requiere autorización médica
+              sobre los ovocitos almacenados requiere autorización médica.
             </p>
           </div>
         </CardContent>

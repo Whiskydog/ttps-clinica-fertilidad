@@ -20,6 +20,18 @@ export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
+export const DoctorEntitySchema = UserEntitySchema.extend({
+  specialty: z.string().max(100).nullable(),
+  licenseNumber: z.string().max(50).nullable(),
+});
+export type Doctor = z.infer<typeof DoctorEntitySchema>;
+
+export const DoctorResponseSchema = ApiResponseSchema(DoctorEntitySchema);
+export const DoctorsResponseSchema = ApiResponseSchema(
+  z.array(DoctorEntitySchema)
+);
+export type DoctorResponse = z.infer<typeof DoctorResponseSchema>;
+export type DoctorsResponse = z.infer<typeof DoctorsResponseSchema>;
 
 // =====================
 
@@ -125,7 +137,7 @@ export type PatientsPaginatedResponse = z.infer<
 
 // =====================
 
-const UserType = ['admin', 'doctor', 'director', 'lab_technician'] as const;
+const UserType = ["admin", "doctor", "director", "lab_technician"] as const;
 
 export const AdminUserCreateSchema = z.object({
   firstName: z.string().min(1).max(100),
@@ -191,7 +203,9 @@ export const StaffUsersPaginationMetaSchema = z.object({
   totalPages: z.number().int().min(0),
 });
 
-export type StaffUsersPaginationMeta = z.infer<typeof StaffUsersPaginationMetaSchema>;
+export type StaffUsersPaginationMeta = z.infer<
+  typeof StaffUsersPaginationMetaSchema
+>;
 
 export const StaffUsersListDataSchema = z.object({
   data: z.array(StaffUserEntitySchema),
@@ -200,6 +214,10 @@ export const StaffUsersListDataSchema = z.object({
 
 export type StaffUsersListData = z.infer<typeof StaffUsersListDataSchema>;
 
-export const StaffUsersListResponseSchema = ApiResponseSchema(StaffUsersListDataSchema);
+export const StaffUsersListResponseSchema = ApiResponseSchema(
+  StaffUsersListDataSchema
+);
 
-export type StaffUsersListResponse = z.infer<typeof StaffUsersListResponseSchema>;
+export type StaffUsersListResponse = z.infer<
+  typeof StaffUsersListResponseSchema
+>;

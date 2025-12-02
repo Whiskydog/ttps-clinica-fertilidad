@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 import { LaboratoryService } from './laboratory.service';
 import { PunctureRecordService } from './services/puncture-record.service';
 import { OocyteService } from './services/oocyte.service';
@@ -10,6 +11,8 @@ import { PunctureRecord } from './entities/puncture-record.entity';
 import { Oocyte } from './entities/oocyte.entity';
 import { OocyteStateHistory } from './entities/oocyte-state-history.entity';
 import { Embryo } from './entities/embryo.entity';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
+import { Patient } from '@users/entities/patient.entity';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 
 @Module({
@@ -19,7 +22,10 @@ import { TreatmentsModule } from '@modules/treatments/treatments.module';
       Oocyte,
       OocyteStateHistory,
       Embryo,
+      Treatment,
+      Patient,
     ]),
+    HttpModule,
     forwardRef(() => TreatmentsModule),
   ],
   controllers: [LaboratoryController],

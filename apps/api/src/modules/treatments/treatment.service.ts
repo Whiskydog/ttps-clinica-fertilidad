@@ -48,7 +48,15 @@ export class TreatmentService {
       closureDate: null,
       medicalHistory,
     });
-    return this.treatmentRepo.save(treatment);
+    const saved = await this.treatmentRepo.save(treatment);
+
+    // Formatear startDate como string YYYY-MM-DD para la respuesta
+    return {
+      ...saved,
+      startDate: saved.startDate
+        ? saved.startDate.toISOString().split('T')[0]
+        : null,
+    };
   }
 
   async findByMedicalHistoryId(medicalHistoryId: number) {
