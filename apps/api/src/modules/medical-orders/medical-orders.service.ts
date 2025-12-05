@@ -127,6 +127,56 @@ export class MedicalOrdersService {
     });
   }
 
+  /**
+   * Obtiene todas las órdenes médicas con filtros opcionales (para Director Médico)
+   */
+  async findAll(options: {
+    page?: number;
+    limit?: number;
+    status?: MedicalOrderStatus;
+    category?: string;
+    doctorId?: number;
+  }) {
+    const page = options.page || 1;
+    const limit = options.limit || 20;
+    const skip = (page - 1) * limit;
+
+    // Construir condiciones de búsqueda
+    const where: any = {};
+
+    if (options.status) {
+      where.status = options.status;
+    }
+
+    if (options.category) {
+      where.category = options.category;
+    }
+
+    if (options.doctorId) {
+      where.doctorId = options.doctorId;
+    }
+
+    const [data, total] = await this.medicalOrderRepository.findAndCount({
+      where,
+      relations: ['doctor', 'patient', 'treatment'],
+      order: { issueDate: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
   async findByTreatment(treatmentId: number, status?: MedicalOrderStatus) {
     const where: any = { treatmentId };
 
