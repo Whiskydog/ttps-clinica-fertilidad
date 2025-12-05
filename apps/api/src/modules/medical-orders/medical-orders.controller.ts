@@ -39,11 +39,16 @@ export class MedicalOrdersController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async getMedicalOrders(
+    @CurrentUser() user: User,
     @Query('treatmentId') treatmentId?: string,
     @Query('patientId') patientId?: string,
     @Query('status') status?: MedicalOrderStatus,
+    @Query('category') category?: string,
+    @Query('doctorId') doctorId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     if (treatmentId) {
       return this.medicalOrdersService.findByTreatment(
@@ -56,6 +61,16 @@ export class MedicalOrdersController {
         Number(patientId),
         status,
       );
+    }
+    // Si es Director y no especifica treatmentId ni patientId, devolver todas las órdenes
+    if (user.role.code === RoleCode.DIRECTOR) {
+      return this.medicalOrdersService.findAll({
+        page: page ? Number(page) : 1,
+        limit: limit ? Number(limit) : 20,
+        status,
+        category,
+        doctorId: doctorId ? Number(doctorId) : undefined,
+      });
     }
     return { data: [], message: 'Debe proporcionar treatmentId o patientId' };
   }
@@ -81,7 +96,7 @@ export class MedicalOrdersController {
 
   @Get(':id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR, RoleCode.LAB_TECHNICIAN)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR, RoleCode.LAB_TECHNICIAN)
   async getMedicalOrderDetail(@Param('id') id: string) {
     const orderId = Number(id);
     this.logger.log(`GET /medical-orders/${orderId} - Obteniendo detalle de orden médica`);
@@ -90,7 +105,7 @@ export class MedicalOrdersController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createMedicalOrder(
     @Body() dto: CreateMedicalOrderDto,
     @CurrentUser() user: User,
@@ -114,7 +129,7 @@ export class MedicalOrdersController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateMedicalOrder(
     @Param('id') id: string,
     @Body() dto: UpdateMedicalOrderDto,
@@ -141,7 +156,7 @@ export class MedicalOrdersController {
 
   @Post('study-results')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createStudyResult(
     @Body() dto: CreateStudyResultDto,
     @CurrentUser() user: User,
@@ -168,7 +183,7 @@ export class MedicalOrdersController {
 
   @Put('study-results/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateStudyResult(
     @Param('id') id: string,
     @Body() dto: UpdateStudyResultDto,
@@ -198,7 +213,7 @@ export class MedicalOrdersController {
 
   @Delete('study-results/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteStudyResult(@Param('id') id: string) {
     const resultId = Number(id);
     await this.studyResultService.remove(resultId);
@@ -208,7 +223,7 @@ export class MedicalOrdersController {
   }
 
   @Get(':orderId/study-results')
-  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR, RoleCode.LAB_TECHNICIAN)
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR, RoleCode.DIRECTOR, RoleCode.LAB_TECHNICIAN)
   async getStudyResultsByOrder(@Param('orderId') orderId: string) {
     const orderIdNum = Number(orderId);
     return this.studyResultService.findByMedicalOrderId(orderIdNum);
@@ -220,7 +235,7 @@ export class MedicalOrdersController {
 
   @Post(':id/generate-pdf')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   @UseInterceptors(FileInterceptor('doctorSignature'))
   async generatePdf(
     @Param('id') id: string,
@@ -254,7 +269,7 @@ export class MedicalOrdersController {
   }
 
   @Get(':id/pdf')
-  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async getPdfUrl(
     @Param('id') id: string,
     @CurrentUser() user: User,

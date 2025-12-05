@@ -191,4 +191,21 @@ export class TreatmentService {
 
     return this.treatmentRepo.save(treatment);
   }
+
+  /**
+   * Reasigna un tratamiento a otro médico (solo para Director Médico)
+   */
+  async reassignDoctor(treatmentId: number, newDoctorId: number): Promise<Treatment> {
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id: treatmentId },
+      relations: ['initialDoctor'],
+    });
+
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+
+    treatment.initialDoctor = { id: newDoctorId } as any;
+    return this.treatmentRepo.save(treatment);
+  }
 }

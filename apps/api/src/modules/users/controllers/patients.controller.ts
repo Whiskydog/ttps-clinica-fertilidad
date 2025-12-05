@@ -35,7 +35,7 @@ export class PatientsController {
     @Query() query: PatientsQueryDto,
     @CurrentUser() user: User,
   ) {
-    return (await this.patientsService.getPatients(query, user.id)).data;
+    return (await this.patientsService.getPatients(query, user.id, user.role.code as RoleCode)).data;
   }
 
   @Get(':id')
@@ -54,6 +54,6 @@ export class PatientsController {
     @Param('id', ParseIntPipe) patientId: number,
     @CurrentUser() user: User,
   ) {
-    return this.patientsService.getPatientTreatments(patientId, user.id);
+    return this.patientsService.getPatientTreatments(patientId, user.id, user.role.code as RoleCode);
   }
 }

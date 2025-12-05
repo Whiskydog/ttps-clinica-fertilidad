@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { PatientCreateDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
-import { PatientsQuery } from '@repo/contracts';
+import { PatientsQuery, RoleCode } from '@repo/contracts';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import argon2 from 'argon2';
 import { Repository, Like } from 'typeorm';
@@ -47,7 +47,7 @@ export class PatientsService {
     return this.patientRepository.findOne({ where: { id: saved.id } });
   }
 
-  async getPatients(query: PatientsQuery, doctorId: number) {
+  async getPatients(query: PatientsQuery, userId: number, userRole?: RoleCode) {
     const { page, limit, dni } = query;
     const skip = (page - 1) * limit;
 
@@ -57,11 +57,15 @@ export class PatientsService {
       .leftJoinAndSelect('patient.role', 'role')
       .distinct(true);
 
-    // Solo pacientes que tienen una historia clínica con al menos un tratamiento del doctor actual
+    // Solo pacientes que tienen una historia clínica con al menos un tratamiento
     queryBuilder
       .innerJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
-      .innerJoin('treatments', 't', 't.medical_history_id = mh.id')
-      .andWhere('t.initial_doctor_id = :doctorId', { doctorId });
+      .innerJoin('treatments', 't', 't.medical_history_id = mh.id');
+
+    // Si NO es Director, filtrar solo por pacientes del doctor actual
+    if (userRole !== RoleCode.DIRECTOR) {
+      queryBuilder.andWhere('t.initial_doctor_id = :doctorId', { doctorId: userId });
+    }
 
     if (dni) {
       queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });
@@ -125,21 +129,27 @@ export class PatientsService {
     };
   }
 
-  async getPatientTreatments(patientId: number, doctorId: number) {
+  async getPatientTreatments(patientId: number, userId: number, userRole?: RoleCode) {
     // Verificar que el paciente existe
     const patient = await this.findPatientById(patientId);
     if (!patient) {
       throw new NotFoundException('Paciente no encontrado');
     }
 
-    // Obtener tratamientos del paciente filtrados por doctor
-    const treatments = await this.treatmentRepository
+    // Obtener tratamientos del paciente
+    const queryBuilder = this.treatmentRepository
       .createQueryBuilder('treatment')
       .leftJoinAndSelect('treatment.initialDoctor', 'doctor')
       .leftJoinAndSelect('treatment.medicalHistory', 'medicalHistory')
       .leftJoinAndSelect('medicalHistory.patient', 'patient')
-      .where('patient.id = :patientId', { patientId })
-      .andWhere('treatment.initial_doctor_id = :doctorId', { doctorId })
+      .where('patient.id = :patientId', { patientId });
+
+    // Si NO es Director, filtrar solo por tratamientos del doctor actual
+    if (userRole !== RoleCode.DIRECTOR) {
+      queryBuilder.andWhere('treatment.initial_doctor_id = :doctorId', { doctorId: userId });
+    }
+
+    const treatments = await queryBuilder
       .orderBy('treatment.start_date', 'DESC')
       .getMany();
 

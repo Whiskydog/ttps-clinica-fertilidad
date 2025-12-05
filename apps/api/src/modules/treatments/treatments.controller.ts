@@ -67,13 +67,13 @@ export class TreatmentsController {
   }
 
   @Get('detail/:id')
-  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async getTreatmentDetail(@Param('id') id: string, @CurrentUser() user: User) {
     const treatmentId = Number(id);
     if (isNaN(treatmentId)) {
       throw new NotFoundException('Invalid treatment ID');
     }
-    return this.treatmentsService.getTreatmentDetail(treatmentId, user.id);
+    return this.treatmentsService.getTreatmentDetail(treatmentId, user.id, user.role.code as RoleCode);
   }
 
   // Endpoints existentes
@@ -87,7 +87,7 @@ export class TreatmentsController {
 
   @Post(':medicalHistoryId')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async create(
     @Param('medicalHistoryId') medicalHistoryId: string,
     @Body() dto: CreateTreatmentDto,
@@ -112,7 +112,7 @@ export class TreatmentsController {
 
   @Post('informed-consent')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createInformedConsent(
     @Body() dto: CreateInformedConsentDto,
     @CurrentUser() user: User,
@@ -134,7 +134,7 @@ export class TreatmentsController {
 
   @Patch('informed-consent/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateInformedConsent(
     @Param('id') id: string,
     @Body() dto: UpdateInformedConsentDto,
@@ -160,7 +160,7 @@ export class TreatmentsController {
 
   @Delete('informed-consent/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteInformedConsent(@Param('id') id: string) {
     const consentId = Number(id);
     await this.informedConsentService.remove(consentId);
@@ -175,7 +175,7 @@ export class TreatmentsController {
 
   @Post('milestone')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createMilestone(
     @Body() dto: CreatePostTransferMilestoneDto,
     @CurrentUser() user: User,
@@ -197,7 +197,7 @@ export class TreatmentsController {
 
   @Patch('milestone/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateMilestone(
     @Param('id') id: string,
     @Body() dto: UpdatePostTransferMilestoneDto,
@@ -216,7 +216,7 @@ export class TreatmentsController {
 
   @Delete('milestone/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteMilestone(@Param('id') id: string) {
     const milestoneId = Number(id);
     await this.milestoneService.remove(milestoneId);
@@ -231,7 +231,7 @@ export class TreatmentsController {
 
   @Post('coverage')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createCoverage(@Body() dto: CreateMedicalCoverageDto) {
     const coverage = await this.coverageService.create({
       medicalInsurance: { id: dto.medicalInsuranceId } as any,
@@ -248,7 +248,7 @@ export class TreatmentsController {
 
   @Patch('coverage/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateCoverage(
     @Param('id') id: string,
     @Body() dto: UpdateMedicalCoverageDto,
@@ -267,7 +267,7 @@ export class TreatmentsController {
 
   @Delete('coverage/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteCoverage(@Param('id') id: string) {
     const coverageId = Number(id);
     await this.coverageService.remove(coverageId);
@@ -278,7 +278,7 @@ export class TreatmentsController {
 
   @Post('doctor-notes/create')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createDoctorNote(
     @Body() dto: CreateDoctorNoteDto,
     @CurrentUser() user: User,
@@ -298,7 +298,7 @@ export class TreatmentsController {
 
   @Patch('doctor-notes/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateDoctorNote(
     @Param('id') id: string,
     @Body() dto: UpdateDoctorNoteDto,
@@ -316,7 +316,7 @@ export class TreatmentsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateTreatment(
     @Param('id') id: string,
     @Body() dto: UpdateTreatmentDto,
@@ -335,7 +335,7 @@ export class TreatmentsController {
 
   @Delete('doctor-notes/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteDoctorNote(@Param('id') id: string) {
     const noteId = Number(id);
     await this.doctorNoteService.remove(noteId);
@@ -350,7 +350,7 @@ export class TreatmentsController {
 
   @Patch('medication-protocols/:id')
   @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateMedicationProtocol(
     @Param('id') id: string,
     @Body() dto: UpdateMedicationProtocolDto,
@@ -368,6 +368,26 @@ export class TreatmentsController {
     return {
       message: 'Protocolo de medicación actualizado correctamente',
       id: updated.id,
+    };
+  }
+
+  // ============================================
+  // Director-only Endpoints
+  // ============================================
+
+  @Patch(':id/reassign-doctor')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DIRECTOR)
+  async reassignDoctor(
+    @Param('id') id: string,
+    @Body() dto: { newDoctorId: number },
+  ) {
+    const treatmentId = Number(id);
+    const updated = await this.treatmentService.reassignDoctor(treatmentId, dto.newDoctorId);
+    return {
+      message: 'Médico reasignado correctamente',
+      treatmentId: updated.id,
+      newDoctorId: dto.newDoctorId,
     };
   }
 }
