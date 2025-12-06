@@ -8,7 +8,8 @@ export class Group3TurneroService {
     'https://ahlnfxipnieoihruewaj.supabase.co/functions/v1';
 
   private readonly token =
-    process.env.TURNERO_API_TOKEN || 'DUMMY_TURNERO_TOKEN';
+    process.env.TURNERO_API_TOKEN || 
+    'DUMMY_TURNERO_TOKEN';
 
   constructor(private readonly http: HttpService) {}
 

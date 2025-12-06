@@ -7,5 +7,6 @@ import { Group3TurneroController } from './group3-turnero.controller';
   imports: [HttpModule],
   controllers: [Group3TurneroController],
   providers: [Group3TurneroService],
+  exports: [Group3TurneroService],
 })
 export class Group3TurneroModule {}
