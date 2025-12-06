@@ -22,11 +22,26 @@ import {
 import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
+import { createTreatment } from "@/app/actions/doctor/patients/create-treatment";
 
 export default function DoctorPatientMedicalHistoryPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
   const queryClient = useQueryClient();
+  const [showCreateTreatment, setShowCreateTreatment] = React.useState(false);
+  const [initialObjective, setInitialObjective] = React.useState("");
+  async function handleCreateTreatment() {
+    if (!initialObjective) return;
+
+    await createTreatment(Number(id), initialObjective);
+
+    await queryClient.invalidateQueries({
+      queryKey: ["patientTreatments", id],
+    });
+
+    setShowCreateTreatment(false);
+    setInitialObjective("");
+  }
 
   const { data, isLoading, error } = useQuery<MedicalHistoryResponse | null>({
     queryKey: ["medicalHistory", id],
@@ -211,6 +226,12 @@ export default function DoctorPatientMedicalHistoryPage() {
           </div>
         </div>
         <div className="card-content">
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setShowCreateTreatment(true)}>
+              Iniciar Tratamiento Nuevo
+            </Button>
+          </div>
+
           {treatmentsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="loading-spinner"></div>
@@ -282,6 +303,47 @@ export default function DoctorPatientMedicalHistoryPage() {
           )}
         </div>
       </div>
+      {showCreateTreatment && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-[400px]">
+            <h2 className="text-xl font-semibold mb-4">Crear Tratamiento</h2>
+
+            <label className="block text-sm font-medium mb-2">
+              Objetivo Inicial
+            </label>
+
+            <select
+              className="w-full border rounded px-3 py-2 mb-4"
+              value={initialObjective}
+              onChange={(e) => setInitialObjective(e.target.value)}
+            >
+              <option value="">Seleccione...</option>
+
+              <option value="gametos_propios">Gametos propios</option>
+
+              <option value="couple_female">Pareja femenina</option>
+
+              <option value="method_ropa">Método ROPA</option>
+
+              <option value="woman_single">Mujer sola</option>
+
+              <option value="preservation_ovocytes_embryos">
+                Preservación de óvulos / embriones
+              </option>
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateTreatment(false)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateTreatment}>Crear</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

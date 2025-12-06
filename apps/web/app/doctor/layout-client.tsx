@@ -58,7 +58,7 @@ export function DoctorLayoutClient({
     },
     {
       name: "Órdenes Médicas",
-      path: "/doctor/orders",
+      path: "/doctor/medical-orders",
       icon: FileText,
     },
     {
