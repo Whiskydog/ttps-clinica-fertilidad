@@ -199,7 +199,7 @@ export default function PuncturesPage() {
             {treatments.length > 0 && (
               <div>
                 <Label htmlFor="treatmentId" className="text-orange-700">
-                  Tratamiento
+                  Tratamientos de {treatments[0]?.medicalHistory.patient.firstName} {treatments[0]?.medicalHistory.patient.lastName}
                 </Label>
                 <Select
                   value={form.treatmentId}
