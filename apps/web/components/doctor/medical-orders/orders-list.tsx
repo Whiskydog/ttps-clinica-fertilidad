@@ -41,7 +41,19 @@ export function OrdersList() {
             </div>
 
             <div>
-              <p className="font-semibold">Orden #{order.code}</p>
+              <p className="font-semibold flex items-center gap-2">
+                Orden #{order.code}
+                <Badge
+                  variant="outline"
+                  className={
+                    order.status === "completed"
+                      ? "bg-green-100 text-green-800 border-green-300"
+                      : "bg-yellow-100 text-yellow-800 border-yellow-300"
+                  }
+                >
+                  {order.status === "completed" ? "Completada" : "Pendiente"}
+                </Badge>
+              </p>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                 <User className="h-4 w-4" />
@@ -52,10 +64,6 @@ export function OrdersList() {
                 <Calendar className="h-4 w-4" />
                 {formatDateForDisplay(order.issueDate)}
               </div>
-
-              <Badge variant="outline">
-                {order.status === "completed" ? "Completada" : "Pendiente"}
-              </Badge>
             </div>
           </div>
 
