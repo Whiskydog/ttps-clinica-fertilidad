@@ -62,14 +62,22 @@ export class MedicalOrdersController {
         status,
       );
     }
-    // Si es Director y no especifica treatmentId ni patientId, devolver todas las órdenes
-    if (user.role.code === RoleCode.DIRECTOR) {
+    // Si es Director o médico y no especifica treatmentId ni patientId, devolver todas las órdenes
+    if (
+      user.role.code === RoleCode.DIRECTOR ||
+      user.role.code === RoleCode.DOCTOR
+    ) {
       return this.medicalOrdersService.findAll({
         page: page ? Number(page) : 1,
         limit: limit ? Number(limit) : 20,
         status,
         category,
-        doctorId: doctorId ? Number(doctorId) : undefined,
+        doctorId:
+          user.role.code === RoleCode.DOCTOR
+            ? user.id
+            : doctorId
+              ? Number(doctorId)
+              : undefined,
       });
     }
     return { data: [], message: 'Debe proporcionar treatmentId o patientId' };
