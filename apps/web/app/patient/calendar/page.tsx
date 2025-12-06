@@ -4,9 +4,11 @@ import { getAppointments } from "@/app/actions/patients/appointments/get";
 import { CalendarLegend } from "@/components/patient/calendar/calendar-legend";
 import { MonthCalendar } from "@/components/patient/calendar/month-calendar";
 import { UpcomingAppointments } from "@/components/patient/calendar/upcoming-appointments";
+import { useDoctors } from "@/hooks/doctor/useDoctors";
 import { TurnoRaw } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import moment from "moment";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,13 +26,19 @@ export default function CalendarPage() {
     queryFn: () => getAppointments(),
   });
 
+  const {
+    doctors,
+    isLoading: isLoadingDoctors,
+    error: errorDoctors,
+  } = useDoctors();
+
   const appointments: TurnoRaw[] = response?.data.data || [];
 
   // Transformar appointments del backend al formato esperado por el calendario
   const calendarEvents = appointments.map((apt) => {
-    const dateObj = new Date(apt.fecha_hora);
-    const date = dateObj.toISOString().split("T")[0];
-    const time = dateObj.toTimeString().slice(0, 5);
+    const dateAndTime = moment.utc(apt.fecha_hora);
+    const date = dateAndTime.format("YYYY-MM-DD");
+    const time = dateAndTime.format("HH:mm");
 
     return {
       id: apt.id,
@@ -53,21 +61,24 @@ export default function CalendarPage() {
     )
     .slice(0, 5)
     .map((apt) => {
-      const dateObj = new Date(apt.fecha_hora);
-      const date = dateObj.toISOString().split("T")[0];
-      const time = dateObj.toTimeString().slice(0, 5);
+      const dateAndTime = moment.utc(apt.fecha_hora);
+      const date = dateAndTime.format("YYYY-MM-DD");
+      const time = dateAndTime.format("HH:mm");
+      const doctor = doctors?.find((doc) => doc.id === apt.id_medico);
 
       return {
         id: apt.id,
         date: date!,
         time,
         type: "Consulta médica",
-        doctor: `Doctor ID: ${apt.id_medico}`,
+        doctor: doctor
+          ? `${doctor?.firstName} ${doctor?.lastName}`
+          : "Desconocido",
         operatingRoom: "",
       };
     });
 
-  if (isLoading) {
+  if (isLoading || isLoadingDoctors) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Cargando calendario...</div>
@@ -75,7 +86,7 @@ export default function CalendarPage() {
     );
   }
 
-  if (error) {
+  if (error || errorDoctors) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg text-red-600">Error al cargar las citas</div>
@@ -94,7 +105,10 @@ export default function CalendarPage() {
             ← Volver al Dashboard
           </Button>
         </Link>
-        <Button className="bg-rose-300 hover:bg-rose-400 text-black" onClick={() => router.push('/patient/appointments/new')}>
+        <Button
+          className="bg-rose-300 hover:bg-rose-400 text-black"
+          onClick={() => router.push("/patient/appointments/new")}
+        >
           Solicitar Nuevo Turno
         </Button>
       </div>

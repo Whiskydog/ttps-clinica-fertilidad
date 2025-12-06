@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
-import { Checkbox } from '@repo/ui/checkbox';
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Checkbox } from "@repo/ui/checkbox";
+import moment from "moment";
 
 interface Appointment {
   id: number;
@@ -17,11 +18,15 @@ interface UpcomingAppointmentsProps {
   appointments: Appointment[];
 }
 
-export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps) {
+export function UpcomingAppointments({
+  appointments,
+}: UpcomingAppointmentsProps) {
   return (
     <Card>
       <CardHeader className="bg-slate-500">
-        <CardTitle className="text-white text-center">PRÓXIMOS TURNOS</CardTitle>
+        <CardTitle className="text-white text-center">
+          PRÓXIMOS TURNOS
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-4">
@@ -34,14 +39,14 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                 <Checkbox />
                 <div className="text-sm text-gray-900">
                   <div className="font-semibold mb-1">
-                    Jueves {new Date(appointment.date).getDate()} de{' '}
-                    {new Date(appointment.date).toLocaleDateString('es-AR', {
-                      month: 'long',
-                    })}{' '}
-                    - {appointment.time} hs
+                    {moment.utc(appointment.date).format("LL")} -{" "}
+                    {appointment.time} hs
                   </div>
                   <div>
-                    {appointment.type} - {appointment.doctor} - {appointment.operatingRoom}
+                    {appointment.type} - {appointment.doctor}{" "}
+                    {appointment.operatingRoom
+                      ? `- Sala: ${appointment.operatingRoom}`
+                      : " - Sala: A definir"}
                   </div>
                 </div>
               </div>
@@ -49,7 +54,11 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                 <Button size="sm" variant="outline">
                   Modificar
                 </Button>
-                <Button size="sm" variant="destructive" className="bg-rose-400 hover:bg-rose-500">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="bg-rose-400 hover:bg-rose-500"
+                >
                   Cancelar
                 </Button>
               </div>
