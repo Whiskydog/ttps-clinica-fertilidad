@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '@users/entities/admin.entity';
 import { Doctor } from '@users/entities/doctor.entity';
@@ -9,11 +9,13 @@ import { User } from '@users/entities/user.entity';
 import argon2 from 'argon2';
 import { Repository } from 'typeorm';
 import { UserValidationService } from './user-validation.service';
-import { RoleCode, type AdminUserCreate, type AdminUserUpdate, type ResetPassword } from '@repo/contracts';
-import { NotFoundException } from '@nestjs/common';
+import { RoleCode, type AdminUserCreate, type AdminUserUpdate, type ResetPassword, type TurnoHorario } from '@repo/contracts';
+import { Group3TurneroService } from '@modules/external/group3-turnero/group3-turnero.service';
 
 @Injectable()
 export class StaffUsersService {
+  private readonly logger = new Logger(StaffUsersService.name);
+
   constructor(
     @InjectRepository(Doctor) private doctorRepository: Repository<Doctor>,
     @InjectRepository(Director)
@@ -24,6 +26,7 @@ export class StaffUsersService {
     @InjectRepository(Role) private roleRepository: Repository<Role>,
     private userValidationService: UserValidationService,
     @InjectRepository(User) private userRepository: Repository<User>,
+    private readonly group3TurneroService: Group3TurneroService,
   ) {}
 
   async getAllStaffUsers(
@@ -75,14 +78,34 @@ export class StaffUsersService {
     };
 
     switch (dto.userType) {
-      case 'doctor':
-        return this.doctorRepository.save(
+      case 'doctor': {
+        // Crear el médico primero
+        const savedDoctor = await this.doctorRepository.save(
           this.doctorRepository.create({
             ...baseData,
             specialty: dto.specialty!,
             licenseNumber: dto.licenseNumber!,
           }),
         );
+
+        // Si hay turnos configurados, crearlos en la API externa
+        if (dto.turnos && dto.turnos.length > 0) {
+          try {
+            await this.crearTurnosParaMedico(savedDoctor.id, dto.turnos);
+            this.logger.log(`Turnos creados exitosamente para médico ${savedDoctor.id}`);
+          } catch (error) {
+            // ROLLBACK: Eliminar el médico si fallan los turnos
+            this.logger.error(`Error creando turnos para médico ${savedDoctor.id}, realizando rollback`, error);
+            await this.doctorRepository.delete(savedDoctor.id);
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            throw new BadRequestException(
+              `Error al crear turnos en el sistema externo: ${errorMessage}. El médico no fue creado.`
+            );
+          }
+        }
+
+        return savedDoctor;
+      }
       case 'lab_technician':
         return this.labTechnicianRepository.save(
           this.labTechnicianRepository.create({
@@ -171,5 +194,26 @@ export class StaffUsersService {
       director: RoleCode.DIRECTOR,
     };
     return roleMap[userType];
+  }
+
+  /**
+   * Crea turnos para un médico en la API externa del turnero.
+   * Cada turno se crea para las próximas 5 semanas automáticamente.
+   */
+  private async crearTurnosParaMedico(
+    medicoId: number,
+    turnos: TurnoHorario[],
+  ): Promise<void> {
+    for (const turno of turnos) {
+      this.logger.log(
+        `Creando turno para médico ${medicoId}: día ${turno.dia_semana}, ${turno.hora_inicio} - ${turno.hora_fin}`,
+      );
+      await this.group3TurneroService.crearTurnos({
+        id_medico: medicoId,
+        hora_inicio: turno.hora_inicio,
+        hora_fin: turno.hora_fin,
+        dia_semana: turno.dia_semana,
+      });
+    }
   }
 }

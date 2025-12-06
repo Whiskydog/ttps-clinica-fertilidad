@@ -1,4 +1,5 @@
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
+import { Group3TurneroModule } from '@modules/external/group3-turnero/group3-turnero.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoctorsController } from './controllers/doctors.controller';
@@ -32,6 +33,7 @@ import { UsersService } from './services/users.service';
       Treatment,
     ]),
     MedicalInsurancesModule,
+    Group3TurneroModule,
   ],
   controllers: [
     UsersController,
