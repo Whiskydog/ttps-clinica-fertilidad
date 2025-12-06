@@ -6,10 +6,8 @@ import { Button } from "@repo/ui/button";
 import {
   LayoutDashboard,
   Users,
-  Search,
   FileText,
-  BarChart3,
-  ClipboardList,
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -51,29 +49,19 @@ export function MedicalDirectorLayoutClient({
       icon: LayoutDashboard,
     },
     {
-      name: "Todos los Pacientes",
-      path: "/medical-director/all-patients",
+      name: "Pacientes",
+      path: "/medical-director/patients",
       icon: Users,
     },
     {
-      name: "Búsqueda Global",
-      path: "/medical-director/search",
-      icon: Search,
-    },
-    {
-      name: "Historias Clínicas",
-      path: "/medical-director/medical-records",
+      name: "Órdenes Médicas",
+      path: "/medical-director/orders",
       icon: FileText,
     },
     {
-      name: "Estadísticas",
-      path: "/medical-director/statistics",
-      icon: BarChart3,
-    },
-    {
-      name: "Reportes",
-      path: "/medical-director/reports",
-      icon: ClipboardList,
+      name: "Auditoría",
+      path: "/medical-director/audit",
+      icon: Shield,
     },
   ];
 
