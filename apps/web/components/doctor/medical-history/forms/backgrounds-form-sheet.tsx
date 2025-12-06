@@ -10,7 +10,6 @@ import {
   SheetTitle,
 } from "@repo/ui/sheet";
 import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Badge } from "@repo/ui/badge";
 import { X } from "lucide-react";
@@ -18,6 +17,7 @@ import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { createBackground } from "@/app/actions/doctor/medical-history/create-background";
 import { deleteBackground } from "@/app/actions/doctor/medical-history/delete-background";
+import { MedicalTermSelector } from "../medical-term-selector";
 
 interface BackgroundsFormSheetProps {
   open: boolean;
@@ -51,21 +51,19 @@ export function BackgroundsFormSheet({
     Array<{ id?: number; term: string }>
   >(surgicalBg.map((b) => ({ id: b.id, term: b.termCode || "" })));
 
-  const [newClinicalTerm, setNewClinicalTerm] = useState("");
-  const [newSurgicalTerm, setNewSurgicalTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddClinical = () => {
-    if (newClinicalTerm.trim()) {
-      setClinicalTerms([...clinicalTerms, { term: newClinicalTerm.trim() }]);
-      setNewClinicalTerm("");
+  const handleAddClinical = (term: string) => {
+    // Evitar duplicados
+    if (!clinicalTerms.some((t) => t.term === term)) {
+      setClinicalTerms([...clinicalTerms, { term }]);
     }
   };
 
-  const handleAddSurgical = () => {
-    if (newSurgicalTerm.trim()) {
-      setSurgicalTerms([...surgicalTerms, { term: newSurgicalTerm.trim() }]);
-      setNewSurgicalTerm("");
+  const handleAddSurgical = (term: string) => {
+    // Evitar duplicados
+    if (!surgicalTerms.some((t) => t.term === term)) {
+      setSurgicalTerms([...surgicalTerms, { term }]);
     }
   };
 
@@ -164,32 +162,16 @@ export function BackgroundsFormSheet({
           {/* Antecedentes Clínicos */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">
-              ANTECEDENTES CLÍNICOS (SNOMED/Fire)
+              ANTECEDENTES CLÍNICOS (SNOMED/FHIR)
             </h3>
 
             <div className="space-y-2">
-              <Label htmlFor="newClinicalTerm">Agregar término</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="newClinicalTerm"
-                  value={newClinicalTerm}
-                  onChange={(e) => setNewClinicalTerm(e.target.value)}
-                  placeholder="Ej: Hipertensión arterial"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddClinical();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddClinical}
-                  disabled={!newClinicalTerm.trim()}
-                >
-                  Agregar
-                </Button>
-              </div>
+              <Label>Buscar y agregar término estandarizado</Label>
+              <MedicalTermSelector
+                onSelect={handleAddClinical}
+                placeholder="Buscar antecedente clínico..."
+                disabled={isSubmitting}
+              />
             </div>
 
             {clinicalTerms.length > 0 && (
@@ -219,31 +201,17 @@ export function BackgroundsFormSheet({
 
           {/* Antecedentes Quirúrgicos */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-sm">ANTECEDENTES QUIRÚRGICOS</h3>
+            <h3 className="font-semibold text-sm">
+              ANTECEDENTES QUIRÚRGICOS (SNOMED/FHIR)
+            </h3>
 
             <div className="space-y-2">
-              <Label htmlFor="newSurgicalTerm">Agregar procedimiento</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="newSurgicalTerm"
-                  value={newSurgicalTerm}
-                  onChange={(e) => setNewSurgicalTerm(e.target.value)}
-                  placeholder="Ej: Apendicectomía (2018)"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSurgical();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddSurgical}
-                  disabled={!newSurgicalTerm.trim()}
-                >
-                  Agregar
-                </Button>
-              </div>
+              <Label>Buscar y agregar procedimiento estandarizado</Label>
+              <MedicalTermSelector
+                onSelect={handleAddSurgical}
+                placeholder="Buscar procedimiento quirúrgico..."
+                disabled={isSubmitting}
+              />
             </div>
 
             {surgicalTerms.length > 0 && (
