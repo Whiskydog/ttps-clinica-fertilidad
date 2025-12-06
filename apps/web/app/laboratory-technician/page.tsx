@@ -1,18 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
-import { Button } from "@repo/ui/button";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { RefreshCw } from "lucide-react";
 
 interface Embryo {
   finalDisposition?: string;
 }
 
 export default function LabTechnicianDashboard() {
-  const router = useRouter();
   const [oocyteCount, setOocyteCount] = useState(0);
   const [embryoCount, setEmbryoCount] = useState(0);
   const [cryopreservedEmbryos, setCryopreservedEmbryos] = useState(0);
@@ -98,16 +94,6 @@ export default function LabTechnicianDashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-          Dashboard Operador de Laboratorio
-        </h1>
-        <Button onClick={fetchData} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Actualizar
-        </Button>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-blue-50 border-blue-200">
           <CardHeader>
@@ -210,28 +196,6 @@ export default function LabTechnicianDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Acciones Rápidas</h2>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() => router.push("/laboratory-technician/punctures")}
-          >
-            Registrar Punción
-          </Button>
-          <Button onClick={() => router.push("/laboratory-technician/oocytes")}>
-            Gestionar Ovocitos
-          </Button>
-          <Button onClick={() => router.push("/laboratory-technician/embryos")}>
-            Gestionar Embriones
-          </Button>
-          <Button
-            onClick={() => router.push("/laboratory-technician/donor-bank")}
-          >
-            Banco de Donantes
-          </Button>
-        </div>
       </div>
     </div>
   );

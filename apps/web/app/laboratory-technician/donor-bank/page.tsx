@@ -23,14 +23,14 @@ import {
 } from "@repo/ui/table";
 import { Badge } from "@repo/ui/badge";
 import { toast } from "@repo/ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/dialog";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+// } from "@repo/ui/dialog";
 
 interface PhenotypeEnums {
   eye_color: { values: string[]; label: string; description: string };
@@ -113,7 +113,7 @@ export default function DonorBankPage() {
   const [pageSize] = useState(10);
   const [selectedType, setSelectedType] = useState("");
 
-  const [showCleanModal, setShowCleanModal] = useState(false);
+  // const [showCleanModal, setShowCleanModal] = useState(false);
 
   const [tankForm, setTankForm] = useState<TankForm>({
     type: "",
@@ -295,9 +295,9 @@ export default function DonorBankPage() {
     }
   };
 
-  const handleClean = async () => {
-    setShowCleanModal(true);
-  };
+  // const handleClean = async () => {
+  //   setShowCleanModal(true);
+  // };
 
   if (!enums) return <div>Cargando...</div>;
 
@@ -313,7 +313,7 @@ export default function DonorBankPage() {
       </div>
 
       <Tabs defaultValue="storage" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-purple-100">
+        <TabsList className="grid w-full grid-cols-4 bg-purple-100">
           <TabsTrigger
             value="storage"
             className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
@@ -338,12 +338,12 @@ export default function DonorBankPage() {
           >
             Buscar
           </TabsTrigger>
-          <TabsTrigger
+          {/* <TabsTrigger
             value="clean"
             className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
           >
             Limpiar
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="storage">
@@ -815,7 +815,7 @@ export default function DonorBankPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="clean">
+        {/* <TabsContent value="clean">
           <Card>
             <CardHeader>
               <CardTitle>Limpiar Datos</CardTitle>
@@ -830,10 +830,10 @@ export default function DonorBankPage() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
 
-      <Dialog open={showCleanModal} onOpenChange={setShowCleanModal}>
+      {/* <Dialog open={showCleanModal} onOpenChange={setShowCleanModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Limpieza</DialogTitle>
@@ -866,7 +866,7 @@ export default function DonorBankPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }

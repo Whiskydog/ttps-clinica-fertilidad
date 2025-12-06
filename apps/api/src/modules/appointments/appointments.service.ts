@@ -43,7 +43,7 @@ export class AppointmentsService {
           `Patient with id=${patient.id} attempted to book a non-initial consultation appointment without a medical history.`,
         );
         throw new BadRequestException(
-          'El paciente debe tener una historia clínica y un tratamiento actual para reservar este tipo de turno.',
+          'Debe tener una historia clínica y un tratamiento actual para reservar este tipo de turno. Reserve un turno de consulta inicial primero.',
         );
       }
 

@@ -53,7 +53,7 @@ export function EmptyState({
         <div className="flex flex-col sm:flex-row gap-3">
           {showAppointmentButton && (
             <Button asChild>
-              <Link href="/patient/calendar">
+              <Link href="/patient/appointments/new">
                 <Calendar className="h-4 w-4 mr-2" />
                 Sacar un turno
               </Link>

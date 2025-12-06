@@ -34,6 +34,10 @@ export const TurnoSchema = z.object({
 
 export type TurnoRaw = z.infer<typeof TurnoSchema>;
 
+export type ExternalAppointmentsResponse = {
+  data: TurnoRaw[];
+};
+
 export type AppointmentDetail = {
   id: number;
   doctorId: number;
