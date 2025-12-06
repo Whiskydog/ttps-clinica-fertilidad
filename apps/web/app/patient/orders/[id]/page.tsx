@@ -10,6 +10,7 @@ import { Check, Download, FileText } from 'lucide-react';
 import { getMedicalOrderDetail } from '@/app/actions/patients/medical-orders/get-detail';
 import type { MedicalOrderDetail, MedicalOrderStatus } from '@repo/contracts';
 import { StudyResultsSection } from '@/components/patient/orders/study-results-section';
+import { getFileUrl } from '@/lib/upload-utils';
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -73,11 +74,8 @@ export default function OrderDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                    const pdfUrl = order.pdfUrl!.startsWith("http")
-                      ? order.pdfUrl!
-                      : `${apiUrl}${order.pdfUrl}`;
-                    window.open(pdfUrl, "_blank");
+                    const url = getFileUrl(order.pdfUrl);
+                    if (url) window.open(url, "_blank");
                   }}
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -111,11 +109,8 @@ export default function OrderDetailPage() {
               </div>
               <Button
                 onClick={() => {
-                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                  const pdfUrl = order.pdfUrl!.startsWith("http")
-                    ? order.pdfUrl!
-                    : `${apiUrl}${order.pdfUrl}`;
-                  window.open(pdfUrl, "_blank");
+                  const url = getFileUrl(order.pdfUrl);
+                  if (url) window.open(url, "_blank");
                 }}
               >
                 <Download className="h-4 w-4 mr-2" />

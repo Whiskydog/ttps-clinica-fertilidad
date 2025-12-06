@@ -56,15 +56,12 @@ export class PatientsService {
     const { page, limit, dni } = query;
     const skip = (page - 1) * limit;
 
-    // Para Director: mostrar todos los pacientes con tratamientos
+    // Para Director: mostrar todos los pacientes
     if (userRole === RoleCode.DIRECTOR) {
       const queryBuilder = this.patientRepository
         .createQueryBuilder('patient')
         .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
-        .leftJoinAndSelect('patient.role', 'role')
-        .distinct(true)
-        .innerJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
-        .innerJoin('treatments', 't', 't.medical_history_id = mh.id');
+        .leftJoinAndSelect('patient.role', 'role');
 
       if (dni) {
         queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });

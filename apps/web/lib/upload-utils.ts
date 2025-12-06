@@ -23,8 +23,8 @@ export async function uploadPDF(
   formData.append('file', file);
 
   const queryParam = type === 'informed-consent' ? '?type=informed-consent' : '';
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  const url = `${backendUrl}/v1/api/uploads/pdf${queryParam}`;
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1/api';
+  const url = `${backendUrl}/uploads/pdf${queryParam}`;
 
   try {
     const response = await fetch(url, {
@@ -66,7 +66,10 @@ export async function uploadPDF(
 export function getFileUrl(fileUri: string | null | undefined): string | null {
   if (!fileUri) return null;
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  // Los archivos estáticos se sirven en http://localhost:3001/uploads/ (sin /v1/api)
+  // Extraer la URL base del servidor sin el path de la API
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1/api';
+  const baseUrl = apiUrl.replace(/\/v1\/api$/, '');
 
   // Normalizar barras invertidas de Windows a barras normales para URLs
   let normalizedUri = fileUri.replace(/\\/g, '/');
@@ -78,11 +81,11 @@ export function getFileUrl(fileUri: string | null | undefined): string | null {
 
   // Si empieza con /uploads, agregarle la URL base
   if (normalizedUri.startsWith('/uploads')) {
-    return `${backendUrl}${normalizedUri}`;
+    return `${baseUrl}${normalizedUri}`;
   }
 
   // Si no tiene el prefijo, agregarlo
-  return `${backendUrl}/uploads/${normalizedUri}`;
+  return `${baseUrl}/uploads/${normalizedUri}`;
 }
 
 /**

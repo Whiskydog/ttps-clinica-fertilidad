@@ -104,9 +104,6 @@ export default function MedicalDirectorMedicalOrderDetailPage() {
     const fileUrl = getFileUrl(pdfUri);
     if (fileUrl) {
       window.open(fileUrl, "_blank");
-    } else {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      window.open(`${backendUrl}${pdfUri || ""}`, "_blank");
     }
   };
 
@@ -128,11 +125,8 @@ export default function MedicalDirectorMedicalOrderDetailPage() {
             <Button
               variant="outline"
               onClick={() => {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                const pdfUrl = orderData.pdfUrl.startsWith("http")
-                  ? orderData.pdfUrl
-                  : `${apiUrl}${orderData.pdfUrl}`;
-                window.open(pdfUrl, "_blank");
+                const url = getFileUrl(orderData.pdfUrl);
+                if (url) window.open(url, "_blank");
               }}
             >
               <Download className="h-4 w-4 mr-2" />

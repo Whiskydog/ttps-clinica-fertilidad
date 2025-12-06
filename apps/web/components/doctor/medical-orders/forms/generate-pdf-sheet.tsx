@@ -77,7 +77,7 @@ export function GeneratePdfSheet({
       formData.append("doctorSignature", signatureFile);
 
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      const url = `${backendUrl}/v1/api/medical-orders/${orderId}/generate-pdf`;
+      const url = `${backendUrl}/medical-orders/${orderId}/generate-pdf`;
 
       console.log("Generando PDF para orden:", orderId);
       console.log("URL:", url);
