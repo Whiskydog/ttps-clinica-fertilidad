@@ -8,10 +8,12 @@ import { TurnoRaw } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CalendarPage() {
   const [view, setView] = useState<"mes" | "semana" | "lista">("mes");
+  const router = useRouter();
 
   const {
     data: response,
@@ -92,7 +94,7 @@ export default function CalendarPage() {
             ← Volver al Dashboard
           </Button>
         </Link>
-        <Button className="bg-rose-300 hover:bg-rose-400 text-black">
+        <Button className="bg-rose-300 hover:bg-rose-400 text-black" onClick={() => router.push('/patient/appointments/new')}>
           Solicitar Nuevo Turno
         </Button>
       </div>
