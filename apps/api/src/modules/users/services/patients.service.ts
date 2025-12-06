@@ -1,5 +1,6 @@
 import { MedicalInsurancesService } from '@modules/medical-insurances/medical-insurances.service';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { AppointmentsService } from '@modules/appointments/appointments.service';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PatientCreateDto } from '@users/dto';
 import { Patient } from '@users/entities/patient.entity';
@@ -11,11 +12,15 @@ import { UserValidationService } from './user-validation.service';
 
 @Injectable()
 export class PatientsService {
+  private readonly logger = new Logger(PatientsService.name);
+
   constructor(
     @InjectRepository(Patient) private patientRepository: Repository<Patient>,
     @InjectRepository(Treatment) private treatmentRepository: Repository<Treatment>,
     private userValidationService: UserValidationService,
     private medicalInsurancesService: MedicalInsurancesService,
+    @Inject(forwardRef(() => AppointmentsService))
+    private appointmentsService: AppointmentsService,
   ) {}
 
   async createPatient(dto: PatientCreateDto): Promise<Patient> {
@@ -51,20 +56,65 @@ export class PatientsService {
     const { page, limit, dni } = query;
     const skip = (page - 1) * limit;
 
+    // Para Director: mostrar todos los pacientes con tratamientos
+    if (userRole === RoleCode.DIRECTOR) {
+      const queryBuilder = this.patientRepository
+        .createQueryBuilder('patient')
+        .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
+        .leftJoinAndSelect('patient.role', 'role')
+        .distinct(true)
+        .innerJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
+        .innerJoin('treatments', 't', 't.medical_history_id = mh.id');
+
+      if (dni) {
+        queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });
+      }
+
+      const [patients, total] = await queryBuilder
+        .skip(skip)
+        .take(Number(limit))
+        .getManyAndCount();
+
+      return this.formatPatientsResponse(patients, total, page, limit);
+    }
+
+    // Para Doctor: mostrar pacientes con tratamientos del doctor + pacientes con turnos agendados
+    // Primero obtenemos los IDs de pacientes con turnos del doctor (desde API externa)
+    let patientIdsWithAppointments: number[] = [];
+    try {
+      const doctorAppointments = await this.appointmentsService.getDoctorAppointments(userId);
+      patientIdsWithAppointments = [
+        ...new Set(
+          doctorAppointments
+            .filter((apt) => apt.patientId !== null)
+            .map((apt) => apt.patientId as number),
+        ),
+      ];
+      this.logger.debug(
+        `Doctor ${userId} tiene ${patientIdsWithAppointments.length} pacientes con turnos agendados`,
+      );
+    } catch (error) {
+      this.logger.warn(`Error obteniendo turnos del doctor ${userId}: ${error}`);
+      // Continuar sin los pacientes de turnos si hay error en la API externa
+    }
+
     const queryBuilder = this.patientRepository
       .createQueryBuilder('patient')
       .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
       .leftJoinAndSelect('patient.role', 'role')
+      .leftJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
+      .leftJoin('treatments', 't', 't.medical_history_id = mh.id')
       .distinct(true);
 
-    // Solo pacientes que tienen una historia clínica con al menos un tratamiento
-    queryBuilder
-      .innerJoin('medical_histories', 'mh', 'mh.patient_id = patient.id')
-      .innerJoin('treatments', 't', 't.medical_history_id = mh.id');
-
-    // Si NO es Director, filtrar solo por pacientes del doctor actual
-    if (userRole !== RoleCode.DIRECTOR) {
-      queryBuilder.andWhere('t.initial_doctor_id = :doctorId', { doctorId: userId });
+    // Condición: pacientes con tratamiento del doctor O pacientes con turno agendado
+    if (patientIdsWithAppointments.length > 0) {
+      queryBuilder.where(
+        '(t.initial_doctor_id = :doctorId OR patient.id IN (:...appointmentPatientIds))',
+        { doctorId: userId, appointmentPatientIds: patientIdsWithAppointments },
+      );
+    } else {
+      // Si no hay pacientes con turnos, solo mostrar los que tienen tratamiento
+      queryBuilder.where('t.initial_doctor_id = :doctorId', { doctorId: userId });
     }
 
     if (dni) {
@@ -76,6 +126,15 @@ export class PatientsService {
       .take(Number(limit))
       .getManyAndCount();
 
+    return this.formatPatientsResponse(patients, total, page, limit);
+  }
+
+  private formatPatientsResponse(
+    patients: Patient[],
+    total: number,
+    page: number,
+    limit: number,
+  ) {
     const totalPages = Math.ceil(total / Number(limit));
     return {
       statusCode: 200,

@@ -1,7 +1,8 @@
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { Group3TurneroModule } from '@modules/external/group3-turnero/group3-turnero.module';
 import { Group8NoticesModule } from '@modules/external/group8-notices/group8-notices.module';
-import { Module } from '@nestjs/common';
+import { AppointmentsModule } from '@modules/appointments/appointments.module';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoctorsController } from './controllers/doctors.controller';
 import { PatientsController } from './controllers/patients.controller';
@@ -36,6 +37,7 @@ import { UsersService } from './services/users.service';
     MedicalInsurancesModule,
     Group3TurneroModule,
     Group8NoticesModule,
+    forwardRef(() => AppointmentsModule),
   ],
   controllers: [
     UsersController,

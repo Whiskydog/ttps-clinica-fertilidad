@@ -380,7 +380,7 @@ export default function TreatmentDetailPage() {
                     </Badge>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative group">
                   {protocol.pdfUrl && (
                     <Button
                       variant="outline"
@@ -398,13 +398,26 @@ export default function TreatmentDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setProtocolPdfSheetOpen(true)}
+                    disabled={!informedConsent || !informedConsent.pdfUri}
                   >
                     <FileText className="h-4 w-4 mr-1" />
                     {protocol.pdfUrl ? "Regenerar PDF" : "Generar PDF"}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleEditProtocol}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditProtocol}
+                    disabled={!informedConsent || !informedConsent.pdfUri}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  {(!informedConsent || !informedConsent.pdfUri) && (
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                      {!informedConsent
+                        ? "Se requiere un consentimiento informado con PDF firmado para editar el protocolo"
+                        : "El consentimiento debe tener un PDF asociado para editar el protocolo"}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="space-y-3 text-sm">

@@ -9,5 +9,6 @@ import { MedicalHistoryModule } from '@modules/medical-history/medical-history.m
   imports: [HttpModule, ConfigModule, MedicalHistoryModule],
   providers: [AppointmentsService],
   controllers: [AppointmentsController],
+  exports: [AppointmentsService],
 })
 export class AppointmentsModule {}
