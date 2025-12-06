@@ -39,14 +39,14 @@ export function UpcomingAppointments({
                 <Checkbox />
                 <div className="text-sm text-gray-900">
                   <div className="font-semibold mb-1">
-                    {moment.utc(appointment.date).format("LL")} -{" "}
+                    {moment.utc(appointment.date).format("dddd LL")} -{" "}
                     {appointment.time} hs
                   </div>
                   <div>
                     {appointment.type} - {appointment.doctor}{" "}
                     {appointment.operatingRoom
                       ? `- Sala: ${appointment.operatingRoom}`
-                      : " - Sala: A definir"}
+                      : ""}
                   </div>
                 </div>
               </div>
