@@ -9,7 +9,11 @@ import {
   Patch,
   Delete,
   Logger,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { TreatmentService } from './treatment.service';
 import { TreatmentsService } from './treatments.service';
 import {
@@ -30,6 +34,7 @@ import { PostTransferMilestoneService } from './services/post-transfer-milestone
 import { MedicalCoverageService } from './services/medical-coverage.service';
 import { DoctorNoteService } from './services/doctor-note.service';
 import { MedicationProtocolService } from './services/medication-protocol.service';
+import { MedicationPdfService } from './services/medication-pdf.service';
 import { MedicalHistoryService } from '../medical-history/services/medical-history.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
@@ -51,6 +56,7 @@ export class TreatmentsController {
     private readonly coverageService: MedicalCoverageService,
     private readonly doctorNoteService: DoctorNoteService,
     private readonly medicationProtocolService: MedicationProtocolService,
+    private readonly medicationPdfService: MedicationPdfService,
   ) {}
 
   // Endpoints para pacientes
@@ -74,6 +80,73 @@ export class TreatmentsController {
       throw new NotFoundException('Invalid treatment ID');
     }
     return this.treatmentsService.getTreatmentDetail(treatmentId, user.id, user.role.code as RoleCode);
+  }
+
+  // ============================================
+  // Medication Protocol PDF Endpoints
+  // (Deben ir ANTES de las rutas genéricas :medicalHistoryId)
+  // ============================================
+
+  @Post(':treatmentId/protocol/generate-pdf')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  @UseInterceptors(FileInterceptor('doctorSignature'))
+  async generateProtocolPdf(
+    @Param('treatmentId') treatmentId: string,
+    @UploadedFile() doctorSignature: Express.Multer.File,
+    @CurrentUser() user: User,
+  ) {
+    const id = Number(treatmentId);
+    if (isNaN(id)) {
+      throw new BadRequestException('ID de tratamiento inválido');
+    }
+
+    if (!doctorSignature) {
+      throw new BadRequestException('La firma del médico es requerida');
+    }
+
+    // Validar que sea una imagen
+    if (!doctorSignature.mimetype.startsWith('image/')) {
+      throw new BadRequestException('El archivo debe ser una imagen (PNG, JPG)');
+    }
+
+    // Validar tamaño máximo (500KB)
+    const maxSize = 500 * 1024;
+    if (doctorSignature.size > maxSize) {
+      throw new BadRequestException('La firma no debe superar los 500KB');
+    }
+
+    const protocol = await this.medicationPdfService.generatePdf({
+      treatmentId: id,
+      doctorSignature,
+      doctorId: user.id,
+    });
+
+    return {
+      message: 'PDF de orden de medicación generado correctamente',
+      pdfUrl: protocol.pdfUrl,
+      generatedAt: protocol.pdfGeneratedAt,
+    };
+  }
+
+  @Get(':treatmentId/protocol/pdf')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR)
+  async getProtocolPdf(@Param('treatmentId') treatmentId: string) {
+    const id = Number(treatmentId);
+    if (isNaN(id)) {
+      throw new BadRequestException('ID de tratamiento inválido');
+    }
+
+    const pdfUrl = await this.medicationPdfService.getProtocolPdf(id);
+
+    if (!pdfUrl) {
+      throw new NotFoundException('No se ha generado PDF para este protocolo');
+    }
+
+    return {
+      pdfUrl,
+    };
   }
 
   // Endpoints existentes

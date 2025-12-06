@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   Edit,
   Trash2,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
@@ -28,6 +29,7 @@ import { TreatmentFormSheet } from "@/components/doctor/treatments/forms/treatme
 import { DeleteNoteDialog } from "@/components/doctor/treatments/forms/delete-note-dialog";
 import { CreateMedicalOrderSheet } from "@/components/doctor/treatments/forms/create-medical-order-sheet";
 import { InformedConsentFormSheet } from "@/components/doctor/treatments/forms/informed-consent-form-sheet";
+import { GenerateProtocolPdfSheet } from "@/components/doctor/treatments/forms/generate-protocol-pdf-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 
@@ -40,6 +42,7 @@ export default function TreatmentDetailPage() {
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const [createOrderSheetOpen, setCreateOrderSheetOpen] = useState(false);
   const [consentSheetOpen, setConsentSheetOpen] = useState(false);
+  const [protocolPdfSheetOpen, setProtocolPdfSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -371,10 +374,38 @@ export default function TreatmentDetailPage() {
                   <h2 className="text-xl font-semibold">
                     Protocolo de Medicación
                   </h2>
+                  {protocol.pdfUrl && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      PDF Generado
+                    </Badge>
+                  )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleEditProtocol}>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  {protocol.pdfUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const url = getFileUrl(protocol.pdfUrl);
+                        if (url) window.open(url, "_blank");
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Descargar
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setProtocolPdfSheetOpen(true)}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    {protocol.pdfUrl ? "Regenerar PDF" : "Generar PDF"}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleEditProtocol}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3 text-sm">
                 <p>
@@ -686,6 +717,19 @@ export default function TreatmentDetailPage() {
           queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
         }}
       />
+
+      {protocol && (
+        <GenerateProtocolPdfSheet
+          open={protocolPdfSheetOpen}
+          onOpenChange={setProtocolPdfSheetOpen}
+          treatmentId={treatment.id}
+          existingPdfUrl={protocol.pdfUrl}
+          onSuccess={() => {
+            setProtocolPdfSheetOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+          }}
+        />
+      )}
     </div>
   );
 }
