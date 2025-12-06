@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { UserValidationService } from './user-validation.service';
 import { RoleCode, type AdminUserCreate, type AdminUserUpdate, type ResetPassword, type TurnoHorario } from '@repo/contracts';
 import { Group3TurneroService } from '@modules/external/group3-turnero/group3-turnero.service';
+import { Group8NoticesService } from '@modules/external/group8-notices/group8-notices.service';
 
 @Injectable()
 export class StaffUsersService {
@@ -27,6 +28,7 @@ export class StaffUsersService {
     private userValidationService: UserValidationService,
     @InjectRepository(User) private userRepository: Repository<User>,
     private readonly group3TurneroService: Group3TurneroService,
+    private readonly group8NoticesService: Group8NoticesService,
   ) {}
 
   async getAllStaffUsers(
@@ -77,6 +79,8 @@ export class StaffUsersService {
       role,
     };
 
+    let savedUser: User;
+
     switch (dto.userType) {
       case 'doctor': {
         // Crear el médico primero
@@ -104,27 +108,42 @@ export class StaffUsersService {
           }
         }
 
-        return savedDoctor;
+        savedUser = savedDoctor;
+        break;
       }
       case 'lab_technician':
-        return this.labTechnicianRepository.save(
+        savedUser = await this.labTechnicianRepository.save(
           this.labTechnicianRepository.create({
             ...baseData,
             labArea: dto.labArea!,
           }),
         );
+        break;
       case 'admin':
-        return this.adminRepository.save(this.adminRepository.create(baseData));
+        savedUser = await this.adminRepository.save(this.adminRepository.create(baseData));
+        break;
       case 'director':
-        return this.directorRepository.save(
+        savedUser = await this.directorRepository.save(
           this.directorRepository.create({
             ...baseData,
             licenseNumber: dto.licenseNumber!,
           }),
         );
+        break;
       default:
         throw new Error(`Tipo de usuario no soportado: ${(dto as any).userType}`);
     }
+
+    // Enviar email con credenciales (no bloquea si falla)
+    try {
+      await this.enviarEmailCredenciales(savedUser, dto.password);
+      this.logger.log(`Email de bienvenida enviado a ${savedUser.email}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      this.logger.error(`Error enviando email de bienvenida a ${savedUser.email}: ${errorMessage}`);
+    }
+
+    return savedUser;
   }
 
   async toggleUserStatus(userId: number, isActive: boolean): Promise<User> {
@@ -215,5 +234,30 @@ export class StaffUsersService {
         dia_semana: turno.dia_semana,
       });
     }
+  }
+
+  /**
+   * Envía email con credenciales de acceso al nuevo usuario.
+   * Texto plano simple.
+   */
+  private async enviarEmailCredenciales(user: User, password: string): Promise<void> {
+    const textoEmail = `Bienvenido al Sistema de Clínica de Fertilidad
+
+Se ha creado tu cuenta de usuario con los siguientes datos:
+
+Email: ${user.email}
+Contraseña temporal: ${password}
+
+Por favor, ingresa al sistema y cambia tu contraseña.
+
+Saludos,
+Clínica de Fertilidad`;
+
+    await this.group8NoticesService.sendEmail({
+      group: 1,
+      toEmails: [user.email],
+      subject: 'Credenciales de Acceso - Sistema Clínica de Fertilidad',
+      htmlBody: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap;">${textoEmail}</pre>`,
+    });
   }
 }
