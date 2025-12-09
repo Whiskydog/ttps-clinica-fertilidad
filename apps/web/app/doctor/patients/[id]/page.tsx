@@ -30,18 +30,6 @@ export default function DoctorPatientMedicalHistoryPage() {
   const queryClient = useQueryClient();
   const [showCreateTreatment, setShowCreateTreatment] = React.useState(false);
   const [initialObjective, setInitialObjective] = React.useState("");
-  async function handleCreateTreatment() {
-    if (!initialObjective) return;
-
-    await createTreatment(Number(id), initialObjective);
-
-    await queryClient.invalidateQueries({
-      queryKey: ["patientTreatments", id],
-    });
-
-    setShowCreateTreatment(false);
-    setInitialObjective("");
-  }
 
   const { data, isLoading, error } = useQuery<MedicalHistoryResponse | null>({
     queryKey: ["medicalHistory", id],
@@ -52,6 +40,19 @@ export default function DoctorPatientMedicalHistoryPage() {
     },
     enabled: !!id,
   });
+
+  async function handleCreateTreatment() {
+    if (!initialObjective) return;
+
+    await createTreatment(Number(data?.id), initialObjective);
+
+    await queryClient.invalidateQueries({
+      queryKey: ["patientTreatments", id],
+    });
+
+    setShowCreateTreatment(false);
+    setInitialObjective("");
+  }
 
   // Get patient treatments
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
