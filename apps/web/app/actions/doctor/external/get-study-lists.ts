@@ -58,27 +58,29 @@ export async function getStudyLists(): Promise<{ data: StudyLists }> {
     ]);
 
   // DEBUG: Log raw responses
-  console.log("[DEBUG] Study Lists Raw Responses:", {
-    semen: { status: semenResp.status, data: semenData },
-    hormonales: { status: hormonalesResp.status, data: hormonalesData },
-    ginecologicos: { status: ginecologicosResp.status, data: ginecologicosData },
-    prequirurgicos: { status: prequirurgicosResp.status, data: prequirurgicosData },
-  });
+  // console.log("[DEBUG] Study Lists Raw Responses:", {
+  //   semen: { status: semenResp.status, data: semenData },
+  //   hormonales: { status: hormonalesResp.status, data: hormonalesData },
+  //   ginecologicos: { status: ginecologicosResp.status, data: ginecologicosData },
+  //   prequirurgicos: { status: prequirurgicosResp.status, data: prequirurgicosData },
+  // });
 
   // Extract study names from responses
   // The external API may return different formats, so we handle both array and object responses
+  // Also remove duplicates to avoid React key conflicts
   const extractStudies = (data: any): string[] => {
+    let studies: string[] = [];
     if (Array.isArray(data)) {
-      return data.map((item: any) =>
+      studies = data.map((item: any) =>
+        typeof item === 'string' ? item : item.name || item.nombre || String(item)
+      );
+    } else if (data?.data && Array.isArray(data.data)) {
+      studies = data.data.map((item: any) =>
         typeof item === 'string' ? item : item.name || item.nombre || String(item)
       );
     }
-    if (data?.data && Array.isArray(data.data)) {
-      return data.data.map((item: any) =>
-        typeof item === 'string' ? item : item.name || item.nombre || String(item)
-      );
-    }
-    return [];
+    // Remove duplicates
+    return [...new Set(studies)];
   };
 
   const result = {
@@ -89,7 +91,7 @@ export async function getStudyLists(): Promise<{ data: StudyLists }> {
   };
 
   // DEBUG: Log final result
-  console.log("[DEBUG] Study Lists Final Result:", result);
+  // console.log("[DEBUG] Study Lists Final Result:", result);
 
   return { data: result };
 }

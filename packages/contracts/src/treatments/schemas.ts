@@ -176,15 +176,15 @@ export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
 
 // Informed Consent Input Schemas
 export const CreateInformedConsentSchema = z.object({
-  treatmentId: z.number(),
+  treatmentId: z.coerce.number(),
   pdfUri: z.string().nullable().optional(),
   signatureDate: z.string().nullable().optional(),
-  uploadedByUserId: z.number().nullable().optional(),
+  uploadedByUserId: z.coerce.number().nullable().optional(),
 });
 
 export const UpdateInformedConsentSchema =
   CreateInformedConsentSchema.partial().extend({
-    id: z.number(),
+    id: z.coerce.number(),
   });
 
 export type CreateInformedConsentInput = z.infer<

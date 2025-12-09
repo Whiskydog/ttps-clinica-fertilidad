@@ -27,6 +27,7 @@ import {
   UpdateMedicalCoverageDto,
   CreateDoctorNoteDto,
   UpdateDoctorNoteDto,
+  CreateMedicationProtocolDto,
   UpdateMedicationProtocolDto,
 } from './dto';
 import { InformedConsentService } from './services/informed-consent.service';
@@ -149,38 +150,9 @@ export class TreatmentsController {
     };
   }
 
-  // Endpoints existentes
-  @Get(':medicalHistoryId')
-  async getByMedicalHistory(
-    @Param('medicalHistoryId') medicalHistoryId: string,
-  ) {
-    const id = Number(medicalHistoryId);
-    return this.treatmentService.findByMedicalHistoryId(id);
-  }
-
-  @Post(':medicalHistoryId')
-  @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
-  async create(
-    @Param('medicalHistoryId') medicalHistoryId: string,
-    @Body() dto: CreateTreatmentDto,
-    @CurrentUser() user: User,
-  ) {
-    const id = Number(medicalHistoryId);
-    const medicalHistory = await this.medicalHistoryService.findById(id);
-    if (!medicalHistory) {
-      throw new NotFoundException('Historia clínica no encontrada');
-    }
-    const treatment = await this.treatmentService.createTreatment(
-      medicalHistory,
-      dto,
-      user.id,
-    );
-    return CreateTreatmentResponseSchema.parse(treatment);
-  }
-
   // ============================================
   // Informed Consent Endpoints
+  // (Rutas específicas ANTES de rutas con parámetros)
   // ============================================
 
   @Post('informed-consent')
@@ -349,6 +321,10 @@ export class TreatmentsController {
     };
   }
 
+  // ============================================
+  // Doctor Notes Endpoints
+  // ============================================
+
   @Post('doctor-notes/create')
   @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
@@ -387,25 +363,6 @@ export class TreatmentsController {
     };
   }
 
-  @Patch(':id')
-  @UseGuards(RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
-  async updateTreatment(
-    @Param('id') id: string,
-    @Body() dto: UpdateTreatmentDto,
-  ) {
-    const treatmentId = Number(id);
-    const updated = await this.treatmentService.update(treatmentId, {
-      ...dto,
-      startDate: (dto.startDate) ?? undefined,
-      closureDate: (dto.closureDate) ?? undefined,
-    });
-    return {
-      message: 'Tratamiento actualizado correctamente',
-      id: updated.id,
-    };
-  }
-
   @Delete('doctor-notes/:id')
   @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
@@ -420,6 +377,26 @@ export class TreatmentsController {
   // ============================================
   // Medication Protocol Endpoints
   // ============================================
+
+  @Post('medication-protocols')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async createMedicationProtocol(@Body() dto: CreateMedicationProtocolDto) {
+    const protocol = await this.medicationProtocolService.create({
+      treatmentId: dto.treatmentId,
+      protocolType: dto.protocolType,
+      drugName: dto.drugName,
+      dose: dto.dose,
+      administrationRoute: dto.administrationRoute,
+      duration: dto.duration,
+      startDate: dto.startDate,
+      additionalMedication: dto.additionalMedication,
+    });
+    return {
+      message: 'Protocolo de medicación creado correctamente',
+      id: protocol.id,
+    };
+  }
 
   @Patch('medication-protocols/:id')
   @UseGuards(RolesGuard)
@@ -440,6 +417,58 @@ export class TreatmentsController {
     });
     return {
       message: 'Protocolo de medicación actualizado correctamente',
+      id: updated.id,
+    };
+  }
+
+  // ============================================
+  // Endpoints con parámetros genéricos (DEBEN IR AL FINAL)
+  // ============================================
+
+  @Get(':medicalHistoryId')
+  async getByMedicalHistory(
+    @Param('medicalHistoryId') medicalHistoryId: string,
+  ) {
+    const id = Number(medicalHistoryId);
+    return this.treatmentService.findByMedicalHistoryId(id);
+  }
+
+  @Post(':medicalHistoryId')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async create(
+    @Param('medicalHistoryId') medicalHistoryId: string,
+    @Body() dto: CreateTreatmentDto,
+    @CurrentUser() user: User,
+  ) {
+    const id = Number(medicalHistoryId);
+    const medicalHistory = await this.medicalHistoryService.findById(id);
+    if (!medicalHistory) {
+      throw new NotFoundException('Historia clínica no encontrada');
+    }
+    const treatment = await this.treatmentService.createTreatment(
+      medicalHistory,
+      dto,
+      user.id,
+    );
+    return CreateTreatmentResponseSchema.parse(treatment);
+  }
+
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async updateTreatment(
+    @Param('id') id: string,
+    @Body() dto: UpdateTreatmentDto,
+  ) {
+    const treatmentId = Number(id);
+    const updated = await this.treatmentService.update(treatmentId, {
+      ...dto,
+      startDate: (dto.startDate) ?? undefined,
+      closureDate: (dto.closureDate) ?? undefined,
+    });
+    return {
+      message: 'Tratamiento actualizado correctamente',
       id: updated.id,
     };
   }

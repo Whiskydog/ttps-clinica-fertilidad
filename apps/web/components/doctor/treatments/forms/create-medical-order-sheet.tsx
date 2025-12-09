@@ -277,8 +277,8 @@ export function CreateMedicalOrderSheet({
                         <SelectValue placeholder="Agregar estudio..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {getAvailableStudies().map((study) => (
-                          <SelectItem key={study} value={study}>
+                        {getAvailableStudies().map((study, index) => (
+                          <SelectItem key={`${study}-${index}`} value={study}>
                             {study}
                           </SelectItem>
                         ))}

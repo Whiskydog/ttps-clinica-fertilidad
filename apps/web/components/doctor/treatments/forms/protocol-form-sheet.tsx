@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UpdateMedicationProtocolSchema } from "@repo/contracts";
+import {
+  CreateMedicationProtocolSchema,
+  UpdateMedicationProtocolSchema,
+} from "@repo/contracts";
 import {
   Sheet,
   SheetContent,
@@ -28,6 +31,7 @@ import {
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateMedicationProtocol } from "@/app/actions/doctor/treatments/update-protocol";
+import { createMedicationProtocol } from "@/app/actions/doctor/treatments/create-protocol";
 import { normalizeDateForInput } from "@/lib/upload-utils";
 
 interface MedicationProtocol {
@@ -45,11 +49,18 @@ interface ProtocolFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   treatmentId: number;
-  protocol: MedicationProtocol;
+  protocol?: MedicationProtocol | null;
   onSuccess: () => void;
 }
 
-type FormValues = z.infer<typeof UpdateMedicationProtocolSchema>;
+// Schema for create mode (without id)
+const CreateFormSchema = CreateMedicationProtocolSchema;
+
+// Schema for update mode (with id)
+const UpdateFormSchema = UpdateMedicationProtocolSchema;
+
+type CreateFormValues = z.infer<typeof CreateFormSchema>;
+type UpdateFormValues = z.infer<typeof UpdateFormSchema>;
 
 export function ProtocolFormSheet({
   open,
@@ -62,33 +73,58 @@ export function ProtocolFormSheet({
   const [additionalMeds, setAdditionalMeds] = useState<string[]>([]);
   const [newMed, setNewMed] = useState("");
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(UpdateMedicationProtocolSchema),
-    defaultValues: {
-      id: protocol?.id,
-      treatmentId,
-      protocolType: protocol?.protocolType || "",
-      drugName: protocol?.drugName || "",
-      dose: protocol?.dose || "",
-      administrationRoute: protocol?.administrationRoute || "",
-      duration: protocol?.duration || null,
-      startDate: normalizeDateForInput(protocol?.startDate),
-    },
+  const isEditMode = !!protocol;
+
+  const form = useForm<CreateFormValues | UpdateFormValues>({
+    resolver: zodResolver(isEditMode ? UpdateFormSchema : CreateFormSchema),
+    defaultValues: isEditMode
+      ? {
+          id: protocol?.id,
+          treatmentId,
+          protocolType: protocol?.protocolType || "",
+          drugName: protocol?.drugName || "",
+          dose: protocol?.dose || "",
+          administrationRoute: protocol?.administrationRoute || "",
+          duration: protocol?.duration || null,
+          startDate: normalizeDateForInput(protocol?.startDate),
+        }
+      : {
+          treatmentId,
+          protocolType: "",
+          drugName: "",
+          dose: "",
+          administrationRoute: "",
+          duration: null,
+          startDate: null,
+        },
   });
 
   useEffect(() => {
-    if (open && protocol) {
-      form.reset({
-        id: protocol.id,
-        treatmentId,
-        protocolType: protocol.protocolType || "",
-        drugName: protocol.drugName || "",
-        dose: protocol.dose || "",
-        administrationRoute: protocol.administrationRoute || "",
-        duration: protocol.duration || null,
-        startDate: normalizeDateForInput(protocol.startDate),
-      });
-      setAdditionalMeds(protocol.additionalMedication || []);
+    if (open) {
+      if (protocol) {
+        form.reset({
+          id: protocol.id,
+          treatmentId,
+          protocolType: protocol.protocolType || "",
+          drugName: protocol.drugName || "",
+          dose: protocol.dose || "",
+          administrationRoute: protocol.administrationRoute || "",
+          duration: protocol.duration || null,
+          startDate: normalizeDateForInput(protocol.startDate),
+        });
+        setAdditionalMeds(protocol.additionalMedication || []);
+      } else {
+        form.reset({
+          treatmentId,
+          protocolType: "",
+          drugName: "",
+          dose: "",
+          administrationRoute: "",
+          duration: null,
+          startDate: null,
+        });
+        setAdditionalMeds([]);
+      }
     }
   }, [open, protocol, treatmentId, form]);
 
@@ -103,27 +139,38 @@ export function ProtocolFormSheet({
     setAdditionalMeds(additionalMeds.filter((_, i) => i !== index));
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: CreateFormValues | UpdateFormValues) => {
     try {
       const dataWithMeds = {
         ...data,
         additionalMedication: additionalMeds.length > 0 ? additionalMeds : null,
       };
 
-      const result = await updateMedicationProtocol(dataWithMeds);
+      let result;
+      if (isEditMode) {
+        result = await updateMedicationProtocol(dataWithMeds);
+      } else {
+        result = await createMedicationProtocol(dataWithMeds);
+      }
 
       if (!result.success) {
         throw new Error(result.error);
       }
 
       queryClient.invalidateQueries({ queryKey: ["treatmentDetail"] });
-      toast.success("Protocolo actualizado correctamente");
+      toast.success(
+        isEditMode
+          ? "Protocolo actualizado correctamente"
+          : "Protocolo creado correctamente"
+      );
       onSuccess();
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Error al actualizar el protocolo"
+          : isEditMode
+            ? "Error al actualizar el protocolo"
+            : "Error al crear el protocolo"
       );
     }
   };
@@ -132,9 +179,15 @@ export function ProtocolFormSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Editar Protocolo de Medicación</SheetTitle>
+          <SheetTitle>
+            {isEditMode
+              ? "Editar Protocolo de Medicacion"
+              : "Establecer Protocolo de Medicacion"}
+          </SheetTitle>
           <SheetDescription>
-            Actualiza la información del protocolo de medicación
+            {isEditMode
+              ? "Actualiza la informacion del protocolo de medicacion"
+              : "Completa la informacion para establecer el protocolo de medicacion"}
           </SheetDescription>
         </SheetHeader>
 
@@ -181,7 +234,7 @@ export function ProtocolFormSheet({
                 <FormItem>
                   <FormLabel>Dosis</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Ej: 150 UI/día" />
+                    <Input {...field} placeholder="Ej: 150 UI/dia" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -193,9 +246,9 @@ export function ProtocolFormSheet({
               name="administrationRoute"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Vía de Administración</FormLabel>
+                  <FormLabel>Via de Administracion</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Ej: Subcutánea" />
+                    <Input {...field} placeholder="Ej: Subcutanea" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -207,12 +260,12 @@ export function ProtocolFormSheet({
               name="duration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Duración</FormLabel>
+                  <FormLabel>Duracion</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value || ""}
-                      placeholder="Ej: 10-12 días"
+                      placeholder="Ej: 10-12 dias"
                     />
                   </FormControl>
                   <FormMessage />
@@ -235,7 +288,7 @@ export function ProtocolFormSheet({
             />
 
             <div className="space-y-2">
-              <Label>Medicación Adicional</Label>
+              <Label>Medicacion Adicional</Label>
               <div className="flex gap-2">
                 <Input
                   value={newMed}
@@ -280,7 +333,11 @@ export function ProtocolFormSheet({
                 disabled={form.formState.isSubmitting}
                 className="flex-1"
               >
-                {form.formState.isSubmitting ? "Guardando..." : "Guardar"}
+                {form.formState.isSubmitting
+                  ? "Guardando..."
+                  : isEditMode
+                    ? "Guardar"
+                    : "Crear Protocolo"}
               </Button>
               <Button
                 type="button"

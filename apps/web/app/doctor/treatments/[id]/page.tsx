@@ -130,9 +130,11 @@ export default function TreatmentDetailPage() {
   };
 
   const handleEditProtocol = () => {
-    if (protocol) {
-      setProtocolSheetOpen(true);
-    }
+    setProtocolSheetOpen(true);
+  };
+
+  const handleCreateProtocol = () => {
+    setProtocolSheetOpen(true);
   };
 
   const handleEditTreatment = () => {
@@ -366,13 +368,13 @@ export default function TreatmentDetailPage() {
           </div>
 
           {/* Protocol Section */}
-          {protocol && (
+          {protocol ? (
             <div className="border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Pill className="h-5 w-5 text-primary" />
                   <h2 className="text-xl font-semibold">
-                    Protocolo de Medicación
+                    Protocolo de Medicacion
                   </h2>
                   {protocol.pdfUrl && (
                     <Badge variant="secondary" className="bg-green-100 text-green-700">
@@ -433,11 +435,11 @@ export default function TreatmentDetailPage() {
                   <span className="font-medium">Dosis:</span> {protocol.dose}
                 </p>
                 <p>
-                  <span className="font-medium">Vía:</span>{" "}
+                  <span className="font-medium">Via:</span>{" "}
                   {protocol.administrationRoute}
                 </p>
                 <p>
-                  <span className="font-medium">Duración:</span>{" "}
+                  <span className="font-medium">Duracion:</span>{" "}
                   {protocol.duration}
                 </p>
                 {protocol.startDate && (
@@ -449,7 +451,7 @@ export default function TreatmentDetailPage() {
                 {protocol.additionalMedication &&
                   protocol.additionalMedication.length > 0 && (
                     <div>
-                      <span className="font-medium">Medicación adicional:</span>
+                      <span className="font-medium">Medicacion adicional:</span>
                       <ul className="list-disc list-inside ml-4 mt-1">
                         {protocol.additionalMedication.map(
                           (med: string, idx: number) => (
@@ -461,7 +463,28 @@ export default function TreatmentDetailPage() {
                   )}
               </div>
             </div>
-          )}
+          ) : informedConsent && informedConsent.pdfUri ? (
+            <div className="border rounded-lg p-6 bg-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">
+                    Protocolo de Medicacion
+                  </h2>
+                </div>
+              </div>
+              <div className="text-center py-8">
+                <Pill className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  No se ha establecido un protocolo de medicacion para este tratamiento
+                </p>
+                <Button onClick={handleCreateProtocol}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Establecer Protocolo
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Monitorings Section */}
           {monitorings.length > 0 && (
@@ -682,15 +705,13 @@ export default function TreatmentDetailPage() {
         onSuccess={() => setNoteSheetOpen(false)}
       />
 
-      {protocol && (
-        <ProtocolFormSheet
-          open={protocolSheetOpen}
-          onOpenChange={setProtocolSheetOpen}
-          treatmentId={treatment.id}
-          protocol={protocol}
-          onSuccess={() => setProtocolSheetOpen(false)}
-        />
-      )}
+      <ProtocolFormSheet
+        open={protocolSheetOpen}
+        onOpenChange={setProtocolSheetOpen}
+        treatmentId={treatment.id}
+        protocol={protocol || null}
+        onSuccess={() => setProtocolSheetOpen(false)}
+      />
 
       <TreatmentFormSheet
         open={treatmentSheetOpen}

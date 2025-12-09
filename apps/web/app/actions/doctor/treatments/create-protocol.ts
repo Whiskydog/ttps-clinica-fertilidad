@@ -1,18 +1,16 @@
 "use server";
 
-import { CreateInformedConsentSchema } from "@repo/contracts";
+import { CreateMedicationProtocolSchema } from "@repo/contracts";
 import { cookies } from "next/headers";
 
-export async function createInformedConsent(payload: unknown) {
-  console.log("Payload received:", JSON.stringify(payload, null, 2));
+export async function createMedicationProtocol(payload: unknown) {
   // Validate payload with Zod schema
-  const validationResult = CreateInformedConsentSchema.safeParse(payload);
+  const validationResult = CreateMedicationProtocolSchema.safeParse(payload);
 
   if (!validationResult.success) {
-    console.error("Validation errors:", JSON.stringify(validationResult.error.flatten(), null, 2));
     return {
       success: false,
-      error: validationResult.error.flatten().fieldErrors,
+      error: validationResult.error.errors[0]?.message || "Datos inválidos",
     };
   }
 
@@ -30,7 +28,7 @@ export async function createInformedConsent(payload: unknown) {
   }
 
   try {
-    const resp = await fetch(`${backendUrl}/treatments/informed-consent`, {
+    const resp = await fetch(`${backendUrl}/treatments/medication-protocols`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +41,7 @@ export async function createInformedConsent(payload: unknown) {
     const res = await resp.json().catch(() => null);
 
     if (!resp.ok) {
-      const message = res?.message || `Error al crear consentimiento: ${resp.status}`;
+      const message = res?.message || `Error al crear protocolo: ${resp.status}`;
       return {
         success: false,
         error: message,

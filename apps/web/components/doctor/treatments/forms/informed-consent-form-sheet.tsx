@@ -142,12 +142,19 @@ export function InformedConsentFormSheet({
         pdfUri,
       };
 
+      console.log("Sending to action:", finalData);
+
       const result = isEditing
         ? await updateInformedConsent(finalData)
         : await createInformedConsent(finalData);
 
+      console.log("Action result:", result);
+
       if (!result.success) {
-        throw new Error(result.error);
+        const errorMsg = typeof result.error === 'string'
+          ? result.error
+          : JSON.stringify(result.error);
+        throw new Error(errorMsg);
       }
 
       queryClient.invalidateQueries({ queryKey: ["treatmentDetail"] });

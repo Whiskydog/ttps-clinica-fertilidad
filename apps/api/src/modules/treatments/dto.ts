@@ -11,6 +11,7 @@ import {
   UpdateMedicalCoverageSchema,
   CreateDoctorNoteSchema,
   UpdateDoctorNoteSchema,
+  CreateMedicationProtocolSchema,
   UpdateMedicationProtocolSchema,
 } from '@repo/contracts';
 
@@ -53,6 +54,9 @@ export class UpdateDoctorNoteDto extends createZodDto(
 ) {}
 
 // DTO for MedicationProtocol
+export class CreateMedicationProtocolDto extends createZodDto(
+  CreateMedicationProtocolSchema,
+) {}
 export class UpdateMedicationProtocolDto extends createZodDto(
   UpdateMedicationProtocolSchema,
 ) {}
