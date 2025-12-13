@@ -122,7 +122,10 @@ export class MedicalHistoryService {
   }
 
   async findById(id: number) {
-    return this.medicalHistoryRepo.findOne({ where: { id } });
+    return this.medicalHistoryRepo.findOne({
+      where: { id },
+      relations: ['currentTreatment'],
+    });
   }
 
   async createForPatient(patientId: number) {
@@ -193,5 +196,9 @@ export class MedicalHistoryService {
       gyneDto,
       doctorId,
     );
+  }
+
+  async save(medicalHistory: MedicalHistory): Promise<MedicalHistory> {
+    return this.medicalHistoryRepo.save(medicalHistory);
   }
 }

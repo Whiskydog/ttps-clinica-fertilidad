@@ -8,10 +8,10 @@ import {
   NotFoundException,
   Patch,
   Delete,
-  Logger,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TreatmentService } from './treatment.service';
@@ -29,6 +29,7 @@ import {
   UpdateDoctorNoteDto,
   CreateMedicationProtocolDto,
   UpdateMedicationProtocolDto,
+  CreateTreatmentResponseDto,
 } from './dto';
 import { InformedConsentService } from './services/informed-consent.service';
 import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
@@ -40,10 +41,12 @@ import { MedicalHistoryService } from '../medical-history/services/medical-histo
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';
-import { CreateTreatmentResponseSchema, RoleCode } from '@repo/contracts';
+import { RoleCode } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 import { parseDateFromString } from '@common/utils/date.utils';
+import { ZodSerializerDto } from 'nestjs-zod';
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 
 @Controller('treatments')
 @UseGuards(JwtAuthGuard)
@@ -436,22 +439,33 @@ export class TreatmentsController {
   @Post(':medicalHistoryId')
   @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  @ZodSerializerDto(CreateTreatmentResponseDto)
+  @EnvelopeMessage('Tratamiento creado exitosamente')
   async create(
-    @Param('medicalHistoryId') medicalHistoryId: string,
+    @Param('medicalHistoryId', ParseIntPipe) medicalHistoryId: number,
     @Body() dto: CreateTreatmentDto,
     @CurrentUser() user: User,
   ) {
-    const id = Number(medicalHistoryId);
-    const medicalHistory = await this.medicalHistoryService.findById(id);
+    const medicalHistory =
+      await this.medicalHistoryService.findById(medicalHistoryId);
     if (!medicalHistory) {
       throw new NotFoundException('Historia clínica no encontrada');
     }
+    if (medicalHistory.currentTreatment) {
+      throw new BadRequestException(
+        'El paciente ya se encuentra en un tratamiento activo',
+      );
+    }
+
     const treatment = await this.treatmentService.createTreatment(
       medicalHistory,
       dto,
       user.id,
     );
-    return CreateTreatmentResponseSchema.parse(treatment);
+
+    await this.medicalHistoryService.save(medicalHistory);
+
+    return treatment;
   }
 
   @Patch(':id')
