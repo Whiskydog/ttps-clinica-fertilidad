@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getKPIs } from "@/app/actions/doctor/dashboard/get-kpis";
 import { getTodayAppointments } from "@/app/actions/doctor/dashboard/get-today-appointments";
 import { getAlerts } from "@/app/actions/doctor/dashboard/get-alerts";
@@ -13,38 +13,36 @@ import { MonthlyStatsPanel } from "@/components/doctor/dashboard/monthly-stats";
 import { QuickActions } from "@/components/doctor/dashboard/quick-actions";
 import { RecentTreatments } from "@/components/doctor/dashboard/recent-treatments";
 import { Skeleton } from "@repo/ui/skeleton";
-import { useEffect } from "react";
 
 export default function DoctorDashboard() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    queryClient.refetchQueries();
-  }, []);
-
   const { data: kpisData, isLoading: kpisLoading } = useQuery({
     queryKey: ["doctor-kpis"],
     queryFn: () => getKPIs(),
+    refetchOnMount: 'always',
   });
 
   const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
     queryKey: ["doctor-today-appointments"],
     queryFn: () => getTodayAppointments(),
+    refetchOnMount: 'always',
   });
 
   const { data: alertsData, isLoading: alertsLoading } = useQuery({
     queryKey: ["doctor-alerts"],
     queryFn: () => getAlerts(),
+    refetchOnMount: 'always',
   });
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["doctor-monthly-stats"],
     queryFn: () => getMonthlyStats(),
+    refetchOnMount: 'always',
   });
 
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
     queryKey: ["doctor-recent-treatments"],
     queryFn: () => getRecentTreatments(),
+    refetchOnMount: 'always',
   });
 
   return (
