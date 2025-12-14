@@ -17,7 +17,7 @@
     "migration:create": "pnpm run typeorm migration:create",
     "migration:generate": "pnpm run typeorm -d src/config/typeorm-datasource.config.ts migration:generate",
     "migration:run": "pnpm run typeorm -d src/config/typeorm-datasource.config.ts migration:run",
-    "migration:revert": "pnpm run typeorm migration:revert"
+    "migration:revert": "pnpm run typeorm -d src/config/typeorm-datasource.config.ts migration:revert"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
