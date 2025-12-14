@@ -113,31 +113,6 @@ export default function CalendarPage() {
         </Button>
       </div>
 
-      <div className="flex gap-2">
-        <span className="font-semibold">Vista:</span>
-        <Button
-          size="sm"
-          variant={view === "mes" ? "default" : "outline"}
-          onClick={() => setView("mes")}
-        >
-          Mes
-        </Button>
-        <Button
-          size="sm"
-          variant={view === "semana" ? "default" : "outline"}
-          onClick={() => setView("semana")}
-        >
-          Semana
-        </Button>
-        <Button
-          size="sm"
-          variant={view === "lista" ? "default" : "outline"}
-          onClick={() => setView("lista")}
-        >
-          Lista
-        </Button>
-      </div>
-
       {view === "mes" && calendarEvents.length > 0 && (
         <MonthCalendar events={calendarEvents} />
       )}
