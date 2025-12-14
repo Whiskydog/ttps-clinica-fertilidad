@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getKPIs } from "@/app/actions/doctor/dashboard/get-kpis";
 import { getTodayAppointments } from "@/app/actions/doctor/dashboard/get-today-appointments";
 import { getAlerts } from "@/app/actions/doctor/dashboard/get-alerts";
@@ -13,8 +13,15 @@ import { MonthlyStatsPanel } from "@/components/doctor/dashboard/monthly-stats";
 import { QuickActions } from "@/components/doctor/dashboard/quick-actions";
 import { RecentTreatments } from "@/components/doctor/dashboard/recent-treatments";
 import { Skeleton } from "@repo/ui/skeleton";
+import { useEffect } from "react";
 
 export default function DoctorDashboard() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    queryClient.refetchQueries();
+  }, []);
+
   const { data: kpisData, isLoading: kpisLoading } = useQuery({
     queryKey: ["doctor-kpis"],
     queryFn: () => getKPIs(),
@@ -66,30 +73,22 @@ export default function DoctorDashboard() {
       {/* Grid de 2 columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Agenda del Día */}
-        {appointmentsLoading && (
-          <Skeleton className="h-[186px] rounded-md" />
-        )}
+        {appointmentsLoading && <Skeleton className="h-[186px] rounded-md" />}
         {appointmentsData?.data && (
           <DailyAgenda appointments={appointmentsData.data} />
         )}
 
         {/* Alertas */}
-        {alertsLoading && (
-          <Skeleton className="h-[186px] rounded-md" />
-        )}
+        {alertsLoading && <Skeleton className="h-[186px] rounded-md" />}
         {alertsData?.data && <AlertsPanel alerts={alertsData.data} />}
       </div>
 
       {/* Estadísticas del Mes */}
-      {statsLoading && (
-        <Skeleton className="h-[290px] rounded-md" />
-      )}
+      {statsLoading && <Skeleton className="h-[290px] rounded-md" />}
       {statsData?.data && <MonthlyStatsPanel stats={statsData.data} />}
 
       {/* Tratamientos Recientes */}
-      {treatmentsLoading && (
-        <Skeleton className="h-[192px] rounded-md" />
-      )}
+      {treatmentsLoading && <Skeleton className="h-[192px] rounded-md" />}
       {treatmentsData?.data && (
         <RecentTreatments treatments={treatmentsData.data} />
       )}
