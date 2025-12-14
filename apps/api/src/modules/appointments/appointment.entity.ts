@@ -27,7 +27,7 @@ export class Appointment extends BaseEntity {
 
   @Index()
   @Column({ unique: true })
-  externalId: string;
+  externalId: number;
 
   @Column({
     type: 'enum',
