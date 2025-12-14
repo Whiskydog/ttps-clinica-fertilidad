@@ -49,14 +49,9 @@ export class TreatmentService {
       medicalHistory,
     });
     const saved = await this.treatmentRepo.save(treatment);
+    medicalHistory.currentTreatment = saved;
 
-    // Formatear startDate como string YYYY-MM-DD para la respuesta
-    return {
-      ...saved,
-      startDate: saved.startDate
-        ? saved.startDate.toISOString().split('T')[0]
-        : null,
-    };
+    return saved;
   }
 
   async findByMedicalHistoryId(medicalHistoryId: number) {

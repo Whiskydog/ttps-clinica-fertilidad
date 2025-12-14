@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicalHistory } from "@/app/actions/medical-history/get";
 import { getPatientTreatments } from "@/app/actions/doctor/patients/get-treatments";
 import { MedicalHistoryResponse } from "@repo/contracts";
@@ -12,17 +12,13 @@ import { GynecologicalCard } from "@/components/doctor/medical-history/cards/gyn
 import { PhysicalExamCard } from "@/components/doctor/medical-history/cards/physical-exam-card";
 import { FamilyBackgroundsCard } from "@/components/doctor/medical-history/cards/family-backgrounds-card";
 import { PartnerDataCard } from "@/components/doctor/medical-history/cards/partner-data-card";
-import {
-  FileText,
-  User,
-  Calendar,
-  AlertCircle,
-  Stethoscope,
-} from "lucide-react";
+import { FileText, User, AlertCircle, Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { createTreatment } from "@/app/actions/doctor/patients/create-treatment";
+import { toast } from "@repo/ui";
+import { Spinner } from "@repo/ui/spinner";
 
 export default function DoctorPatientMedicalHistoryPage() {
   const params = useParams();
@@ -30,6 +26,29 @@ export default function DoctorPatientMedicalHistoryPage() {
   const queryClient = useQueryClient();
   const [showCreateTreatment, setShowCreateTreatment] = React.useState(false);
   const [initialObjective, setInitialObjective] = React.useState("");
+
+  const createTreatmentMutation = useMutation({
+    mutationFn: async ({
+      medicalHistoryId,
+      initialObjective,
+    }: {
+      medicalHistoryId: number;
+      initialObjective: string;
+    }) => await createTreatment(medicalHistoryId, initialObjective),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ["patientTreatments", id],
+      });
+      toast.success(response.message);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al crear el tratamiento");
+    },
+    onSettled: () => {
+      setShowCreateTreatment(false);
+      setInitialObjective("");
+    },
+  });
 
   const { data, isLoading, error } = useQuery<MedicalHistoryResponse | null>({
     queryKey: ["medicalHistory", id],
@@ -44,14 +63,10 @@ export default function DoctorPatientMedicalHistoryPage() {
   async function handleCreateTreatment() {
     if (!initialObjective) return;
 
-    await createTreatment(Number(data?.id), initialObjective);
-
-    await queryClient.invalidateQueries({
-      queryKey: ["patientTreatments", id],
+    createTreatmentMutation.mutate({
+      medicalHistoryId: Number(data?.id),
+      initialObjective,
     });
-
-    setShowCreateTreatment(false);
-    setInitialObjective("");
   }
 
   // Get patient treatments
@@ -340,7 +355,18 @@ export default function DoctorPatientMedicalHistoryPage() {
               >
                 Cancelar
               </Button>
-              <Button onClick={handleCreateTreatment}>Crear</Button>
+              <Button
+                disabled={createTreatmentMutation.isPending}
+                onClick={handleCreateTreatment}
+              >
+                {createTreatmentMutation.isPending ? (
+                  <>
+                    Creando <Spinner />
+                  </>
+                ) : (
+                  "Crear"
+                )}
+              </Button>
             </div>
           </div>
         </div>

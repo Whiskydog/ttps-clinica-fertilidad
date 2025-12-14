@@ -13,9 +13,13 @@ import {
   UpdateDoctorNoteSchema,
   CreateMedicationProtocolSchema,
   UpdateMedicationProtocolSchema,
+  CreateTreatmentResponseSchema,
 } from '@repo/contracts';
 
 export class CreateTreatmentDto extends createZodDto(CreateTreatmentSchema) {}
+export class CreateTreatmentResponseDto extends createZodDto(
+  CreateTreatmentResponseSchema,
+) {}
 export class UpdateTreatmentDto extends createZodDto(UpdateTreatmentSchema) {}
 
 export type CreateTreatmentDtoType = z.infer<typeof CreateTreatmentSchema>;

@@ -6,6 +6,8 @@ import {
   MilestoneResult,
 } from "./enums";
 import { UserEntitySchema } from "../users";
+import { ApiResponseSchema } from "../common/api";
+import moment from "moment";
 
 export const InitialObjectiveEnum = z.enum(
   Object.values(InitialObjective) as [string, ...string[]]
@@ -21,15 +23,17 @@ export const CreateTreatmentSchema = z.object({
 
 export type CreateTreatmentDtoType = z.infer<typeof CreateTreatmentSchema>;
 
-export const CreateTreatmentResponseSchema = z.object({
-  id: z.number(),
-  initialObjective: InitialObjectiveEnum,
-  status: TreatmentStatusEnum,
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable(),
-});
+export const CreateTreatmentResponseSchema = ApiResponseSchema(
+  z.object({
+    id: z.number(),
+    initialObjective: InitialObjectiveEnum,
+    status: TreatmentStatusEnum,
+    startDate: z
+      .date()
+      .transform((date) => moment.utc(date).format("YYYY-MM-DD"))
+      .nullable(),
+  })
+);
 
 export type CreateTreatmentResponseDtoType = z.infer<
   typeof CreateTreatmentResponseSchema

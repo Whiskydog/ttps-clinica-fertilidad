@@ -1,5 +1,6 @@
 "use server";
 
+import { CreateTreatmentResponseDtoType } from "@repo/contracts";
 import { cookies } from "next/headers";
 
 export async function createTreatment(
@@ -23,7 +24,11 @@ export async function createTreatment(
     }),
   });
 
-  const payload = await resp.json().catch(() => null);
+  const payload: CreateTreatmentResponseDtoType = await resp
+    .json()
+    .catch(() => {
+      throw new Error("Error al parsear la respuesta del servidor");
+    });
 
   if (!resp.ok) {
     const message = payload?.message || `Request failed: ${resp.status}`;
