@@ -14,6 +14,7 @@ import { Fenotype } from './fenotype.entity';
 import { GynecologicalHistory } from './gynecological-history.entity';
 import { Habits } from './habits.entity';
 import { PartnerData } from './partner-data.entity';
+import { Appointment } from '@modules/appointments/appointment.entity';
 
 @Entity('medical_histories')
 @Unique(['patient'])
@@ -33,6 +34,9 @@ export class MedicalHistory extends BaseEntity {
 
   @Column({ type: 'text', nullable: true, name: 'family_backgrounds' })
   familyBackgrounds: string;
+
+  @OneToMany(() => Appointment, (appointment) => appointment.medicalHistory)
+  appointments: Appointment[];
 
   @OneToMany(
     () => Treatment,
