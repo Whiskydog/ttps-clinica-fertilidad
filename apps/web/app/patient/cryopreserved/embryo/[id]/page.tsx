@@ -197,7 +197,7 @@ export default function EmbryoDetailPage() {
       />
 
       {/* 🔹 ACCIONES */}
-      <div className="flex gap-3 flex-wrap">
+      {/* <div className="flex gap-3 flex-wrap">
         <Button onClick={() => setOpenTransfer(true)}>
           Solicitar Transferencia
         </Button>
@@ -207,10 +207,10 @@ export default function EmbryoDetailPage() {
         <Button variant="destructive" onClick={() => setOpenDiscard(true)}>
           Solicitar Descarte
         </Button>
-      </div>
+      </div> */}
 
       {/* 🔹 MODALES */}
-      <TransferRequestModal
+      {/* <TransferRequestModal
         open={openTransfer}
         onOpenChange={setOpenTransfer}
         embryoId={embryo.uniqueIdentifier}
@@ -225,7 +225,7 @@ export default function EmbryoDetailPage() {
         open={openDiscard}
         onOpenChange={setOpenDiscard}
         embryoId={embryo.uniqueIdentifier}
-      />
+      /> */}
     </div>
   );
 }

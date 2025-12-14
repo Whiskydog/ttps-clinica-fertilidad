@@ -404,10 +404,10 @@ export default function OocytesPage() {
                             oocyte.isCryopreserved
                               ? "bg-blue-500 text-white border-blue-500"
                               : oocyte.currentState === "cultivated"
-                              ? "bg-green-500 text-white border-green-500"
-                              : oocyte.currentState === "used"
-                              ? "bg-gray-600 text-white border-gray-600"
-                              : "bg-red-500 text-white border-red-500"
+                                ? "bg-green-500 text-white border-green-500"
+                                : oocyte.currentState === "used"
+                                  ? "bg-gray-600 text-white border-gray-600"
+                                  : "bg-red-500 text-white border-red-500"
                           }`}
                         >
                           {oocyte.isCryopreserved
@@ -481,23 +481,23 @@ export default function OocytesPage() {
                           Ver detalles
                         </Button>
                         {oocyte.currentState !== "discarded" &&
-                        oocyte.currentState !== "used" && (
-                          <Button
-                            onClick={() =>
-                              setDiscardModal({
-                                open: true,
-                                oocyteId: oocyte.id,
-                                cause: "",
-                              })
-                            }
-                            variant="destructive"
-                            size="sm"
-                            className="h-8 px-2"
-                            title="Descartar"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
+                          oocyte.currentState !== "used" && (
+                            <Button
+                              onClick={() =>
+                                setDiscardModal({
+                                  open: true,
+                                  oocyteId: oocyte.id,
+                                  cause: "",
+                                })
+                              }
+                              variant="destructive"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Descartar"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
                       </div>
                     </TableCell>
                   </TableRow>

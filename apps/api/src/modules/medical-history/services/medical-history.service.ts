@@ -83,7 +83,7 @@ export class MedicalHistoryService {
     // historia clínica
     const mh = await this.medicalHistoryRepo.findOne({
       where: { patient: { id: patient.id } },
-      relations: ['patient'],
+      relations: ['patient', 'currentTreatment'],
     });
     this.logger.log(`MH found: ${JSON.stringify(mh)}`);
     if (!mh) return null;
