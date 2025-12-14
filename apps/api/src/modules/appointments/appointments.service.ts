@@ -12,10 +12,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppointmentDetail, ReasonForVisit, TurnoRaw } from '@repo/contracts';
+import {
+  AppointmentDetail,
+  ExternalBookingResponse,
+  ReasonForVisit,
+  TurnoRaw,
+} from '@repo/contracts';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { BookAppointmentDto, mapRawAppointments } from './dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Appointment } from './appointment.entity';
+import { Repository } from 'typeorm';
+import moment from 'moment';
 
 @Injectable()
 export class AppointmentsService {
@@ -23,6 +32,8 @@ export class AppointmentsService {
   private readonly logger = new Logger(AppointmentsService.name);
 
   constructor(
+    @InjectRepository(Appointment)
+    private readonly appointmentRepository: Repository<Appointment>,
     private readonly medicalHistoryService: MedicalHistoryService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -33,7 +44,7 @@ export class AppointmentsService {
   async bookAppointment(
     patient: Patient,
     dto: BookAppointmentDto,
-  ): Promise<void> {
+  ): Promise<Appointment> {
     const patientMedicalHistory = await this.medicalHistoryService.findByUserId(
       patient.id,
     );
@@ -76,22 +87,46 @@ export class AppointmentsService {
       id_turno: dto.appointment.id,
     };
 
-    await firstValueFrom(
+    const externalBookingResponse = await firstValueFrom(
       this.httpService
-        .patch(url, body, { headers })
+        .patch<ExternalBookingResponse>(url, body, { headers })
         .pipe(catchError((err) => this.handleAxiosError(err))),
     );
+
+    const externalBooking = externalBookingResponse.data.turno;
+
+    const appointment = this.appointmentRepository.create({
+      externalId: externalBooking.id,
+      date: moment.utc(externalBooking.fecha_hora).toDate(),
+      doctor: { id: dto.doctorId },
+      medicalHistory: {
+        id: patientMedicalHistory.id,
+      },
+      treatment: { id: patientMedicalHistory.currentTreatment?.id },
+      reason: dto.reason,
+    });
+
+    const savedAppointment = await this.appointmentRepository.save(appointment);
+
+    return this.appointmentRepository.findOne({
+      where: { id: savedAppointment.id },
+      relations: ['doctor'],
+    });
   }
 
-  async getPatientAppointments(idPatient: number) {
-    const url = `${this.apiUrl}/get_turnos_paciente?id_paciente=${idPatient}`;
-    const headers = this.buildAuthHeaders();
-    return await firstValueFrom(
-      this.httpService.get(url, { headers }).pipe(
-        map((resp) => resp.data as unknown),
-        catchError((err) => this.handleAxiosError(err)),
-      ),
-    );
+  async getPatientAppointments(patientId: number): Promise<Appointment[]> {
+    const appointments = await this.appointmentRepository.find({
+      where: {
+        medicalHistory: {
+          patient: {
+            id: patientId,
+          },
+        },
+      },
+      relations: ['doctor', 'medicalHistory', 'treatment'],
+    });
+
+    return appointments;
   }
 
   async createDoctorSlots(body: any) {

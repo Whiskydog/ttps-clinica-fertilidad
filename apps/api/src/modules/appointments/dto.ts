@@ -1,5 +1,7 @@
 import {
   AppointmentDetail,
+  AppointmentResponseSchema,
+  AppointmentsResponseSchema,
   BookAppointmentSchema,
   PostTurnosSchema,
   TurnoRaw,
@@ -7,6 +9,10 @@ import {
 import { createZodDto } from 'nestjs-zod';
 
 export class BookAppointmentDto extends createZodDto(BookAppointmentSchema) {}
+
+export class AppointmentResponseDto extends createZodDto(AppointmentResponseSchema) {}
+
+export class AppointmentsResponseDto extends createZodDto(AppointmentsResponseSchema) {}
 
 export class PostTurnosDto extends createZodDto(PostTurnosSchema) {}
 
