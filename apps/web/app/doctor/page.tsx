@@ -12,6 +12,7 @@ import { AlertsPanel } from "@/components/doctor/dashboard/alerts-panel";
 import { MonthlyStatsPanel } from "@/components/doctor/dashboard/monthly-stats";
 import { QuickActions } from "@/components/doctor/dashboard/quick-actions";
 import { RecentTreatments } from "@/components/doctor/dashboard/recent-treatments";
+import { Skeleton } from "@repo/ui/skeleton";
 
 export default function DoctorDashboard() {
   const { data: kpisData, isLoading: kpisLoading } = useQuery({
@@ -39,21 +40,6 @@ export default function DoctorDashboard() {
     queryFn: () => getRecentTreatments(),
   });
 
-  const isLoading =
-    kpisLoading ||
-    appointmentsLoading ||
-    alertsLoading ||
-    statsLoading ||
-    treatmentsLoading;
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Cargando dashboard...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>
@@ -64,6 +50,14 @@ export default function DoctorDashboard() {
       </div>
 
       {/* KPIs */}
+      {kpisLoading && (
+        <div className="flex items-center justify-center gap-4">
+          <Skeleton className="flex-1 h-[130px] rounded-md" />
+          <Skeleton className="flex-1 h-[130px] rounded-md" />
+          <Skeleton className="flex-1 h-[130px] rounded-md" />
+          <Skeleton className="flex-1 h-[130px] rounded-md" />
+        </div>
+      )}
       {kpisData?.data && <KPICards kpis={kpisData.data} />}
 
       {/* Accesos Rápidos */}
@@ -72,18 +66,30 @@ export default function DoctorDashboard() {
       {/* Grid de 2 columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Agenda del Día */}
+        {appointmentsLoading && (
+          <Skeleton className="h-[186px] rounded-md" />
+        )}
         {appointmentsData?.data && (
           <DailyAgenda appointments={appointmentsData.data} />
         )}
 
         {/* Alertas */}
+        {alertsLoading && (
+          <Skeleton className="h-[186px] rounded-md" />
+        )}
         {alertsData?.data && <AlertsPanel alerts={alertsData.data} />}
       </div>
 
       {/* Estadísticas del Mes */}
+      {statsLoading && (
+        <Skeleton className="h-[290px] rounded-md" />
+      )}
       {statsData?.data && <MonthlyStatsPanel stats={statsData.data} />}
 
       {/* Tratamientos Recientes */}
+      {treatmentsLoading && (
+        <Skeleton className="h-[192px] rounded-md" />
+      )}
       {treatmentsData?.data && (
         <RecentTreatments treatments={treatmentsData.data} />
       )}
