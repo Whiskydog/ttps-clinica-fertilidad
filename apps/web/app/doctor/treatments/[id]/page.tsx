@@ -32,6 +32,7 @@ import { InformedConsentFormSheet } from "@/components/doctor/treatments/forms/i
 import { GenerateProtocolPdfSheet } from "@/components/doctor/treatments/forms/generate-protocol-pdf-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
+import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monitoring-plan-sheet";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -43,6 +44,7 @@ export default function TreatmentDetailPage() {
   const [createOrderSheetOpen, setCreateOrderSheetOpen] = useState(false);
   const [consentSheetOpen, setConsentSheetOpen] = useState(false);
   const [protocolPdfSheetOpen, setProtocolPdfSheetOpen] = useState(false);
+  const [monitoringPlanSheetOpen, setMonitoringPlanSheetOpen] = useState(false);
   const queryClient = useQueryClient();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -113,6 +115,8 @@ export default function TreatmentDetailPage() {
   const informedConsent = treatmentData.informedConsent;
   const milestones = treatmentData.milestones || [];
   const medicalCoverage = treatmentData.medicalCoverage;
+  const canPlanMonitoring =
+    !!protocol && !!informedConsent && !!informedConsent.pdfUri;
 
   const handleAddNote = () => {
     setSelectedNote(null);
@@ -377,7 +381,10 @@ export default function TreatmentDetailPage() {
                     Protocolo de Medicacion
                   </h2>
                   {protocol.pdfUrl && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-700"
+                    >
                       PDF Generado
                     </Badge>
                   )}
@@ -476,7 +483,8 @@ export default function TreatmentDetailPage() {
               <div className="text-center py-8">
                 <Pill className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  No se ha establecido un protocolo de medicacion para este tratamiento
+                  No se ha establecido un protocolo de medicacion para este
+                  tratamiento
                 </p>
                 <Button onClick={handleCreateProtocol}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -662,6 +670,28 @@ export default function TreatmentDetailPage() {
               <Button
                 variant="default"
                 className="w-full justify-start"
+                disabled={!canPlanMonitoring}
+                onClick={() => setMonitoringPlanSheetOpen(true)}
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                PLANIFICAR MONITOREOS
+              </Button>
+
+              {!canPlanMonitoring && (
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-72 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                  {!informedConsent
+                    ? "Se requiere consentimiento informado firmado"
+                    : !informedConsent.pdfUri
+                      ? "El consentimiento debe tener un PDF cargado"
+                      : "Debe existir un protocolo de estimulación activo"}
+                </div>
+              )}
+            </div>
+
+            <div className="relative group">
+              <Button
+                variant="default"
+                className="w-full justify-start"
                 onClick={() => setCreateOrderSheetOpen(true)}
                 disabled={!informedConsent || !informedConsent.pdfUri}
               >
@@ -760,10 +790,22 @@ export default function TreatmentDetailPage() {
           existingPdfUrl={protocol.pdfUrl}
           onSuccess={() => {
             setProtocolPdfSheetOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+            queryClient.invalidateQueries({
+              queryKey: ["treatmentDetail", id],
+            });
           }}
         />
       )}
+      <MonitoringPlanSheet
+        open={monitoringPlanSheetOpen}
+        onOpenChange={setMonitoringPlanSheetOpen}
+        treatmentId={treatment.id}
+        protocol={protocol}
+        onSuccess={() => {
+          setMonitoringPlanSheetOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+        }}
+      />
     </div>
   );
 }

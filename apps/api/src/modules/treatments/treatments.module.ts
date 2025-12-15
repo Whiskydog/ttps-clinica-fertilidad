@@ -22,12 +22,15 @@ import { TreatmentsController } from '@modules/treatments/treatments.controller'
 import { MedicalHistoryModule } from '../medical-history/medical-history.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
 import { Group8NoticesModule } from '../external/group8-notices/group8-notices.module';
+import { MonitoringPlan } from './entities/monitoring-plan.entity';
+import { MonitoringPlanService } from './services/monitoring-plan.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Treatment,
       Monitoring,
+      MonitoringPlan,
       MedicationProtocol,
       DoctorNote,
       InformedConsent,
@@ -50,6 +53,7 @@ import { Group8NoticesModule } from '../external/group8-notices/group8-notices.m
     DoctorNoteService,
     MedicationProtocolService,
     MedicationPdfService,
+    MonitoringPlanService,
   ],
   controllers: [TreatmentsController],
   exports: [
@@ -58,6 +62,7 @@ import { Group8NoticesModule } from '../external/group8-notices/group8-notices.m
     InformedConsentService,
     PostTransferMilestoneService,
     MedicalCoverageService,
+    MonitoringPlanService,
   ],
 })
 export class TreatmentsModule {}

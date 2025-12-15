@@ -12,6 +12,7 @@ import { TreatmentStatus, InitialObjective } from '@repo/contracts';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { parseDateFromString } from '@common/utils/date.utils';
+import { MonitoringPlanService } from './services/monitoring-plan.service';
 
 @Injectable()
 export class TreatmentService {
@@ -30,6 +31,7 @@ export class TreatmentService {
     private readonly medicalOrderRepo: Repository<MedicalOrder>,
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
+    private readonly monitoringPlanService: MonitoringPlanService,
   ) {}
 
   async createTreatment(
@@ -190,7 +192,10 @@ export class TreatmentService {
   /**
    * Reasigna un tratamiento a otro médico (solo para Director Médico)
    */
-  async reassignDoctor(treatmentId: number, newDoctorId: number): Promise<Treatment> {
+  async reassignDoctor(
+    treatmentId: number,
+    newDoctorId: number,
+  ): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id: treatmentId },
       relations: ['initialDoctor'],
@@ -202,5 +207,35 @@ export class TreatmentService {
 
     treatment.initialDoctor = { id: newDoctorId } as any;
     return this.treatmentRepo.save(treatment);
+  }
+
+  async createDefaultMonitoringPlans(
+    treatmentId: number,
+    stimulationStartDate: Date,
+  ) {
+    const sequences = [
+      { sequence: 1, plannedDay: 7 },
+      { sequence: 2, plannedDay: 10 },
+      { sequence: 3, plannedDay: 13 },
+    ];
+
+    for (const { sequence, plannedDay } of sequences) {
+      const baseDate = new Date(stimulationStartDate);
+      baseDate.setDate(baseDate.getDate() + plannedDay);
+
+      const minDate = new Date(baseDate);
+      minDate.setDate(minDate.getDate() - 1);
+
+      const maxDate = new Date(baseDate);
+      maxDate.setDate(maxDate.getDate() + 1);
+
+      await this.monitoringPlanService.create({
+        treatmentId,
+        sequence,
+        plannedDay,
+        minDate,
+        maxDate,
+      });
+    }
   }
 }
