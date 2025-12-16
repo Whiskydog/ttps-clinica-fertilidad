@@ -1,6 +1,7 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { BaseEntity } from '@common/entities/base.entity';
 import { Treatment } from './treatment.entity';
+import { Appointment } from '@modules/appointments/appointment.entity';
 
 export enum MonitoringPlanStatus {
   PENDING = 'PENDING', // creado por el médico, sin turno
@@ -38,8 +39,9 @@ export class MonitoringPlan extends BaseEntity {
   status: MonitoringPlanStatus;
 
   // Turno reservado por el paciente (cuando exista)
-  @Column({ name: 'appointment_id', type: 'int', nullable: true })
-  appointmentId?: number | null;
+  @OneToOne(() => Appointment, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'appointment_id' })
+  appointment?: Appointment | null;
 
   // Orden dentro del esquema (1°, 2°, 3° monitoreo)
   @Column({ name: 'sequence', type: 'int' })

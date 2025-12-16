@@ -10,6 +10,7 @@ import { TreatmentStatus, RoleCode } from '@repo/contracts';
 import { InformedConsentService } from './services/informed-consent.service';
 import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
 import { MedicalCoverageService } from './services/medical-coverage.service';
+import { MonitoringPlan } from './entities/monitoring-plan.entity';
 
 @Injectable()
 export class TreatmentsService {
@@ -27,6 +28,8 @@ export class TreatmentsService {
     private readonly informedConsentService: InformedConsentService,
     private readonly milestoneService: PostTransferMilestoneService,
     private readonly coverageService: MedicalCoverageService,
+    @InjectRepository(MonitoringPlan)
+    private monitoringPlanRepository: Repository<MonitoringPlan>,
   ) {}
 
   async getCurrentTreatmentByPatient(patientId: number) {
@@ -49,7 +52,11 @@ export class TreatmentsService {
     return treatment;
   }
 
-  async getTreatmentDetail(treatmentId: number, userId: number, userRole?: RoleCode) {
+  async getTreatmentDetail(
+    treatmentId: number,
+    userId: number,
+    userRole?: RoleCode,
+  ) {
     // First, try to find the treatment with all its relations
     const treatment = await this.treatmentRepository.findOne({
       where: { id: treatmentId },
@@ -74,6 +81,11 @@ export class TreatmentsService {
       order: { monitoringDate: 'ASC' },
     });
 
+    const monitoringPlans = await this.monitoringPlanRepository.find({
+      where: { treatmentId },
+      order: { sequence: 'ASC' },
+    });
+
     const protocol = await this.protocolRepository.findOne({
       where: { treatment: { id: treatmentId } },
     });
@@ -96,6 +108,7 @@ export class TreatmentsService {
     return {
       treatment,
       monitorings,
+      monitoringPlans,
       protocol,
       doctorNotes,
       informedConsent,

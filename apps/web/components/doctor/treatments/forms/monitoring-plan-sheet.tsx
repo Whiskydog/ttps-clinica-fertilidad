@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import moment from "moment";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,8 @@ import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Badge } from "@repo/ui/badge";
 import { Activity } from "lucide-react";
+import { createMonitoringPlans } from "@/app/actions/doctor/monitoring-plans/create";
+import { toast } from "@repo/ui";
 
 type MonitoringRow = {
   sequence: number;
@@ -45,7 +47,28 @@ export function MonitoringPlanSheet({
     },
   });
 
-  const rows = form.watch("rows");
+  const rows = useWatch({
+    control: form.control,
+    name: "rows",
+  });
+  const validationErrors = useMemo(() => {
+    const errors: Record<number, string> = {};
+
+    rows?.forEach((row, index) => {
+      if (index === 0) return;
+
+      const current = Number(row?.plannedDay);
+      const prev = Number(rows[index - 1]?.plannedDay);
+
+      if (Number.isFinite(current) && Number.isFinite(prev) && current < prev) {
+        errors[index] = "El día no puede ser anterior al monitoreo previo";
+      }
+    });
+
+    return errors;
+  }, [rows]);
+
+  const hasErrors = Object.keys(validationErrors).length > 0;
 
   const stimulationStartDate = protocol?.startDate
     ? moment(protocol.startDate)
@@ -71,8 +94,18 @@ export function MonitoringPlanSheet({
   }, [rows, stimulationStartDate]);
 
   const onSubmit = async (data: { rows: MonitoringRow[] }) => {
-    // TODO: conectar con MonitoringPlanService
-    console.log("Monitoring plan:", data, treatmentId);
+    const result = await createMonitoringPlans({
+      treatmentId,
+      rows: data.rows,
+    });
+
+    if (!result.success) {
+      toast.error("No se pudo crear el plan de monitoreos");
+      return;
+    }
+
+    toast.success("Plan de monitoreos creado correctamente");
+
     onSuccess();
   };
 
@@ -144,8 +177,28 @@ export function MonitoringPlanSheet({
                 <Input
                   type="number"
                   min={1}
+                  max={31}
+                  aria-invalid={!!validationErrors[index]}
+                  className={
+                    validationErrors[index]
+                      ? "!border-red-500 focus-visible:!ring-red-500"
+                      : ""
+                  }
                   {...form.register(`rows.${index}.plannedDay`, {
                     valueAsNumber: true,
+                    onChange: (e) => {
+                      let value = Number(e.target.value);
+
+                      if (Number.isNaN(value)) return;
+
+                      if (value < 1) value = 1;
+                      if (value > 31) value = 31;
+
+                      form.setValue(`rows.${index}.plannedDay`, value, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    },
                   })}
                 />
 
@@ -162,6 +215,11 @@ export function MonitoringPlanSheet({
                 <div className="text-sm">
                   {calculated?.max ? calculated.max.format("DD/MM") : "—"}
                 </div>
+                {validationErrors[index] && (
+                  <div className="col-span-4 text-xs text-red-600">
+                    {validationErrors[index]}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -175,7 +233,9 @@ export function MonitoringPlanSheet({
             >
               Cancelar
             </Button>
-            <Button type="submit">Guardar planificación</Button>
+            <Button type="submit" disabled={hasErrors || !stimulationStartDate}>
+              Guardar planificación
+            </Button>
           </div>
         </form>
       </SheetContent>

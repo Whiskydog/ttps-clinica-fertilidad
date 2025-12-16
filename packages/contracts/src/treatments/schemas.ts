@@ -89,7 +89,17 @@ export const CreateMonitoringPlanSchema = z.object({
   minDate: z.string(), // YYYY-MM-DD
   maxDate: z.string(), // YYYY-MM-DD
 });
-
+export const CreateMonitoringPlansSchema = z.object({
+  treatmentId: z.number(),
+  rows: z
+    .array(
+      z.object({
+        sequence: z.number().min(1),
+        plannedDay: z.number().min(1).max(31),
+      })
+    )
+    .min(1),
+});
 export const UpdateMonitoringPlanSchema = z.object({
   id: z.number(),
   status: MonitoringPlanStatusEnum.optional(),

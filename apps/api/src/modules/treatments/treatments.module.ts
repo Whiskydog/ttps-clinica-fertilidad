@@ -24,6 +24,7 @@ import { UploadsModule } from '@modules/uploads/uploads.module';
 import { Group8NoticesModule } from '../external/group8-notices/group8-notices.module';
 import { MonitoringPlan } from './entities/monitoring-plan.entity';
 import { MonitoringPlanService } from './services/monitoring-plan.service';
+import { MonitoringPlansController } from './controllers/monitoring-plans.controller';
 
 @Module({
   imports: [
@@ -55,7 +56,7 @@ import { MonitoringPlanService } from './services/monitoring-plan.service';
     MedicationPdfService,
     MonitoringPlanService,
   ],
-  controllers: [TreatmentsController],
+  controllers: [TreatmentsController, MonitoringPlansController],
   exports: [
     TreatmentService,
     TreatmentsService,

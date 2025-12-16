@@ -238,4 +238,15 @@ export class TreatmentService {
       });
     }
   }
+
+  async findOne(id: number): Promise<Treatment> {
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id },
+      relations: ['medicalHistory', 'initialDoctor'],
+    });
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+    return treatment;
+  }
 }

@@ -493,13 +493,60 @@ export default function TreatmentDetailPage() {
               </div>
             </div>
           ) : null}
+          {/* Monitoring Plans Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Monitoreos Planificados</h2>
+            </div>
 
+            {!treatmentData.monitoringPlans ||
+            treatmentData.monitoringPlans.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p>No hay días de monitoreo planificados</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {treatmentData.monitoringPlans.map((plan: any) => (
+                  <div
+                    key={plan.id}
+                    className="flex justify-between items-center border rounded-lg p-4"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        Monitoreo #{plan.sequence} — Día {plan.plannedDay}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Rango permitido: {formatDateForDisplay(plan.minDate)} –{" "}
+                        {formatDateForDisplay(plan.maxDate)}
+                      </p>
+                    </div>
+
+                    <Badge
+                      variant="outline"
+                      className={
+                        plan.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                          : plan.status === "RESERVED"
+                            ? "bg-blue-100 text-blue-800 border-blue-300"
+                            : plan.status === "COMPLETED"
+                              ? "bg-green-100 text-green-800 border-green-300"
+                              : "bg-gray-100 text-gray-800 border-gray-300"
+                      }
+                    >
+                      {plan.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {/* Monitorings Section */}
           {monitorings.length > 0 && (
             <div className="border rounded-lg p-6 bg-card">
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Monitoreos</h2>
+                <h2 className="text-xl font-semibold">Monitoreos Realizados</h2>
               </div>
               <div className="space-y-4">
                 {monitorings.map((monitoring: any) => (

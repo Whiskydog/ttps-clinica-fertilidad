@@ -41,4 +41,8 @@ export class MonitoringPlanService {
     if (!plan) throw new NotFoundException('Monitoring plan not found');
     await this.repo.remove(plan);
   }
+
+  async deleteByTreatment(treatmentId: number) {
+    await this.repo.delete({ treatmentId });
+  }
 }
