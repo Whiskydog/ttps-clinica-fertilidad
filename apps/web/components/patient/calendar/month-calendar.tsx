@@ -1,46 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@repo/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-interface CalendarEvent {
-  id: number;
-  date: string;
-  time: string;
-  type: string;
-  title: string;
-  status: string;
-}
+import { getDisplayName } from "@/utils/appointment-utils";
+import { Appointment } from "@repo/contracts";
+import { Button } from "@repo/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import moment from "moment";
+import "moment/locale/es";
+import { useEffect, useState } from "react";
 
 interface MonthCalendarProps {
-  events: CalendarEvent[];
+  appointments: Appointment[];
 }
 
-const DAYS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
-const MONTHS = [
-  'ENERO',
-  'FEBRERO',
-  'MARZO',
-  'ABRIL',
-  'MAYO',
-  'JUNIO',
-  'JULIO',
-  'AGOSTO',
-  'SEPTIEMBRE',
-  'OCTUBRE',
-  'NOVIEMBRE',
-  'DICIEMBRE',
-];
+const DAYS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 
-export function MonthCalendar({ events }: MonthCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)); // Septiembre 2025
+export function MonthCalendar({ appointments }: MonthCalendarProps) {
+  const [currentDate, setCurrentDate] = useState(moment.utc());
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+  useEffect(() => {
+    moment.locale("es");
+    setCurrentDate(moment.utc());
+  }, []);
+
+  const getDaysInMonth = (date: moment.Moment) => {
+    const daysInMonth = date.daysInMonth();
+    const firstDay = date.clone().startOf("month").day();
 
     const days: (number | null)[] = [];
 
@@ -58,23 +42,32 @@ export function MonthCalendar({ events }: MonthCalendarProps) {
   };
 
   const getEventForDay = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.find((event) => event.date === dateStr);
+    const targetDate = currentDate.clone().date(day);
+    return appointments.find((appointment) => {
+      const appointmentDate = moment.utc(appointment.date);
+      return appointmentDate.isSame(targetDate, "day");
+    });
   };
 
-  const getEventColor = (type: string, status: string) => {
-    if (status === 'completed') return 'bg-purple-400';
-    if (type === 'monitoreo') return 'bg-amber-700';
-    if (type === 'puncion') return 'bg-rose-300';
-    return 'bg-gray-700';
+  const getEventColor = (reason: string) => {
+    switch (reason) {
+      case "embryo-transfer":
+        return "bg-purple-400";
+      case "stimulation-monitoring":
+        return "bg-amber-700";
+      case "egg-retrieval":
+        return "bg-rose-300";
+      default:
+        return "bg-gray-700";
+    }
   };
 
   const previousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setCurrentDate((prev) => prev.clone().subtract(1, "month"));
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setCurrentDate((prev) => prev.clone().add(1, "month"));
   };
 
   const days = getDaysInMonth(currentDate);
@@ -90,8 +83,8 @@ export function MonthCalendar({ events }: MonthCalendarProps) {
           <ChevronLeft className="w-4 h-4 mr-1" />
           Anterior
         </Button>
-        <h2 className="text-xl font-bold">
-          {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+        <h2 className="text-xl font-bold uppercase">
+          {currentDate.format("MMMM YYYY")}
         </h2>
         <Button
           variant="link"
@@ -116,24 +109,30 @@ export function MonthCalendar({ events }: MonthCalendarProps) {
 
         {/* Days */}
         {days.map((day, index) => {
-          const event = day ? getEventForDay(day) : null;
+          const appointment = day ? getEventForDay(day) : null;
 
           return (
             <div
               key={index}
               className={`min-h-[100px] border border-gray-400 p-2 ${
-                event ? getEventColor(event.type, event.status) : day ? 'bg-gray-800 text-white' : 'bg-gray-900'
+                appointment
+                  ? getEventColor(appointment.reason)
+                  : day
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-900"
               }`}
             >
               {day && (
                 <>
-                  <div className={`text-sm font-semibold mb-1 ${event ? 'text-white' : ''}`}>
+                  <div
+                    className={`text-sm font-semibold mb-1 ${appointment ? "text-white" : ""}`}
+                  >
                     {day}
                   </div>
-                  {event && (
+                  {appointment && (
                     <div className="text-xs text-white">
-                      <div>{event.time}</div>
-                      <div>{event.title}</div>
+                      <div>{moment.utc(appointment.date).format("HH:mm")}</div>
+                      <div>{getDisplayName(appointment.reason)}</div>
                     </div>
                   )}
                 </>

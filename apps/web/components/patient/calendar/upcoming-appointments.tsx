@@ -1,18 +1,11 @@
 "use client";
 
+import { getDisplayName } from "@/utils/appointment-utils";
+import { Appointment } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 import { Checkbox } from "@repo/ui/checkbox";
 import moment from "moment";
-
-interface Appointment {
-  id: number;
-  date: string;
-  time: string;
-  type: string;
-  doctor: string;
-  operatingRoom: string;
-}
 
 interface UpcomingAppointmentsProps {
   appointments: Appointment[];
@@ -39,14 +32,17 @@ export function UpcomingAppointments({
                 <Checkbox />
                 <div className="text-sm text-gray-900">
                   <div className="font-semibold mb-1">
-                    {moment.utc(appointment.date).format("dddd LL")} -{" "}
-                    {appointment.time} hs
+                    <span className="capitalize">
+                      {moment.utc(appointment.date).format("dddd")}
+                    </span>
+                    ,{" "}
+                    {moment
+                      .utc(appointment.date)
+                      .format("DD [de] MMMM [de] YYYY HH:mm")}
                   </div>
                   <div>
-                    {appointment.type} - {appointment.doctor}{" "}
-                    {appointment.operatingRoom
-                      ? `- Sala: ${appointment.operatingRoom}`
-                      : ""}
+                    {getDisplayName(appointment.reason)} -{" "}
+                    {`${appointment.doctor.firstName} ${appointment.doctor.lastName}`}
                   </div>
                 </div>
               </div>
