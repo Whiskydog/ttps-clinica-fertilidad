@@ -28,6 +28,8 @@ export const AppointmentEntitySchema = z.object({
 export const AppointmentResponseSchema = ApiResponseSchema(AppointmentEntitySchema);
 export const AppointmentsResponseSchema = ApiResponseSchema(AppointmentEntitySchema.array());
 
+export type Appointment = z.infer<typeof AppointmentEntitySchema>;
+
 export type AppointmentResponse = z.infer<typeof AppointmentResponseSchema>;
 export type AppointmentsResponse = z.infer<typeof AppointmentsResponseSchema>;
 
