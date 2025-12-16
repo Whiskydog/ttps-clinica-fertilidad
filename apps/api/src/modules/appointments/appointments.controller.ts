@@ -1,4 +1,9 @@
-import { BookAppointmentDto, PostTurnosDto } from '@modules/appointments/dto';
+import {
+  AppointmentResponseDto,
+  AppointmentsResponseDto,
+  BookAppointmentDto,
+  PostTurnosDto,
+} from '@modules/appointments/dto';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { Patient } from '@modules/users/entities/patient.entity';
@@ -20,6 +25,8 @@ import { RoleCode } from '@repo/contracts';
 import moment from 'moment';
 import { AppointmentsService } from './appointments.service';
 import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
+import { ZodSerializerDto } from 'nestjs-zod';
+import { Appointment } from './appointment.entity';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -29,11 +36,12 @@ export class AppointmentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @EnvelopeMessage('Turno reservado con éxito.')
+  @EnvelopeMessage('Turno reservado con éxito')
+  @ZodSerializerDto(AppointmentResponseDto)
   async bookAppointment(
     @Body() dto: BookAppointmentDto,
     @CurrentUser() user: User,
-  ) {
+  ): Promise<Appointment> {
     if (user.role.code !== RoleCode.PATIENT) {
       this.logger.warn(
         `User with id=${user.id} and role=${user.role} attempted to book an appointment.`,
@@ -41,13 +49,19 @@ export class AppointmentsController {
       throw new BadRequestException('Solo pacientes pueden reservar turnos.');
     }
 
-    await this.appointmentsService.bookAppointment(user as Patient, dto);
+    const appointment = await this.appointmentsService.bookAppointment(
+      user as Patient,
+      dto,
+    );
+
+    return appointment;
   }
 
   // Obtener turnos del paciente autenticado
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMyAppointments(@CurrentUser() user: User) {
+  @ZodSerializerDto(AppointmentsResponseDto)
+  getMyAppointments(@CurrentUser() user: User): Promise<Appointment[]> {
     return this.appointmentsService.getPatientAppointments(user.id);
   }
 
