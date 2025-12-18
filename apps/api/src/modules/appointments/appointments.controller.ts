@@ -64,6 +64,12 @@ export class AppointmentsController {
     return this.appointmentsService.getPatientAppointments(user.id);
   }
 
+  @Get('available')
+  @UseGuards(JwtAuthGuard)
+  getAvailableAppointments(): Promise<AppointmentDetail[]> {
+    return this.appointmentsService.getAvailableSlots();
+  }
+
   @Post('doctor/slots')
   createDoctorSlots(@Body() dto: PostTurnosDto) {
     return this.appointmentsService.createDoctorSlots(dto);
