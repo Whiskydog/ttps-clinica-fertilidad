@@ -140,15 +140,22 @@ export class AppointmentsService {
     );
   }
 
-  async getDoctorAvailableSlots(doctorId: number) {
+  async getDoctorAvailableSlots(
+    doctorId: number,
+  ): Promise<AppointmentDetail[]> {
     const appointmentsAndSlots =
       await this.getDoctorAppointmentsAndSlots(doctorId);
     return appointmentsAndSlots.filter(
-      (appointment) => appointment.patientId === null,
+      (appointment) =>
+        appointment.patientId === null &&
+        moment.utc(appointment.dateTime).isSameOrAfter(moment.utc(), 'day'),
     );
   }
 
-  async getDoctorAvailableSlotsByDate(doctorId: number, date: string) {
+  async getDoctorAvailableSlotsByDate(
+    doctorId: number,
+    date: string,
+  ): Promise<AppointmentDetail[]> {
     const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
       doctorId,
       date,
@@ -179,7 +186,9 @@ export class AppointmentsService {
     );
   }
 
-  private async getDoctorAppointmentsAndSlots(doctorId: number) {
+  private async getDoctorAppointmentsAndSlots(
+    doctorId: number,
+  ): Promise<AppointmentDetail[]> {
     const url = `${this.apiUrl}/get_turnos_medico?id_medico=${doctorId}`;
     const headers = this.buildAuthHeaders();
     const appointmentsObservable = this.httpService
