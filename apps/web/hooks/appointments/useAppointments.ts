@@ -20,6 +20,7 @@ export function useAppointments() {
       queryClient.invalidateQueries({
         queryKey: ["doctor-available-slots", variables.appointment.doctorId],
       });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
   });
 
