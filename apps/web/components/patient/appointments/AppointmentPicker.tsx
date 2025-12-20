@@ -1,13 +1,13 @@
-import { useDoctorAvailableAppointments } from "@/hooks/doctor/useDoctorAvailableAppointments";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { getNextFiveWeeksDays } from "@/utils/date-utils";
 import { AppointmentDetail } from "@repo/contracts";
 import { Spinner } from "@repo/ui/spinner";
+import { CircleX } from "lucide-react";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FieldError } from "react-hook-form";
 import AppointmentDatePicker from "./AppointmentDatePicker";
 import AppointmentTimePicker from "./AppointmentTimePicker";
-import { FieldError } from "react-hook-form";
-import { CircleX } from "lucide-react";
 
 interface Props {
   doctorId: number;
@@ -23,14 +23,34 @@ export default function AppointmentPicker({
   error,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(null);
+  const { availableAppointmentsQuery } = useAppointments();
   const {
-    appointments,
+    data: availableAppointments,
     isLoading,
     isError,
     error: fetchError,
-  } = useDoctorAvailableAppointments(doctorId);
+  } = availableAppointmentsQuery;
 
-  const doctorSelected = doctorId && doctorId > 0;
+  const appointments = useMemo(() => {
+    if (!availableAppointments) return [];
+
+    if (doctorId < 0) {
+      const groupedAppointments = availableAppointments.reduce(
+        (acc, appt) => {
+          (acc[appt.dateTime] ??= []).push(appt);
+          return acc;
+        },
+        {} as Record<string, AppointmentDetail[]>
+      );
+
+      return Object.values(groupedAppointments).map(
+        (appts) => appts.at(Math.floor(Math.random() * appts.length))!
+      );
+    }
+
+    return availableAppointments.filter((appt) => appt.doctorId === doctorId);
+  }, [availableAppointments, doctorId]);
+
   const nextFiveWeeks = getNextFiveWeeksDays();
 
   useEffect(() => {
@@ -39,7 +59,7 @@ export default function AppointmentPicker({
 
   return (
     <div>
-      {doctorSelected && isLoading && (
+      {isLoading && (
         <div className="bg-slate-100 p-4 rounded flex items-center justify-center h-32 gap-2">
           <Spinner />
           <span>Cargando citas disponibles...</span>
@@ -48,20 +68,11 @@ export default function AppointmentPicker({
       {isError && (
         <div className="text-red-500">Error: {fetchError?.message}</div>
       )}
-      {!doctorSelected && (
+      {!isLoading && !isError && appointments && appointments.length === 0 && (
         <div className="bg-slate-100 p-4 rounded flex items-center justify-center h-32 gap-2">
-          Por favor seleccione un médico para ver las citas disponibles.
+          No hay citas disponibles{doctorId > 0 && " para este médico"}.
         </div>
       )}
-      {doctorSelected &&
-        !isLoading &&
-        !isError &&
-        appointments &&
-        appointments.length === 0 && (
-          <div className="bg-slate-100 p-4 rounded flex items-center justify-center h-32 gap-2">
-            No hay citas disponibles para este médico.
-          </div>
-        )}
       {!isLoading && !isError && appointments && appointments.length > 0 && (
         <div className="grid grid-cols-2 gap-4">
           <AppointmentDatePicker
