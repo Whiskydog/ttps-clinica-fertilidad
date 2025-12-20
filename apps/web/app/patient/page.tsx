@@ -9,6 +9,7 @@ import { TreatmentHistory } from "@/components/patient/dashboard/treatment-histo
 import { usePayments } from "@/hooks/payments/usePayments";
 import type { Treatment } from "@repo/contracts";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "motion/react";
 
 export default function PatientDashboard() {
   const { data: currentTreatmentResponse, isLoading: isLoadingCurrent } = useQuery({
@@ -38,13 +39,24 @@ export default function PatientDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-          {!isLoadingOwnDebt && ownDebt && ownDebt.debt > 0 && (
-            <OwnDebtCard debt={ownDebt.debt} />
-          )}
-          <TreatmentCard treatment={currentTreatment} />
-          <TreatmentHistory treatments={treatmentHistory} />
-        </div>
+        <motion.div
+          layout
+          className="lg:col-span-2 space-y-6 order-2 lg:order-1"
+        >
+          <AnimatePresence initial={false}>
+            {!isLoadingOwnDebt && ownDebt && ownDebt.debt > 0 && (
+              <OwnDebtCard key="own-debt" debt={ownDebt.debt} />
+            )}
+            <TreatmentCard
+              key="current-treatment"
+              treatment={currentTreatment}
+            />
+            <TreatmentHistory
+              key="treatment-history"
+              treatments={treatmentHistory}
+            />
+          </AnimatePresence>
+        </motion.div>
 
         <div className="lg:col-span-1 order-1 lg:order-2">
           <QuickActions />
