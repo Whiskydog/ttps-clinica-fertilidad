@@ -3,10 +3,10 @@ import { ReasonForVisit } from "./enums";
 import { ApiResponseSchema } from "../common/api";
 
 export const BookAppointmentSchema = z.object({
-  doctorId: z.number().int().positive(),
   reason: z.enum(ReasonForVisit),
   appointment: z.object({
     id: z.number().int().positive(),
+    doctorId: z.number().int().positive(),
     dateTime: z.iso.datetime({ offset: true }).optional(),
   }),
 });

@@ -41,10 +41,6 @@ export default function BookAppointmentForm() {
   const watchAppointment = form.watch("appointment");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (data.doctorId === "-1") {
-      form.setError("doctorId", { message: "Por favor seleccione un médico" });
-      return;
-    }
     if (!data.appointment) {
       form.setError("appointment", {
         message: "Por favor seleccione una cita disponible",
@@ -54,7 +50,6 @@ export default function BookAppointmentForm() {
 
     await bookAppointmentMutation.mutateAsync(
       {
-        doctorId: Number(data.doctorId),
         reason: data.reason,
         appointment: data.appointment,
       },

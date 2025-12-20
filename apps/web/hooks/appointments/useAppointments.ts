@@ -18,7 +18,7 @@ export function useAppointments() {
     mutationFn: bookAppointment,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["doctor-available-slots", variables.doctorId],
+        queryKey: ["doctor-available-slots", variables.appointment.doctorId],
       });
     },
   });

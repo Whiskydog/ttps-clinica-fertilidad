@@ -103,7 +103,7 @@ export class AppointmentsService {
     const appointment = this.appointmentRepository.create({
       externalId: externalBooking.id,
       date: moment.utc(externalBooking.fecha_hora).toDate(),
-      doctor: { id: dto.doctorId },
+      doctor: { id: dto.appointment.doctorId },
       medicalHistory: {
         id: patientMedicalHistory.id,
       },
