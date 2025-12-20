@@ -160,6 +160,17 @@ export default function BookAppointmentForm() {
                     value={field.value?.toString()}
                     onValueChange={field.onChange}
                   >
+                    <Field key="any" orientation="horizontal">
+                      <RadioGroupItem
+                        id="doctor-any"
+                        value="-1"
+                        checked={field.value === "-1"}
+                        onChange={() => field.onChange("-1")}
+                      />
+                      <FieldLabel htmlFor="doctor-any">
+                        Cualquier médico está bien
+                      </FieldLabel>
+                    </Field>
                     {doctors.map((doctor) => (
                       <Field key={doctor.id} orientation="horizontal">
                         <RadioGroupItem
@@ -226,7 +237,7 @@ export default function BookAppointmentForm() {
                   doctors?.find((doc) => doc.id === Number(watchDoctorId))
                     ?.lastName
                 }`
-              : "No seleccionado"}
+              : "Cualquier médico"}
           </p>
           <p>
             <span className="font-bold">Motivo: </span>
