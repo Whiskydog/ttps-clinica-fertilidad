@@ -4,10 +4,11 @@ import { Public } from '@common/decorators/public.decorator';
 @Public()
 @Controller('external/group6')
 export class Group6ChatbotController {
-  constructor(private readonly service: Group6ChatbotService) {}
+  constructor(private readonly service: Group6ChatbotService) { }
 
   @Post('preguntar')
   preguntar(@Body() body) {
+    console.log('Chatbot Body:', body);
     return this.service.preguntar(body);
   }
 }
