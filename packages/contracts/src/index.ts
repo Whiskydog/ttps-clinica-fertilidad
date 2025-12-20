@@ -12,6 +12,7 @@ export * from "./medical-insurances/schemas";
 export * from "./medical-history/schemas";
 export * from "./medical-history/enums";
 export * from "./medical-orders/schemas";
+export * from "./payments/schemas";
 export * from "./treatments/enums";
 export * from "./treatments/schemas";
 export * from "./users";
