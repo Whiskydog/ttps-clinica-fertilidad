@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Embryo } from '../entities/embryo.entity';
 import { Oocyte } from '../entities/oocyte.entity';
 import { OocyteStateHistory } from '../entities/oocyte-state-history.entity';
-import { EmbryoDisposition, OocyteState } from '@repo/contracts';
+import { EmbryoDisposition, OocyteState, PgtResult } from '@repo/contracts';
 import { LaboratoryService } from '../laboratory.service';
 
 @Injectable()
@@ -133,7 +133,7 @@ export class EmbryoService {
         ],
       });
     if (!oocyte) {
-      throw new NotFoundException('Oocyte not found');
+      throw new NotFoundException('Ovocito no encontrado');
     }
     const patient = oocyte.puncture.treatment.medicalHistory.patient;
     const date = embryoData.fertilizationDate || new Date();
@@ -166,6 +166,9 @@ export class EmbryoService {
     // Marcar el ovocito como usado
     const originOocyte = await this.oocyteRepository.findOne({ where: { id: embryoData.oocyteOrigin!.id } });
     if (originOocyte) {
+      if (originOocyte.currentState === OocyteState.USED) {
+        throw new BadRequestException('El ovocito ya ha sido utilizado para crear un embrión');
+      }
       const oldState = originOocyte.currentState;
       originOocyte.currentState = OocyteState.USED;
       await this.oocyteRepository.save(originOocyte);
@@ -211,6 +214,9 @@ export class EmbryoService {
     tube: string,
   ): Promise<Embryo> {
     const embryo = await this.findOne(id);
+    if (embryo.finalDisposition === EmbryoDisposition.CRYOPRESERVED) {
+      throw new BadRequestException('El embrión ya está criopreservado');
+    }
     embryo.finalDisposition = EmbryoDisposition.CRYOPRESERVED;
     embryo.cryoTank = tank;
     embryo.cryoRack = rack;
@@ -220,12 +226,29 @@ export class EmbryoService {
 
   async transfer(id: number): Promise<Embryo> {
     const embryo = await this.findOne(id);
+    if (embryo.finalDisposition === EmbryoDisposition.TRANSFERRED) {
+      throw new BadRequestException('El embrión ya está transferido');
+    }
+    if (embryo.pgtResult === PgtResult.NOT_OK) {
+      throw new BadRequestException('No se puede transferir un embrión con PGT no apto');
+    }
     embryo.finalDisposition = EmbryoDisposition.TRANSFERRED;
     return this.embryoRepository.save(embryo);
   }
 
-  async discard(id: number, cause: string): Promise<Embryo> {
+  async updatePgt(id: number, pgtResult?: PgtResult, pgtDecisionSuggested?: string): Promise<Embryo> {
     const embryo = await this.findOne(id);
+    if (pgtResult !== undefined) embryo.pgtResult = pgtResult;
+    if (pgtDecisionSuggested !== undefined) embryo.pgtDecisionSuggested = pgtDecisionSuggested;
+    return this.embryoRepository.save(embryo);
+  }
+
+  async discard(id: number, cause: string): Promise<Embryo> {
+    if (!cause) throw new BadRequestException('Causa de descarte obligatoria');
+    const embryo = await this.findOne(id);
+    if (embryo.finalDisposition === EmbryoDisposition.DISCARDED) {
+      throw new BadRequestException('El embrión ya está descartado');
+    }
     embryo.finalDisposition = EmbryoDisposition.DISCARDED;
     embryo.discardCause = cause;
     return this.embryoRepository.save(embryo);

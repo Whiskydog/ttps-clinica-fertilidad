@@ -102,7 +102,7 @@ export class LaboratoryService {
         'puncture.treatment.medicalHistory.patient',
       ],
     });
-    if (!oocyte) throw new NotFoundException('Oocyte not found');
+    if (!oocyte) throw new NotFoundException('Ovocito no encontrado');
     if (oocyte.currentState !== OocyteState.MATURE) {
       throw new BadRequestException(
         'Solo se pueden criopreservar ovocitos maduros',
@@ -127,13 +127,14 @@ export class LaboratoryService {
   }
 
   async findTreatmentsByPatientDni(dni: string): Promise<Treatment[]> {
-    const patient = await this.patientRepository.findOne({ where: { dni } });
-    if (!patient) return [];
+    if (!dni) return [];
     return this.treatmentRepository
       .createQueryBuilder('treatment')
       .leftJoinAndSelect('treatment.medicalHistory', 'medicalHistory')
       .leftJoinAndSelect('medicalHistory.patient', 'patient')
-      .where('patient.id = :patientId', { patientId: patient.id })
+      .innerJoin('treatment.informedConsent', 'consent', 'consent.pdfUri IS NOT NULL AND consent.signatureDate IS NOT NULL')
+      .where('patient.dni LIKE :dni', { dni: `${dni}%` })
+      .andWhere('medicalHistory.current_treatment_id = treatment.id')
       .getMany();
   }
 

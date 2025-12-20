@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@repo/ui/table";
 import type { EmbryoDetail, OocyteDetail, Doctor } from "@repo/contracts";
+import { PgtResult } from "@repo/contracts";
 
 interface Gamete {
   id: number;
@@ -73,6 +74,9 @@ export default function EmbryosPage() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [discardCause, setDiscardCause] = useState("");
+
+  const [showPgtModal, setShowPgtModal] = useState(false);
+  const [pgtForm, setPgtForm] = useState({ pgtResult: undefined as PgtResult | undefined, pgtDecisionSuggested: "" });
 
   const fetchOocytes = async () => {
     const res = await fetch("/api/laboratory/oocytes/mature", {
@@ -182,12 +186,12 @@ export default function EmbryosPage() {
       }
     );
     if (res.ok) {
-      toast.success("Embryo cryopreserved successfully");
+      toast.success("Embrión criopreservado exitosamente");
       setIsCryoModalOpen(false);
       setIsModalOpen(false);
       fetchEmbryos();
     } else {
-      toast.error("Failed to cryopreserve embryo");
+      toast.error("Error al criopreservar embrión");
     }
   };
 
@@ -209,11 +213,52 @@ export default function EmbryosPage() {
       }
     );
     if (res.ok) {
-      toast.success("Embryo discarded successfully");
+      toast.success("Embrión descartado exitosamente");
       setIsModalOpen(false);
       fetchEmbryos();
     } else {
-      toast.error("Failed to discard embryo");
+      toast.error("Error al descartar embrión");
+    }
+  };
+
+  const handleUpdatePgt = async () => {
+    if (!selectedEmbryo) return;
+    
+    const payload: any = {};
+    if (pgtForm.pgtResult !== undefined) {
+      payload.pgtResult = pgtForm.pgtResult;
+    }
+    if (pgtForm.pgtDecisionSuggested && pgtForm.pgtDecisionSuggested.trim() !== "") {
+      payload.pgtDecisionSuggested = pgtForm.pgtDecisionSuggested;
+    }
+    
+    const res = await fetch(
+      `/api/laboratory/embryos/${selectedEmbryo.id}/pgt`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    if (res.ok) {
+      toast.success("PGT actualizado exitosamente");
+      setShowPgtModal(false);
+      
+      // Actualizar el selectedEmbryo con los nuevos valores de PGT
+      if (selectedEmbryo) {
+        setSelectedEmbryo({
+          ...selectedEmbryo,
+          pgtResult: pgtForm.pgtResult || selectedEmbryo.pgtResult,
+          pgtDecisionSuggested: pgtForm.pgtDecisionSuggested || selectedEmbryo.pgtDecisionSuggested,
+        });
+      }
+      
+      fetchEmbryos();
+    } else {
+      toast.error("Error al actualizar PGT");
     }
   };
 
@@ -454,8 +499,8 @@ export default function EmbryosPage() {
                   <SelectValue placeholder="Seleccione resultado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ok">OK</SelectItem>
-                  <SelectItem value="not_ok">Not OK</SelectItem>
+                  <SelectItem value="ok">Apto</SelectItem>
+                  <SelectItem value="not_ok">No Apto</SelectItem>
                   <SelectItem value="pending">Pendiente</SelectItem>
                 </SelectContent>
               </Select>
@@ -495,7 +540,10 @@ export default function EmbryosPage() {
                     Calidad
                   </TableHead>
                   <TableHead className="font-semibold text-green-800">
-                    Disposición
+                    PGT
+                  </TableHead>
+                  <TableHead className="font-semibold text-green-800">
+                    Estado
                   </TableHead>
                   <TableHead className="font-semibold text-green-800">
                     Acciones
@@ -528,7 +576,13 @@ export default function EmbryosPage() {
                           <span className="font-medium">
                             {embryo.qualityScore}
                           </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className={
+                            embryo.qualityScore >= 4
+                              ? "bg-green-100 text-green-800 border-green-200 text-xs"
+                              : embryo.qualityScore >= 2
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200 text-xs"
+                              : "bg-red-100 text-red-800 border-red-200 text-xs"
+                          }>
                             {embryo.qualityScore >= 4
                               ? "Buena"
                               : embryo.qualityScore >= 2
@@ -543,17 +597,48 @@ export default function EmbryosPage() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {embryo.pgtResult ? (
+                        <Badge
+                          variant="outline"
+                          className={
+                            embryo.pgtResult === "ok"
+                              ? "bg-green-500 text-white border-green-500"
+                              : embryo.pgtResult === "not_ok"
+                              ? "bg-red-100 text-red-800 border-red-200"
+                              : embryo.pgtResult === "pending"
+                              ? "bg-blue-100 text-blue-800 border-blue-200"
+                              : ""
+                          }
+                        >
+                          {embryo.pgtResult === "ok"
+                            ? "Apto"
+                            : embryo.pgtResult === "not_ok"
+                              ? "No Apto"
+                              : embryo.pgtResult === "pending"
+                              ? "Pendiente"
+                              : embryo.pgtResult}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-500 italic">
+                          Sin resultado
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge
-                        variant={
-                          embryo.finalDisposition === "cryopreserved"
-                            ? "secondary"
-                            : embryo.finalDisposition === "transferred"
-                              ? "default"
-                              : embryo.finalDisposition === "discarded"
-                                ? "destructive"
-                                : "outline"
+                        variant="outline"
+                        className={
+                          embryo.finalDisposition === "transferred"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : embryo.finalDisposition === "cryopreserved"
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : embryo.finalDisposition === "discarded"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : embryo.finalDisposition === null ||
+                              embryo.finalDisposition === undefined
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "text-xs"
                         }
-                        className="text-xs"
                       >
                         {embryo.finalDisposition === "cryopreserved"
                           ? "Criopreservado"
@@ -693,7 +778,13 @@ export default function EmbryosPage() {
                           {selectedEmbryo!.qualityScore || "No evaluada"}
                         </span>
                         {selectedEmbryo!.qualityScore && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className={
+                            selectedEmbryo!.qualityScore >= 4
+                              ? "bg-green-100 text-green-800 border-green-200 text-xs"
+                              : selectedEmbryo!.qualityScore >= 2
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200 text-xs"
+                              : "bg-red-100 text-red-800 border-red-200 text-xs"
+                          }>
                             {selectedEmbryo!.qualityScore >= 4
                               ? "Buena"
                               : selectedEmbryo!.qualityScore >= 2
@@ -732,9 +823,9 @@ export default function EmbryosPage() {
                       </Label>
                       <p className="text-sm">
                         {selectedEmbryo!.pgtResult === "ok"
-                          ? "OK"
+                          ? "Apto"
                           : selectedEmbryo!.pgtResult === "not_ok"
-                            ? "No OK"
+                            ? "No Apto"
                             : selectedEmbryo!.pgtResult === "pending"
                               ? "Pendiente"
                               : "No realizado"}
@@ -745,14 +836,18 @@ export default function EmbryosPage() {
                         Estado Actual
                       </Label>
                       <Badge
-                        variant={
-                          selectedEmbryo!.finalDisposition === "cryopreserved"
-                            ? "secondary"
-                            : selectedEmbryo!.finalDisposition === "transferred"
-                              ? "default"
-                              : selectedEmbryo!.finalDisposition === "discarded"
-                                ? "destructive"
-                                : "outline"
+                        variant="outline"
+                        className={
+                          selectedEmbryo!.finalDisposition === "transferred"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : selectedEmbryo!.finalDisposition === "cryopreserved"
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : selectedEmbryo!.finalDisposition === "discarded"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : selectedEmbryo!.finalDisposition === null ||
+                              selectedEmbryo!.finalDisposition === undefined
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "text-xs"
                         }
                       >
                         {selectedEmbryo!.finalDisposition === "cryopreserved"
@@ -837,7 +932,19 @@ export default function EmbryosPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <Button
+                        onClick={() => {
+                          setPgtForm({
+                            pgtResult: selectedEmbryo?.pgtResult || undefined,
+                            pgtDecisionSuggested: selectedEmbryo?.pgtDecisionSuggested || "",
+                          });
+                          setShowPgtModal(true);
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700 h-12"
+                      >
+                        Actualizar PGT
+                      </Button>
                       <Button
                         onClick={() => setIsCryoModalOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 h-12"
@@ -986,6 +1093,13 @@ export default function EmbryosPage() {
               ¿Está seguro de que desea transferir este embrión? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
+          {selectedEmbryo?.pgtResult === "not_ok" && (
+            <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+              <p className="text-red-800 text-sm">
+                <strong>Advertencia:</strong> Este embrión tiene PGT "No Apto". La transferencia está bloqueada por validaciones del sistema.
+              </p>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTransferModal(false)}>
               Cancelar
@@ -1001,13 +1115,14 @@ export default function EmbryosPage() {
                 }
               );
               if (res.ok) {
-                toast.success("Embryo transferred successfully");
+                toast.success("Embrión transferido exitosamente");
                 setIsModalOpen(false);
                 fetchEmbryos();
               } else {
-                toast.error("Failed to transfer embryo");
+                const errorData = await res.json();
+                toast.error(errorData.message || "Error al transferir embrión");
               }
-            }}>
+            }} disabled={selectedEmbryo?.pgtResult === "not_ok"}>
               Transferir
             </Button>
           </DialogFooter>
@@ -1046,6 +1161,53 @@ export default function EmbryosPage() {
               }
             }}>
               Descartar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PGT Modal */}
+      <Dialog open={showPgtModal} onOpenChange={setShowPgtModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Actualizar PGT</DialogTitle>
+            <DialogDescription>
+              Actualice el resultado de PGT y sugerencia de decisión para este embrión.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="pgt-result">Resultado PGT</Label>
+              <Select
+                value={pgtForm.pgtResult}
+                onValueChange={(value) => setPgtForm({ ...pgtForm, pgtResult: value as PgtResult })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione resultado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ok">Apto</SelectItem>
+                  <SelectItem value="not_ok">No Apto</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="pgt-suggestion">Sugerencia de Decisión</Label>
+              <Input
+                id="pgt-suggestion"
+                value={pgtForm.pgtDecisionSuggested}
+                onChange={(e) => setPgtForm({ ...pgtForm, pgtDecisionSuggested: e.target.value })}
+                placeholder="Ingrese sugerencia opcional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPgtModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdatePgt}>
+              Actualizar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -84,6 +84,16 @@ export default function OocytesPage() {
     oocyteId: number | null;
     cause: string;
   }>({ open: false, oocyteId: null, cause: "" });
+  const [matureModal, setMatureModal] = useState<{
+    open: boolean;
+    oocyteId: number | null;
+  }>({ open: false, oocyteId: null });
+  const [finishCultivationModal, setFinishCultivationModal] = useState<{
+    open: boolean;
+    oocyteId: number | null;
+    success: boolean | null;
+    cause: string;
+  }>({ open: false, oocyteId: null, success: null, cause: "" });
   const [cultivateModal, setCultivateModal] = useState<{
     open: boolean;
     oocyteId: number | null;
@@ -164,23 +174,6 @@ export default function OocytesPage() {
     }
   };
 
-  const handleStateChange = async (oocyteId: number, newState: string) => {
-    const res = await fetch(`/api/laboratory/oocytes/${oocyteId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ id: oocyteId, currentState: newState }),
-    });
-    if (res.ok) {
-      fetchOocytes();
-    } else {
-      setAlertMessage("Error cambiando estado");
-      setShowAlertModal(true);
-    }
-  };
-
   const handleCryopreserve = async (oocyteId: number) => {
     const res = await fetch(
       `/api/laboratory/oocytes/${oocyteId}/cryopreserve`,
@@ -218,6 +211,55 @@ export default function OocytesPage() {
       setAlertMessage("Ovocito descartado");
       setShowAlertModal(true);
       setDiscardModal({ open: false, oocyteId: null, cause: "" });
+      fetchOocytes();
+    } else {
+      setAlertMessage("Error");
+      setShowAlertModal(true);
+    }
+  };
+
+  const handleMature = async () => {
+    if (!matureModal.oocyteId) return;
+    const res = await fetch(
+      `/api/laboratory/oocytes/${matureModal.oocyteId}/mature`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    if (res.ok) {
+      setAlertMessage("Ovocito madurado");
+      setShowAlertModal(true);
+      setMatureModal({ open: false, oocyteId: null });
+      fetchOocytes();
+    } else {
+      setAlertMessage("Error");
+      setShowAlertModal(true);
+    }
+  };
+
+  const handleFinishCultivation = async () => {
+    if (!finishCultivationModal.oocyteId || finishCultivationModal.success === null) return;
+    const body = finishCultivationModal.success
+      ? { success: true }
+      : { success: false, cause: finishCultivationModal.cause };
+    const res = await fetch(
+      `/api/laboratory/oocytes/${finishCultivationModal.oocyteId}/finish-cultivation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+    if (res.ok) {
+      setAlertMessage(finishCultivationModal.success ? "Cultivo finalizado: ovocito madurado" : "Cultivo finalizado: ovocito descartado");
+      setShowAlertModal(true);
+      setFinishCultivationModal({ open: false, oocyteId: null, success: null, cause: "" });
       fetchOocytes();
     } else {
       setAlertMessage("Error");
@@ -394,45 +436,24 @@ export default function OocytesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {oocyte.currentState === "discarded" ||
-                      oocyte.currentState === "cultivated" ||
-                      oocyte.currentState === "used" ||
-                      oocyte.isCryopreserved ? (
-                        <Badge
-                          variant="outline"
-                          className={`text-xs font-medium ${
-                            oocyte.isCryopreserved
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : oocyte.currentState === "cultivated"
-                                ? "bg-green-500 text-white border-green-500"
-                                : oocyte.currentState === "used"
-                                  ? "bg-gray-600 text-white border-gray-600"
-                                  : "bg-red-500 text-white border-red-500"
-                          }`}
-                        >
-                          {oocyte.isCryopreserved
-                            ? "Criopreservado"
-                            : translateState(oocyte.currentState)}
-                        </Badge>
-                      ) : (
-                        <Select
-                          value={oocyte.currentState}
-                          onValueChange={(value) =>
-                            handleStateChange(oocyte.id, value)
-                          }
-                        >
-                          <SelectTrigger className="w-32 border-blue-300 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="very_immature">
-                              Muy Inmaduro
-                            </SelectItem>
-                            <SelectItem value="immature">Inmaduro</SelectItem>
-                            <SelectItem value="mature">Maduro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Badge
+                        variant="outline"
+                        className={`text-xs font-medium ${
+                          oocyte.isCryopreserved
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : oocyte.currentState === "cultivated"
+                              ? "bg-green-500 text-white border-green-500"
+                              : oocyte.currentState === "used"
+                                ? "bg-purple-500 text-white border-purple-500"
+                                : oocyte.currentState === "discarded"
+                                  ? "bg-red-500 text-white border-red-500"
+                                  : "bg-yellow-500 text-white border-yellow-500"
+                        }`}
+                      >
+                        {oocyte.isCryopreserved
+                          ? "Criopreservado"
+                          : translateState(oocyte.currentState)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -447,6 +468,21 @@ export default function OocytesPage() {
                         {oocyte.currentState === "very_immature" && (
                           <Button
                             onClick={() =>
+                              setMatureModal({
+                                open: true,
+                                oocyteId: oocyte.id,
+                              })
+                            }
+                            size="sm"
+                            className="bg-yellow-600 hover:bg-yellow-700 h-8 px-2"
+                            title="Madurar"
+                          >
+                            Madurar
+                          </Button>
+                        )}
+                        {oocyte.currentState === "immature" && (
+                          <Button
+                            onClick={() =>
                               setCultivateModal({
                                 open: true,
                                 oocyteId: oocyte.id,
@@ -458,6 +494,23 @@ export default function OocytesPage() {
                             title="Cultivar"
                           >
                             Cultivar
+                          </Button>
+                        )}
+                        {oocyte.currentState === "cultivated" && (
+                          <Button
+                            onClick={() =>
+                              setFinishCultivationModal({
+                                open: true,
+                                oocyteId: oocyte.id,
+                                success: null,
+                                cause: "",
+                              })
+                            }
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 h-8 px-2"
+                            title="Finalizar Cultivo"
+                          >
+                            Finalizar Cultivo
                           </Button>
                         )}
                         {oocyte.currentState === "mature" &&
@@ -592,6 +645,118 @@ export default function OocytesPage() {
                 className="flex-1"
               >
                 Confirmar Descarte
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Madurar */}
+      <Dialog
+        open={matureModal.open}
+        onOpenChange={(open) => setMatureModal({ ...matureModal, open })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-yellow-800 flex items-center gap-2">
+              Madurar Ovocito
+            </DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de que desea madurar este ovocito de "Muy Inmaduro" a "Inmaduro"?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                <strong>ℹ️ Información:</strong> El ovocito pasará al estado "Inmaduro" y podrá ser cultivado posteriormente.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setMatureModal({ open: false, oocyteId: null })
+                }
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleMature}
+                className="bg-yellow-600 hover:bg-yellow-700 flex-1"
+              >
+                Confirmar Maduración
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Finalizar Cultivo */}
+      <Dialog
+        open={finishCultivationModal.open}
+        onOpenChange={(open) => setFinishCultivationModal({ ...finishCultivationModal, open })}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-purple-800 flex items-center gap-2">
+              Finalizar Cultivo
+            </DialogTitle>
+            <DialogDescription>
+              ¿Cómo resultó el cultivo del ovocito?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setFinishCultivationModal({ ...finishCultivationModal, success: true, cause: "" })}
+                variant={finishCultivationModal.success === true ? "default" : "outline"}
+                className="flex-1"
+              >
+                Maduró exitosamente
+              </Button>
+              <Button
+                onClick={() => setFinishCultivationModal({ ...finishCultivationModal, success: false })}
+                variant={finishCultivationModal.success === false ? "destructive" : "outline"}
+                className="flex-1"
+              >
+                No maduró
+              </Button>
+            </div>
+            {finishCultivationModal.success === false && (
+              <div>
+                <Label htmlFor="discard-cause" className="text-red-700">
+                  Causa del descarte
+                </Label>
+                <Textarea
+                  id="discard-cause"
+                  placeholder="Describa la razón por la que no maduró..."
+                  value={finishCultivationModal.cause}
+                  onChange={(e) =>
+                    setFinishCultivationModal({ ...finishCultivationModal, cause: e.target.value })
+                  }
+                  className="min-h-[80px] border-red-300 focus:border-red-500"
+                  required
+                />
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setFinishCultivationModal({ open: false, oocyteId: null, success: null, cause: "" })
+                }
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleFinishCultivation}
+                disabled={finishCultivationModal.success === null || (finishCultivationModal.success === false && !finishCultivationModal.cause.trim())}
+                className="bg-purple-600 hover:bg-purple-700 flex-1"
+              >
+                Finalizar
               </Button>
             </div>
           </div>

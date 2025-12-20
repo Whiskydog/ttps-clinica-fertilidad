@@ -26,7 +26,7 @@ export class OocyteStateHistoryService {
 
     if (!history) {
       throw new NotFoundException(
-        `Oocyte state history with ID ${id} not found`,
+        `Historial de estado de ovocito con ID ${id} no encontrado`,
       );
     }
 

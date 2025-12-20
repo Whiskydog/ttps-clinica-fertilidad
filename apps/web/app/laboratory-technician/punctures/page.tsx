@@ -6,13 +6,6 @@ import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Textarea } from "@repo/ui/textarea";
 import { Label } from "@repo/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/select";
 import { toast } from "@repo/ui";
 import {
   Table,
@@ -37,6 +30,7 @@ export default function PuncturesPage() {
   const [patientDni, setPatientDni] = useState("");
   const [treatments, setTreatments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [form, setForm] = useState({
     treatmentId: "",
     punctureDate: "",
@@ -52,6 +46,19 @@ export default function PuncturesPage() {
 
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+
+  useEffect(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    const timer = setTimeout(() => {
+      if (patientDni.length >= 1) { // Filtrar desde el primer carácter
+        fetchTreatments();
+      } else {
+        setTreatments([]);
+      }
+    }, 300); // 300ms debounce
+    setDebounceTimer(timer);
+    return () => clearTimeout(timer);
+  }, [patientDni]);
 
   // Fetch punciones al cargar
   useEffect(() => {
@@ -184,43 +191,52 @@ export default function PuncturesPage() {
                   required
                 />
               </div>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  onClick={fetchTreatments}
-                  disabled={!patientDni || isLoading}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {isLoading ? "Buscando..." : "Buscar Tratamientos"}
-                </Button>
-              </div>
             </div>
+
+            {isLoading && <p className="text-orange-600">Buscando tratamientos...</p>}
 
             {treatments.length > 0 && (
               <div>
-                <Label htmlFor="treatmentId" className="text-orange-700">
-                  Tratamientos de {treatments[0]?.medicalHistory.patient.firstName} {treatments[0]?.medicalHistory.patient.lastName}
+                <Label className="text-orange-700">
+                  Tratamientos Actuales Encontrados
                 </Label>
-                <Select
-                  value={form.treatmentId}
-                  onValueChange={(value) =>
-                    setForm({ ...form, treatmentId: value })
-                  }
-                >
-                  <SelectTrigger className="border-orange-300 focus:border-orange-500">
-                    <SelectValue placeholder="Seleccione un tratamiento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {treatments.map((treatment) => (
-                      <SelectItem
-                        key={treatment.id}
-                        value={treatment.id.toString()}
-                      >
-                        {treatment.id} - {treatment.initialObjective}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="border border-orange-300 rounded-lg p-4 bg-orange-50 max-h-60 overflow-y-auto">
+                  {treatments.map((treatment) => (
+                    <div
+                      key={treatment.id}
+                      className={`p-3 mb-2 rounded cursor-pointer transition-colors ${
+                        form.treatmentId === treatment.id.toString()
+                          ? "bg-orange-200 border-orange-400"
+                          : "bg-white hover:bg-orange-100"
+                      }`}
+                      onClick={() => setForm({ ...form, treatmentId: treatment.id.toString() })}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-orange-800">
+                            {treatment.medicalHistory.patient.lastName}, {treatment.medicalHistory.patient.firstName} ({treatment.medicalHistory.patient.dni})
+                          </p>
+                          <p className="text-sm text-orange-700">
+                            Tratamiento ID: {treatment.id} - Objetivo: {treatment.initialObjective}
+                          </p>
+                          <p className="text-sm text-orange-600">
+                            Fecha: {new Date(treatment.createdAt).toLocaleDateString('es-ES')}
+                          </p>
+                          {treatment.status && (
+                            <p className="text-sm text-orange-600">
+                              Estado: {treatment.status}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {form.treatmentId === treatment.id.toString() && (
+                            <span className="text-orange-600 font-semibold">Seleccionado</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

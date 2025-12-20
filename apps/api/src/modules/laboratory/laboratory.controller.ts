@@ -23,11 +23,12 @@ import {
   UpdateOocyteStateHistoryDto,
   CreateEmbryoDto,
   UpdateEmbryoDto,
+  UpdateEmbryoPgtDto,
 } from './dto';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';
-import { RoleCode, OocyteState, EmbryoDisposition } from '@repo/contracts';
+import { RoleCode, OocyteState, EmbryoDisposition, PgtResult } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 import { parseDateFromString } from '@common/utils/date.utils';
@@ -219,6 +220,33 @@ export class LaboratoryController {
     );
     return {
       message: 'Oocito cultivado correctamente',
+    };
+  }
+
+  @Post('oocytes/:id/mature')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async matureOocyte(@Param('id') id: string) {
+    const oocyteId = Number(id);
+    await this.oocyteService.mature(oocyteId);
+    return {
+      message: 'Oocito madurado correctamente',
+    };
+  }
+
+  @Post('oocytes/:id/finish-cultivation')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async finishCultivation(
+    @Param('id') id: string,
+    @Body() body: { success: boolean; cause?: string },
+  ) {
+    const oocyteId = Number(id);
+    await this.oocyteService.finishCultivation(oocyteId, body.success, body.cause);
+    return {
+      message: body.success
+        ? 'Cultivo finalizado: ovocito madurado correctamente'
+        : 'Cultivo finalizado: ovocito descartado',
     };
   }
 
@@ -531,5 +559,15 @@ export class LaboratoryController {
   ) {
     const embryoId = Number(id);
     return this.embryoService.discard(embryoId, body.cause);
+  }
+
+  @Patch('embryos/:id/pgt')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async updateEmbryoPgt(
+    @Param('id') id: string,
+    @Body() dto: UpdateEmbryoPgtDto,
+  ) {
+    const embryoId = Number(id);
+    return this.embryoService.updatePgt(embryoId, dto.pgtResult, dto.pgtDecisionSuggested);
   }
 }
