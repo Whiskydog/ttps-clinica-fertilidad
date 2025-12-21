@@ -39,6 +39,7 @@ export type {
 export type {
   JourneyStep,
   CryopreservationSummary,
+  CryopreservedSemen,
 } from "./cryopreservation/schemas";
 
 // Exportar tipos específicos de laboratory

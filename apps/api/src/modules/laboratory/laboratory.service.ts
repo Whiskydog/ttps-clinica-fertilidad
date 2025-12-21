@@ -11,8 +11,12 @@ import { PunctureRecord } from './entities/puncture-record.entity';
 import { Oocyte } from './entities/oocyte.entity';
 import { OocyteStateHistory } from './entities/oocyte-state-history.entity';
 import { Embryo } from './entities/embryo.entity';
+import { CryopreservedSemen } from './entities/cryopreserved-semen.entity';
+import { SemenViability } from './entities/semen-viability.entity';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { Patient } from '@users/entities/patient.entity';
+import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
+import { StudyResult } from '@modules/medical-orders/entities/study-result.entity';
 import { OocyteState } from '@repo/contracts';
 
 @Injectable()
@@ -26,6 +30,10 @@ export class LaboratoryService {
     private oocyteStateHistoryRepository: Repository<OocyteStateHistory>,
     @InjectRepository(Embryo)
     private embryoRepository: Repository<Embryo>,
+    @InjectRepository(CryopreservedSemen)
+    private cryopreservedSemenRepository: Repository<CryopreservedSemen>,
+    @InjectRepository(SemenViability)
+    private semenViabilityRepository: Repository<SemenViability>,
     @InjectRepository(Treatment)
     private treatmentRepository: Repository<Treatment>,
     @InjectRepository(Patient)
@@ -102,7 +110,7 @@ export class LaboratoryService {
         'puncture.treatment.medicalHistory.patient',
       ],
     });
-    if (!oocyte) throw new NotFoundException('Oocyte not found');
+    if (!oocyte) throw new NotFoundException('Ovocito no encontrado');
     if (oocyte.currentState !== OocyteState.MATURE) {
       throw new BadRequestException(
         'Solo se pueden criopreservar ovocitos maduros',
@@ -127,13 +135,14 @@ export class LaboratoryService {
   }
 
   async findTreatmentsByPatientDni(dni: string): Promise<Treatment[]> {
-    const patient = await this.patientRepository.findOne({ where: { dni } });
-    if (!patient) return [];
+    if (!dni) return [];
     return this.treatmentRepository
       .createQueryBuilder('treatment')
       .leftJoinAndSelect('treatment.medicalHistory', 'medicalHistory')
       .leftJoinAndSelect('medicalHistory.patient', 'patient')
-      .where('patient.id = :patientId', { patientId: patient.id })
+      .innerJoin('treatment.informedConsent', 'consent', 'consent.pdfUri IS NOT NULL AND consent.signatureDate IS NOT NULL')
+      .where('patient.dni LIKE :dni', { dni: `${dni}%` })
+      .andWhere('medicalHistory.current_treatment_id = treatment.id')
       .getMany();
   }
 
@@ -182,6 +191,92 @@ export class LaboratoryService {
       .andWhere('oocyte.currentState != :used', { used: OocyteState.USED })
       .orderBy('oocyte.createdAt', 'DESC')
       .getMany();
+  }
+
+  // Cryopreserved Semen methods
+  async createCryopreservedSemen(data: {
+    patientDni: string;
+    phenotype?: any;
+    cryoTank?: string;
+    cryoRack?: string;
+    cryoTube?: string;
+    cryopreservationDate?: Date;
+  }): Promise<CryopreservedSemen> {
+    const semen = this.cryopreservedSemenRepository.create(data);
+    return this.cryopreservedSemenRepository.save(semen);
+  }
+
+  async findCryopreservedSemenByDni(dni: string): Promise<CryopreservedSemen[]> {
+    return this.cryopreservedSemenRepository.find({
+      where: { patientDni: dni, isAvailable: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findCryopreservedSemenById(id: number): Promise<CryopreservedSemen> {
+    const semen = await this.cryopreservedSemenRepository.findOne({
+      where: { id },
+    });
+    if (!semen) {
+      throw new NotFoundException(`Semen criopreservado con ID ${id} no encontrado`);
+    }
+    return semen;
+  }
+
+  async markLocalSemenAsUsed(id: number): Promise<void> {
+    await this.cryopreservedSemenRepository.update(id, { isAvailable: false });
+  }
+
+  async checkSemenViability(partnerDni: string): Promise<{ isViable: boolean; status: string }> {
+    const viability = await this.semenViabilityRepository.findOne({
+      where: { partnerDni },
+    });
+
+    if (!viability) {
+      return { isViable: false, status: 'pending' };
+    }
+
+    return {
+      isViable: viability.status === 'viable',
+      status: viability.status
+    };
+  }
+
+  async setSemenViability(
+    partnerDni: string,
+    status: 'viable' | 'not_viable',
+    notes?: string,
+    validatedBy?: string,
+    studyReference?: string
+  ): Promise<SemenViability> {
+    let viability = await this.semenViabilityRepository.findOne({
+      where: { partnerDni },
+    });
+
+    if (!viability) {
+      viability = this.semenViabilityRepository.create({
+        partnerDni,
+        status,
+        validationDate: new Date(),
+        notes,
+        validatedBy,
+        studyReference,
+      });
+    } else {
+      viability.status = status;
+      viability.validationDate = new Date();
+      if (notes !== undefined) viability.notes = notes;
+      if (validatedBy !== undefined) viability.validatedBy = validatedBy;
+      if (studyReference !== undefined) viability.studyReference = studyReference;
+    }
+
+    return this.semenViabilityRepository.save(viability);
+  }
+
+  async getSemenViability(partnerDni: string): Promise<SemenViability | null> {
+    return this.semenViabilityRepository.findOne({
+      where: { partnerDni },
+    });
   }
 
   // aca CRUD

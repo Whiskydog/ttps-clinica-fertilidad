@@ -78,6 +78,7 @@ export const EmbryoSchema = z.object({
     })
     .optional(),
   pgtResult: z.nativeEnum(PgtResult).nullable().optional(),
+  pgtDecisionSuggested: z.string().nullable().optional(),
   finalDisposition: z.nativeEnum(EmbryoDisposition).nullable(),
   cryoTank: z.string().nullable(),
   cryoRack: z.string().nullable(),
@@ -231,5 +232,11 @@ export const UpdateEmbryoSchema = CreateEmbryoSchema.partial().extend({
   id: z.number(),
 });
 
+export const UpdateEmbryoPgtSchema = z.object({
+  pgtResult: z.nativeEnum(PgtResult).nullable().optional(),
+  pgtDecisionSuggested: z.string().nullable().optional(),
+});
+
 export type CreateEmbryoInput = z.infer<typeof CreateEmbryoSchema>;
 export type UpdateEmbryoInput = z.infer<typeof UpdateEmbryoSchema>;
+export type UpdateEmbryoPgtInput = z.infer<typeof UpdateEmbryoPgtSchema>;

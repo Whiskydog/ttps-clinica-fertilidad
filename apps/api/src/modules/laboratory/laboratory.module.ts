@@ -11,6 +11,8 @@ import { PunctureRecord } from './entities/puncture-record.entity';
 import { Oocyte } from './entities/oocyte.entity';
 import { OocyteStateHistory } from './entities/oocyte-state-history.entity';
 import { Embryo } from './entities/embryo.entity';
+import { CryopreservedSemen } from './entities/cryopreserved-semen.entity';
+import { SemenViability } from './entities/semen-viability.entity';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { Patient } from '@users/entities/patient.entity';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
@@ -22,6 +24,8 @@ import { TreatmentsModule } from '@modules/treatments/treatments.module';
       Oocyte,
       OocyteStateHistory,
       Embryo,
+      CryopreservedSemen,
+      SemenViability,
       Treatment,
       Patient,
     ]),
