@@ -164,7 +164,7 @@ export function GeneratePdfSheet({
 
         <div className="space-y-6 mt-6">
           <div className="space-y-2">
-            <Label>Firma del Médico (PNG) *</Label>
+            <Label>Firma del Médico (PNG) 🞲</Label>
             <div className="flex flex-col gap-2">
               <Input
                 type="file"

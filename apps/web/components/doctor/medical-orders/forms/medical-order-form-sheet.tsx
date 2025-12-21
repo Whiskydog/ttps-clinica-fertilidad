@@ -195,7 +195,7 @@ export function MedicalOrderFormSheet({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Estudio *</FormLabel>
+                  <FormLabel>Tipo de Estudio 🞲</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>

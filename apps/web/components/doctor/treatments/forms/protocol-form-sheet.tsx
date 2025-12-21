@@ -79,24 +79,24 @@ export function ProtocolFormSheet({
     resolver: zodResolver(isEditMode ? UpdateFormSchema : CreateFormSchema),
     defaultValues: isEditMode
       ? {
-          id: protocol?.id,
-          treatmentId,
-          protocolType: protocol?.protocolType || "",
-          drugName: protocol?.drugName || "",
-          dose: protocol?.dose || "",
-          administrationRoute: protocol?.administrationRoute || "",
-          duration: protocol?.duration || null,
-          startDate: normalizeDateForInput(protocol?.startDate),
-        }
+        id: protocol?.id,
+        treatmentId,
+        protocolType: protocol?.protocolType || "",
+        drugName: protocol?.drugName || "",
+        dose: protocol?.dose || "",
+        administrationRoute: protocol?.administrationRoute || "",
+        duration: protocol?.duration || null,
+        startDate: normalizeDateForInput(protocol?.startDate),
+      }
       : {
-          treatmentId,
-          protocolType: "",
-          drugName: "",
-          dose: "",
-          administrationRoute: "",
-          duration: null,
-          startDate: null,
-        },
+        treatmentId,
+        protocolType: "",
+        drugName: "",
+        dose: "",
+        administrationRoute: "",
+        duration: null,
+        startDate: null,
+      },
   });
 
   useEffect(() => {
@@ -201,7 +201,7 @@ export function ProtocolFormSheet({
               name="protocolType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Protocolo *</FormLabel>
+                  <FormLabel>Tipo de Protocolo 🞲</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -218,7 +218,7 @@ export function ProtocolFormSheet({
               name="drugName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medicamento Principal *</FormLabel>
+                  <FormLabel>Medicamento Principal 🞲</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Ej: FSH recombinante" />
                   </FormControl>

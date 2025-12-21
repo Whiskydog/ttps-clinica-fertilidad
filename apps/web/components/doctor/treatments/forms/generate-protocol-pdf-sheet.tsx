@@ -101,7 +101,7 @@ export function GenerateProtocolPdfSheet({
   const handleDownload = () => {
     const url = generatedPdfUrl || existingPdfUrl;
     if (url) {
-      window.open(getFileUrl(url), "_blank");
+      window.open(getFileUrl(url) || undefined, "_blank");
     }
   };
 
@@ -179,7 +179,7 @@ export function GenerateProtocolPdfSheet({
 
           {/* Input de firma */}
           <div className="space-y-3">
-            <Label>Firma del Médico *</Label>
+            <Label>Firma del Médico 🞲</Label>
             <p className="text-sm text-muted-foreground">
               Suba una imagen de su firma (PNG o JPG, máximo 500KB)
             </p>
