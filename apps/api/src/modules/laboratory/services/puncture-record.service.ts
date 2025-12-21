@@ -27,7 +27,7 @@ export class PunctureRecordService {
     });
 
     if (!record) {
-      throw new NotFoundException(`Puncture record with ID ${id} not found`);
+      throw new NotFoundException(`Registro de punción con ID ${id} no encontrado`);
     }
 
     return record;

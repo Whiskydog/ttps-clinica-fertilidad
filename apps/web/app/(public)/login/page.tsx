@@ -135,6 +135,17 @@ export default function LoginPage() {
               Regístrese aquí
             </Link>
           </p>
+
+          {/* Staff Login Link */}
+          <p className="mt-6 text-center text-sm text-gray-600">
+            ¿Eres personal de la clínica?{" "}
+            <Link
+              href="/staff-login"
+              className="text-blue-600 hover:text-blue-500 underline font-medium"
+            >
+              Inicia sesión aquí
+            </Link>
+          </p>
         </div>
 
         {/* Footer */}

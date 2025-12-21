@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,10 +9,11 @@ import {
   SheetTitle,
 } from "@repo/ui/sheet";
 import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
-import { X, FileText, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@repo/ui/alert";
+import { FileText, Loader2, Info, AlertTriangle } from "lucide-react";
 import { toast } from "@repo/ui";
+import { getSignature } from "@/app/actions/doctor/signature/get-signature";
+import Link from "next/link";
 
 interface GeneratePdfSheetProps {
   open: boolean;
@@ -29,59 +30,45 @@ export function GeneratePdfSheet({
   orderCode,
   onSuccess,
 }: GeneratePdfSheetProps) {
-  const [signatureFile, setSignatureFile] = useState<File | null>(null);
-  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasSignature, setHasSignature] = useState<boolean | null>(null);
+  const [isCheckingSignature, setIsCheckingSignature] = useState(false);
 
-  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.includes("png") && !file.type.includes("image")) {
-        toast.error("La firma debe ser una imagen PNG");
-        return;
-      }
-      // Validate file size (max 500KB for signatures)
-      const maxSizeKB = 500;
-      if (file.size > maxSizeKB * 1024) {
-        toast.error(
-          `La imagen de firma es muy grande (${(file.size / 1024).toFixed(0)}KB). El máximo permitido es ${maxSizeKB}KB. Por favor, reduzca el tamaño de la imagen.`
-        );
-        return;
-      }
-      setSignatureFile(file);
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSignaturePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    if (open) {
+      checkSignature();
     }
-  };
+  }, [open]);
 
-  const clearSignature = () => {
-    setSignatureFile(null);
-    setSignaturePreview(null);
+  const checkSignature = async () => {
+    setIsCheckingSignature(true);
+    try {
+      const result = await getSignature();
+
+      // El backend puede devolver la estructura anidada
+      const signatureData = (result.data as any)?.data || result.data;
+      const hasSignatureUri = !!signatureData?.signatureUri;
+
+      setHasSignature(result.success && hasSignatureUri);
+    } catch (error) {
+      console.error("Error checking signature:", error);
+      setHasSignature(false);
+    } finally {
+      setIsCheckingSignature(false);
+    }
   };
 
   const handleGeneratePdf = async () => {
-    if (!signatureFile) {
-      toast.error("Debe subir la firma del médico");
-      return;
-    }
-
     setIsGenerating(true);
 
     try {
       const formData = new FormData();
-      formData.append("doctorSignature", signatureFile);
 
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
       const url = `${backendUrl}/medical-orders/${orderId}/generate-pdf`;
 
       console.log("Generando PDF para orden:", orderId);
       console.log("URL:", url);
-      console.log("Archivo:", signatureFile.name, signatureFile.size, "bytes");
 
       const response = await fetch(url, {
         method: "POST",
@@ -112,10 +99,6 @@ export function GeneratePdfSheet({
       toast.success(
         "PDF generado correctamente. Se enviará un email al paciente."
       );
-
-      // Reset state
-      setSignatureFile(null);
-      setSignaturePreview(null);
 
       onSuccess();
       onOpenChange(false);
@@ -163,42 +146,41 @@ export function GeneratePdfSheet({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
-          <div className="space-y-2">
-            <Label>Firma del Médico (PNG) 🞲</Label>
-            <div className="flex flex-col gap-2">
-              <Input
-                type="file"
-                accept="image/png,image/*"
-                onChange={handleSignatureChange}
-                className="cursor-pointer"
-              />
-              {signaturePreview && (
-                <div className="relative border rounded-lg p-2 bg-gray-50">
-                  <img
-                    src={signaturePreview}
-                    alt="Vista previa de firma"
-                    className="max-h-24 mx-auto"
-                  />
-                  <button
-                    type="button"
-                    onClick={clearSignature}
-                    className="absolute top-1 right-1 text-red-600 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Suba una imagen PNG con su firma (máximo 500KB) para incluirla
-                en el PDF de la orden médica
-              </p>
+          {isCheckingSignature ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <span className="ml-2 text-sm text-gray-600">
+                Verificando firma...
+              </span>
             </div>
-          </div>
+          ) : hasSignature === false ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                No tiene una firma guardada configurada. Debe agregar su firma
+                antes de poder generar el PDF.{" "}
+                <Link
+                  href="/doctor/signature"
+                  className="underline font-medium"
+                >
+                  Ir a Mi Firma
+                </Link>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Se utilizará su firma guardada para generar el PDF de la orden
+                médica.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button
               onClick={handleGeneratePdf}
-              disabled={!signatureFile || isGenerating}
+              disabled={isGenerating || isCheckingSignature || !hasSignature}
               className="flex-1"
             >
               {isGenerating ? (

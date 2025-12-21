@@ -1,3 +1,4 @@
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 import {
   AppointmentResponseDto,
   AppointmentsResponseDto,
@@ -21,12 +22,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { RoleCode } from '@repo/contracts';
+import { AppointmentDetail, RoleCode } from '@repo/contracts';
 import moment from 'moment';
-import { AppointmentsService } from './appointments.service';
-import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { Appointment } from './appointment.entity';
+import { AppointmentsService } from './appointments.service';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -57,7 +57,6 @@ export class AppointmentsController {
     return appointment;
   }
 
-  // Obtener turnos del paciente autenticado
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ZodSerializerDto(AppointmentsResponseDto)
@@ -65,18 +64,22 @@ export class AppointmentsController {
     return this.appointmentsService.getPatientAppointments(user.id);
   }
 
-  // Crear grilla de turnos para un médico
+  @Get('available')
+  @UseGuards(JwtAuthGuard)
+  getAvailableAppointments(): Promise<AppointmentDetail[]> {
+    return this.appointmentsService.getAvailableSlots();
+  }
+
   @Post('doctor/slots')
   createDoctorSlots(@Body() dto: PostTurnosDto) {
     return this.appointmentsService.createDoctorSlots(dto);
   }
 
-  // Listar turnos disponibles de un médico
   @Get('doctor/:id/available')
   getAvailableDoctorSlots(
     @Param('id', ParseIntPipe) id: number,
     @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
-  ) {
+  ): Promise<AppointmentDetail[]> {
     if (date) {
       this.logger.log(
         `Fetching available doctor slots for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,
@@ -95,7 +98,7 @@ export class AppointmentsController {
   getDoctorAppointments(
     @Param('id', ParseIntPipe) id: number,
     @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
-  ) {
+  ): Promise<AppointmentDetail[]> {
     if (date) {
       this.logger.log(
         `Fetching doctor appointments for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,

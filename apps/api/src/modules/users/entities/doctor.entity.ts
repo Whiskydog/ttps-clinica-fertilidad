@@ -11,6 +11,9 @@ export class Doctor extends User {
   @Column({ name: 'license_number', unique: true })
   licenseNumber: string;
 
+  @Column({ name: 'signature_uri', type: 'text', nullable: true })
+  signatureUri?: string | null;
+
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointments: Appointment[];
 }

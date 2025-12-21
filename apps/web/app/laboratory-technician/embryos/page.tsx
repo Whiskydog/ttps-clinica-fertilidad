@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@repo/ui/table";
 import type { EmbryoDetail, OocyteDetail, Doctor } from "@repo/contracts";
+import { PgtResult } from "@repo/contracts";
 
 interface Gamete {
   id: number;
@@ -68,11 +69,29 @@ export default function EmbryosPage() {
   const [cryoForm, setCryoForm] = useState({ tank: "", rack: "", tube: "" });
   const [donatedSperms, setDonatedSperms] = useState<Gamete[]>([]);
   const [loadingSperms, setLoadingSperms] = useState(false);
+  const [cryopreservedSemen, setCryopreservedSemen] = useState<any[]>([]);
+  const [loadingCryopreserved, setLoadingCryopreserved] = useState(false);
+  const [isViable, setIsViable] = useState<boolean | null>(null);
   const itemsPerPage = 10;
 
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [discardCause, setDiscardCause] = useState("");
+
+  const [showPgtModal, setShowPgtModal] = useState(false);
+  const [pgtForm, setPgtForm] = useState({ pgtResult: undefined as PgtResult | undefined, pgtDecisionSuggested: "" });
+
+  const [showViabilityModal, setShowViabilityModal] = useState(false);
+  const [viabilityForm, setViabilityForm] = useState({
+    status: 'viable' as 'viable' | 'not_viable',
+    notes: '',
+    studyReference: '',
+  });
+  const [viabilityDetails, setViabilityDetails] = useState<any>(null);
+
+  const [partnerDni, setPartnerDni] = useState<string | null>(null);
+  const [semenOptions, setSemenOptions] = useState<string[]>(['own', 'donated']);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const fetchOocytes = async () => {
     const res = await fetch("/api/laboratory/oocytes/mature", {
@@ -102,7 +121,8 @@ export default function EmbryosPage() {
     qualityScore: "",
     semenSource: "own",
     donationIdUsed: "",
-    pgtResult: "",
+    dniPareja: "",
+    pgtResult: "pending",
   });
 
   useEffect(() => {
@@ -112,14 +132,40 @@ export default function EmbryosPage() {
   }, [currentPage]);
 
   useEffect(() => {
+    if (form.oocyteOriginId) {
+      fetchPatientFromOocyte(form.oocyteOriginId);
+    } else {
+      setPartnerDni(null);
+      setSemenOptions(['own', 'donated']);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [form.oocyteOriginId]);
+
+  useEffect(() => {
     if (form.semenSource === "donated") {
       fetchDonatedSperms();
-    } else {
-      // Clear donated sperms when switching back to own
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
+    } else if (form.semenSource === "cryopreserved") {
+      if (partnerDni) {
+        fetchCryopreservedSemen();
+      }
       setDonatedSperms([]);
       setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
+    } else if (form.semenSource === "own") {
+      checkViability();
+      setDonatedSperms([]);
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+    } else {
+      setDonatedSperms([]);
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
     }
-  }, [form.semenSource]);
+  }, [form.semenSource, form.dniPareja, partnerDni]);
 
   const fetchEmbryos = async () => {
     const res = await fetch(
@@ -168,6 +214,120 @@ export default function EmbryosPage() {
     }
   };
 
+  const fetchCryopreservedSemen = async () => {
+    if (!form.dniPareja) return;
+    setLoadingCryopreserved(true);
+    try {
+      const response = await fetch(`/api/laboratory/cryopreserved-semen/dni/${form.dniPareja}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      const semenData = data.data || data; // Handle nested or direct response
+      if (Array.isArray(semenData)) {
+        setCryopreservedSemen(semenData);
+      } else {
+        toast.error("Error al consultar semen criopreservado");
+        setCryopreservedSemen([]);
+      }
+    } catch {
+      toast.error("Error de conexión");
+      setCryopreservedSemen([]);
+    } finally {
+      setLoadingCryopreserved(false);
+    }
+  };
+
+  const checkViability = async () => {
+    if (!form.dniPareja) {
+      setIsViable(null);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      const viabilityData = data.data || data; // Handle nested or direct response
+      setIsViable(viabilityData.isViable);
+
+      // Also fetch details for the modal
+      if (viabilityData.status !== 'pending') {
+        fetchViabilityDetails();
+      }
+    } catch {
+      setIsViable(false);
+    }
+  };
+
+  const fetchViabilityDetails = async () => {
+    if (!form.dniPareja) return;
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}/details`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      setViabilityDetails(data.data || data);
+    } catch (error) {
+      console.error('Error fetching viability details:', error);
+    }
+  };
+
+  const handleValidateViability = async () => {
+    if (!form.dniPareja) return;
+
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}/validate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(viabilityForm),
+      });
+
+      if (response.ok) {
+        toast.success('Viabilidad de semen actualizada correctamente');
+        setShowViabilityModal(false);
+        await checkViability(); // Refresh viability status
+        setViabilityForm({ status: 'viable', notes: '', studyReference: '' });
+      } else {
+        toast.error('Error al actualizar viabilidad');
+      }
+    } catch (error) {
+      console.error('Error validating viability:', error);
+      toast.error('Error de conexión');
+    }
+  };
+
+  const fetchPatientFromOocyte = async (oocyteId: string) => {
+    if (!oocyteId) return;
+    try {
+      const response = await fetch(`/api/laboratory/oocytes/${oocyteId}/patient`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const apiResponse = await response.json();
+      const data = apiResponse.data; // Access the nested data
+      if (data.partnerDni) {
+        setPartnerDni(data.partnerDni);
+        setForm((prev) => ({ ...prev, dniPareja: data.partnerDni }));
+        setSemenOptions(['own', 'donated', 'cryopreserved']);
+        setForceUpdate(prev => prev + 1);
+      } else {
+        setPartnerDni(null);
+        setForm((prev) => ({ ...prev, dniPareja: "" }));
+        setSemenOptions(['own', 'donated']);
+        setForceUpdate(prev => prev + 1);
+      }
+      // Reset validation
+    } catch (error) {
+      toast.error("Error al buscar paciente del ovocito");
+      setPartnerDni(null);
+      setForm((prev) => ({ ...prev, dniPareja: "" }));
+      setSemenOptions(['own', 'donated']);
+      setForceUpdate(prev => prev + 1);
+    }
+  };
+
   const handleCryopreserve = async () => {
     if (!selectedEmbryo) return;
     const res = await fetch(
@@ -182,12 +342,12 @@ export default function EmbryosPage() {
       }
     );
     if (res.ok) {
-      toast.success("Embryo cryopreserved successfully");
+      toast.success("Embrión criopreservado exitosamente");
       setIsCryoModalOpen(false);
       setIsModalOpen(false);
       fetchEmbryos();
     } else {
-      toast.error("Failed to cryopreserve embryo");
+      toast.error("Error al criopreservar embrión");
     }
   };
 
@@ -209,16 +369,63 @@ export default function EmbryosPage() {
       }
     );
     if (res.ok) {
-      toast.success("Embryo discarded successfully");
+      toast.success("Embrión descartado exitosamente");
       setIsModalOpen(false);
       fetchEmbryos();
     } else {
-      toast.error("Failed to discard embryo");
+      toast.error("Error al descartar embrión");
+    }
+  };
+
+  const handleUpdatePgt = async () => {
+    if (!selectedEmbryo) return;
+    
+    const payload: any = {};
+    if (pgtForm.pgtResult !== undefined) {
+      payload.pgtResult = pgtForm.pgtResult;
+    }
+    if (pgtForm.pgtDecisionSuggested && pgtForm.pgtDecisionSuggested.trim() !== "") {
+      payload.pgtDecisionSuggested = pgtForm.pgtDecisionSuggested;
+    }
+    
+    const res = await fetch(
+      `/api/laboratory/embryos/${selectedEmbryo.id}/pgt`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    if (res.ok) {
+      toast.success("PGT actualizado exitosamente");
+      setShowPgtModal(false);
+      
+      // Actualizar el selectedEmbryo con los nuevos valores de PGT
+      if (selectedEmbryo) {
+        setSelectedEmbryo({
+          ...selectedEmbryo,
+          pgtResult: pgtForm.pgtResult || selectedEmbryo.pgtResult,
+          pgtDecisionSuggested: pgtForm.pgtDecisionSuggested || selectedEmbryo.pgtDecisionSuggested,
+        });
+      }
+      
+      fetchEmbryos();
+    } else {
+      toast.error("Error al actualizar PGT");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate semen viability for own semen
+    if (form.semenSource === "own" && isViable === false) {
+      toast.error("No se puede crear un embrión con semen propio no viable. Valide la viabilidad primero.");
+      return;
+    }
 
     const selectedSperm = donatedSperms.find(
       (s) => s.id.toString() === form.donationIdUsed
@@ -255,6 +462,7 @@ export default function EmbryosPage() {
         qualityScore: "",
         semenSource: "own",
         donationIdUsed: "",
+        dniPareja: "",
         pgtResult: "",
       });
     } else {
@@ -265,7 +473,7 @@ export default function EmbryosPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-green-800">
+        <h1 className="text-3xl font-bold text-blue-800">
           Gestión de Embriones
         </h1>
         <Button onClick={() => window.history.back()} variant="outline">
@@ -274,17 +482,26 @@ export default function EmbryosPage() {
       </div>
 
       {/* Formulario de Creación */}
-      <Card className="bg-green-50 border-green-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-green-800">
+          <CardTitle className="text-blue-800">
             Registrar Nuevo Embrión
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {partnerDni && (
+                <div>
+                  <Label className="text-blue-700">
+                    DNI de la Pareja: {partnerDni}
+                  </Label>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="oocyteOriginId" className="text-green-700">
+                <Label htmlFor="oocyteOriginId" className="text-blue-700">
                   Ovocito de Origen
                 </Label>
                 <Select
@@ -293,7 +510,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, oocyteOriginId: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione un ovocito maduro no criopreservado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -306,8 +523,8 @@ export default function EmbryosPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="fertilizationDate" className="text-green-700">
-                  Fecha de Fecundación
+                <Label htmlFor="fertilizationDate" className="text-blue-700">
+                  Fecha de Fecundación *
                 </Label>
                 <Input
                   id="fertilizationDate"
@@ -316,7 +533,7 @@ export default function EmbryosPage() {
                   onChange={(e) =>
                     setForm({ ...form, fertilizationDate: e.target.value })
                   }
-                  className="border-green-300 focus:border-green-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
@@ -325,9 +542,9 @@ export default function EmbryosPage() {
               <div>
                 <Label
                   htmlFor="fertilizationTechnique"
-                  className="text-green-700"
+                  className="text-blue-700"
                 >
-                  Técnica de Fecundación
+                  Técnica de Fecundación *
                 </Label>
                 <Select
                   value={form.fertilizationTechnique}
@@ -335,7 +552,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, fertilizationTechnique: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione técnica" />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,8 +562,8 @@ export default function EmbryosPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="technicianId" className="text-green-700">
-                  Técnico
+                <Label htmlFor="technicianId" className="text-blue-700">
+                  Técnico *
                 </Label>
                 <Select
                   value={form.technicianId}
@@ -354,7 +571,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, technicianId: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione técnico" />
                   </SelectTrigger>
                   <SelectContent>
@@ -369,8 +586,8 @@ export default function EmbryosPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="qualityScore" className="text-green-700">
-                  Calidad (1-6)
+                <Label htmlFor="qualityScore" className="text-blue-700">
+                  Calidad (1-6) *
                 </Label>
                 <Input
                   id="qualityScore"
@@ -381,39 +598,63 @@ export default function EmbryosPage() {
                   onChange={(e) =>
                     setForm({ ...form, qualityScore: e.target.value })
                   }
-                  className="border-green-300 focus:border-green-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="semenSource" className="text-green-700">
-                  Fuente de Semen
-                </Label>
-                <Select
-                  value={form.semenSource}
-                  onValueChange={(value) =>
-                    setForm({ ...form, semenSource: value })
-                  }
-                >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
-                    <SelectValue placeholder="Seleccione fuente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="own">Propio</SelectItem>
-                    <SelectItem value="donated">Donado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {form.oocyteOriginId && (
+                <div>
+                  <Label htmlFor="semenSource" className="text-blue-700">
+                    Fuente de Semen *
+                  </Label>
+                  <div className="flex gap-2">
+                    <Select
+                      key={`semen-${forceUpdate}`}
+                      value={form.semenSource}
+                      onValueChange={(value) =>
+                        setForm({ ...form, semenSource: value })
+                      }
+                    >
+                      <SelectTrigger className="border-blue-300 focus:border-blue-500 flex-1">
+                        <SelectValue placeholder="Seleccione fuente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="own">
+                          Propio de la pareja {isViable === false ? "(No viable)" : isViable === true ? "(Viable)" : "(Pendiente)"}
+                        </SelectItem>
+                        <SelectItem value="donated">Donado</SelectItem>
+                        {semenOptions.indexOf('cryopreserved') !== -1 && (
+                          <SelectItem value="cryopreserved">Criopreservado de la pareja</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {form.semenSource === "own" && form.dniPareja && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          fetchViabilityDetails();
+                          setShowViabilityModal(true);
+                        }}
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                      >
+                        Validar Viabilidad
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             {form.semenSource === "donated" && (
               <div>
-                <Label htmlFor="donationIdUsed" className="text-green-700">
+                <Label htmlFor="donationIdUsed" className="text-blue-700">
                   Esperma Donado
                 </Label>
                 {loadingSperms ? (
-                  <div className="flex items-center justify-center p-4 border border-green-300 rounded-md">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-                    <span className="ml-2 text-green-600">
+                  <div className="flex items-center justify-center p-4 border border-blue-300 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-blue-600">
                       Cargando espermas...
                     </span>
                   </div>
@@ -424,7 +665,7 @@ export default function EmbryosPage() {
                       setForm({ ...form, donationIdUsed: value })
                     }
                   >
-                    <SelectTrigger className="border-green-300 focus:border-green-500">
+                    <SelectTrigger className="border-blue-300 focus:border-blue-500">
                       <SelectValue placeholder="Seleccione un esperma donado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -440,9 +681,42 @@ export default function EmbryosPage() {
                 )}
               </div>
             )}
+            {form.semenSource === "cryopreserved" && (
+              <div>
+                <Label htmlFor="donationIdUsed" className="text-blue-700">
+                  Semen Criopreservado
+                </Label>
+                {loadingCryopreserved ? (
+                  <div className="flex items-center justify-center p-4 border border-blue-300 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-blue-600">
+                      Cargando semen criopreservado...
+                    </span>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.donationIdUsed}
+                    onValueChange={(value) =>
+                      setForm({ ...form, donationIdUsed: value })
+                    }
+                  >
+                    <SelectTrigger className="border-blue-300 focus:border-blue-500">
+                      <SelectValue placeholder="Seleccione semen criopreservado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cryopreservedSemen.map((semen) => (
+                        <SelectItem key={semen.id} value={semen.id.toString()}>
+                          Fecha: {new Date(semen.cryopreservationDate).toLocaleDateString('es-ES')} - Ubicación: Tanque {semen.cryoTank}, Rack {semen.cryoRack}, Tubo {semen.cryoTube}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
             <div>
-              <Label htmlFor="pgtResult" className="text-green-700">
-                Resultado PGT
+              <Label htmlFor="pgtResult" className="text-blue-700">
+                Resultado PGT (Opcional)
               </Label>
               <Select
                 value={form.pgtResult}
@@ -450,19 +724,19 @@ export default function EmbryosPage() {
                   setForm({ ...form, pgtResult: value })
                 }
               >
-                <SelectTrigger className="border-green-300 focus:border-green-500">
+                <SelectTrigger className="border-blue-300 focus:border-blue-500">
                   <SelectValue placeholder="Seleccione resultado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ok">OK</SelectItem>
-                  <SelectItem value="not_ok">Not OK</SelectItem>
+                  <SelectItem value="ok">Apto</SelectItem>
+                  <SelectItem value="not_ok">No Apto</SelectItem>
                   <SelectItem value="pending">Pendiente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Button
               type="submit"
-              className="bg-green-600 hover:bg-green-700 w-full"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full"
             >
               Registrar Embrión
             </Button>
@@ -471,9 +745,9 @@ export default function EmbryosPage() {
       </Card>
 
       {/* Listado de Embriones */}
-      <Card className="bg-green-50 border-green-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-green-800">
+          <CardTitle className="text-blue-800">
             Embriones Registrados ({embryos.length})
           </CardTitle>
         </CardHeader>
@@ -481,30 +755,33 @@ export default function EmbryosPage() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-green-100">
-                  <TableHead className="font-semibold text-green-800">
+                <TableRow className="bg-blue-100">
+                  <TableHead className="font-semibold text-blue-800">
                     ID
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Identificador
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Fecha de Fertilización
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Calidad
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
-                    Disposición
+                  <TableHead className="font-semibold text-blue-800">
+                    PGT
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
+                    Estado
+                  </TableHead>
+                  <TableHead className="font-semibold text-blue-800">
                     Acciones
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {embryos.map((embryo) => (
-                  <TableRow key={embryo.id} className="hover:bg-green-25">
+                  <TableRow key={embryo.id} className="hover:bg-blue-25">
                     <TableCell className="font-medium">{embryo.id}</TableCell>
                     <TableCell>
                       <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
@@ -528,7 +805,13 @@ export default function EmbryosPage() {
                           <span className="font-medium">
                             {embryo.qualityScore}
                           </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className={
+                            embryo.qualityScore >= 4
+                              ? "bg-green-100 text-green-800 border-green-200 text-xs"
+                              : embryo.qualityScore >= 2
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200 text-xs"
+                              : "bg-red-100 text-red-800 border-red-200 text-xs"
+                          }>
                             {embryo.qualityScore >= 4
                               ? "Buena"
                               : embryo.qualityScore >= 2
@@ -543,17 +826,48 @@ export default function EmbryosPage() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {embryo.pgtResult ? (
+                        <Badge
+                          variant="outline"
+                          className={
+                            embryo.pgtResult === "ok"
+                              ? "bg-green-500 text-white border-green-500"
+                              : embryo.pgtResult === "not_ok"
+                              ? "bg-red-100 text-red-800 border-red-200"
+                              : embryo.pgtResult === "pending"
+                              ? "bg-blue-100 text-blue-800 border-blue-200"
+                              : ""
+                          }
+                        >
+                          {embryo.pgtResult === "ok"
+                            ? "Apto"
+                            : embryo.pgtResult === "not_ok"
+                              ? "No Apto"
+                              : embryo.pgtResult === "pending"
+                              ? "Pendiente"
+                              : embryo.pgtResult}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-500 italic">
+                          Sin resultado
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge
-                        variant={
-                          embryo.finalDisposition === "cryopreserved"
-                            ? "secondary"
-                            : embryo.finalDisposition === "transferred"
-                              ? "default"
-                              : embryo.finalDisposition === "discarded"
-                                ? "destructive"
-                                : "outline"
+                        variant="outline"
+                        className={
+                          embryo.finalDisposition === "transferred"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : embryo.finalDisposition === "cryopreserved"
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : embryo.finalDisposition === "discarded"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : embryo.finalDisposition === null ||
+                              embryo.finalDisposition === undefined
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "text-xs"
                         }
-                        className="text-xs"
                       >
                         {embryo.finalDisposition === "cryopreserved"
                           ? "Criopreservado"
@@ -572,7 +886,7 @@ export default function EmbryosPage() {
                           setSelectedEmbryo(embryo);
                           setIsModalOpen(true);
                         }}
-                        className="border-green-300 hover:bg-green-50"
+                        className="border-blue-300 hover:bg-blue-50"
                       >
                         <Eye className="w-3 h-3 mr-1" />
                         Gestionar
@@ -693,7 +1007,13 @@ export default function EmbryosPage() {
                           {selectedEmbryo!.qualityScore || "No evaluada"}
                         </span>
                         {selectedEmbryo!.qualityScore && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className={
+                            selectedEmbryo!.qualityScore >= 4
+                              ? "bg-green-100 text-green-800 border-green-200 text-xs"
+                              : selectedEmbryo!.qualityScore >= 2
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200 text-xs"
+                              : "bg-red-100 text-red-800 border-red-200 text-xs"
+                          }>
                             {selectedEmbryo!.qualityScore >= 4
                               ? "Buena"
                               : selectedEmbryo!.qualityScore >= 2
@@ -709,10 +1029,12 @@ export default function EmbryosPage() {
                       </Label>
                       <p className="text-sm">
                         {selectedEmbryo!.semenSource === "own"
-                          ? "Propio del paciente"
+                          ? "Propio de la pareja"
                           : selectedEmbryo!.semenSource === "donated"
                             ? "Donado"
-                            : "No especificada"}
+                            : selectedEmbryo!.semenSource === "cryopreserved"
+                              ? "Criopreservado de la pareja"
+                              : "No especificada"}
                       </p>
                     </div>
                     {selectedEmbryo!.semenSource === "donated" &&
@@ -726,15 +1048,26 @@ export default function EmbryosPage() {
                           </p>
                         </div>
                       )}
+                    {selectedEmbryo!.semenSource === "cryopreserved" &&
+                      selectedEmbryo!.donationIdUsed && (
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-gray-700">
+                            ID de Semen Criopreservado
+                          </Label>
+                          <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                            {selectedEmbryo!.donationIdUsed}
+                          </p>
+                        </div>
+                      )}
                     <div className="space-y-1">
                       <Label className="text-sm font-medium text-gray-700">
                         Resultado PGT
                       </Label>
                       <p className="text-sm">
                         {selectedEmbryo!.pgtResult === "ok"
-                          ? "OK"
+                          ? "Apto"
                           : selectedEmbryo!.pgtResult === "not_ok"
-                            ? "No OK"
+                            ? "No Apto"
                             : selectedEmbryo!.pgtResult === "pending"
                               ? "Pendiente"
                               : "No realizado"}
@@ -745,14 +1078,18 @@ export default function EmbryosPage() {
                         Estado Actual
                       </Label>
                       <Badge
-                        variant={
-                          selectedEmbryo!.finalDisposition === "cryopreserved"
-                            ? "secondary"
-                            : selectedEmbryo!.finalDisposition === "transferred"
-                              ? "default"
-                              : selectedEmbryo!.finalDisposition === "discarded"
-                                ? "destructive"
-                                : "outline"
+                        variant="outline"
+                        className={
+                          selectedEmbryo!.finalDisposition === "transferred"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : selectedEmbryo!.finalDisposition === "cryopreserved"
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : selectedEmbryo!.finalDisposition === "discarded"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : selectedEmbryo!.finalDisposition === null ||
+                              selectedEmbryo!.finalDisposition === undefined
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "text-xs"
                         }
                       >
                         {selectedEmbryo!.finalDisposition === "cryopreserved"
@@ -837,7 +1174,19 @@ export default function EmbryosPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <Button
+                        onClick={() => {
+                          setPgtForm({
+                            pgtResult: selectedEmbryo?.pgtResult || undefined,
+                            pgtDecisionSuggested: selectedEmbryo?.pgtDecisionSuggested || "",
+                          });
+                          setShowPgtModal(true);
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700 h-12"
+                      >
+                        Actualizar PGT
+                      </Button>
                       <Button
                         onClick={() => setIsCryoModalOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 h-12"
@@ -986,6 +1335,13 @@ export default function EmbryosPage() {
               ¿Está seguro de que desea transferir este embrión? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
+          {selectedEmbryo?.pgtResult === "not_ok" && (
+            <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+              <p className="text-red-800 text-sm">
+                <strong>Advertencia:</strong> Este embrión tiene un resultado de PGT no apto. Por criterios médicos, la transferencia no puede realizarse.
+              </p>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTransferModal(false)}>
               Cancelar
@@ -1001,13 +1357,14 @@ export default function EmbryosPage() {
                 }
               );
               if (res.ok) {
-                toast.success("Embryo transferred successfully");
+                toast.success("Embrión transferido exitosamente");
                 setIsModalOpen(false);
                 fetchEmbryos();
               } else {
-                toast.error("Failed to transfer embryo");
+                const errorData = await res.json();
+                toast.error(errorData.message || "Error al transferir embrión");
               }
-            }}>
+            }} disabled={selectedEmbryo?.pgtResult === "not_ok"}>
               Transferir
             </Button>
           </DialogFooter>
@@ -1046,6 +1403,145 @@ export default function EmbryosPage() {
               }
             }}>
               Descartar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PGT Modal */}
+      <Dialog open={showPgtModal} onOpenChange={setShowPgtModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Actualizar PGT</DialogTitle>
+            <DialogDescription>
+              Actualice el resultado de PGT y sugerencia de decisión para este embrión.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="pgt-result">Resultado PGT</Label>
+              <Select
+                value={pgtForm.pgtResult}
+                onValueChange={(value) => setPgtForm({ ...pgtForm, pgtResult: value as PgtResult })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione resultado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ok">Apto</SelectItem>
+                  <SelectItem value="not_ok">No Apto</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="pgt-suggestion">Sugerencia de Decisión</Label>
+              <Input
+                id="pgt-suggestion"
+                value={pgtForm.pgtDecisionSuggested}
+                onChange={(e) => setPgtForm({ ...pgtForm, pgtDecisionSuggested: e.target.value })}
+                placeholder="Ingrese sugerencia opcional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPgtModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdatePgt}>
+              Actualizar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Validación de Viabilidad de Semen */}
+      <Dialog open={showViabilityModal} onOpenChange={setShowViabilityModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Validar Viabilidad de Semen</DialogTitle>
+            <DialogDescription>
+              Confirme la viabilidad del semen para el DNI: {form.dniPareja}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {viabilityDetails && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <h4 className="font-medium text-sm mb-2">Estado Actual:</h4>
+                <p className="text-sm">
+                  <span className={`font-medium ${
+                    viabilityDetails.status === 'viable' ? 'text-green-600' :
+                    viabilityDetails.status === 'not_viable' ? 'text-red-600' : 'text-yellow-600'
+                  }`}>
+                    {viabilityDetails.status === 'viable' ? 'Viable' :
+                     viabilityDetails.status === 'not_viable' ? 'No Viable' : 'Pendiente'}
+                  </span>
+                  {viabilityDetails.validationDate && (
+                    <span className="text-gray-500 ml-2">
+                      (Validado: {new Date(viabilityDetails.validationDate).toLocaleDateString()})
+                    </span>
+                  )}
+                </p>
+                {viabilityDetails.notes && (
+                  <p className="text-sm text-gray-600 mt-1">Notas: {viabilityDetails.notes}</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm font-medium">Estado de Viabilidad</Label>
+              <Select
+                value={viabilityForm.status}
+                onValueChange={(value: 'viable' | 'not_viable') =>
+                  setViabilityForm({ ...viabilityForm, status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viable">Viable</SelectItem>
+                  <SelectItem value="not_viable">No Viable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="study-reference" className="text-sm font-medium">
+                Referencia del Estudio (Opcional)
+              </Label>
+              <Input
+                id="study-reference"
+                value={viabilityForm.studyReference}
+                onChange={(e) =>
+                  setViabilityForm({ ...viabilityForm, studyReference: e.target.value })
+                }
+                placeholder="Ej: Estudio seminal #12345"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="viability-notes" className="text-sm font-medium">
+                Notas (Opcional)
+              </Label>
+              <textarea
+                id="viability-notes"
+                value={viabilityForm.notes}
+                onChange={(e) =>
+                  setViabilityForm({ ...viabilityForm, notes: e.target.value })
+                }
+                placeholder="Observaciones adicionales..."
+                className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViabilityModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleValidateViability}>
+              Confirmar Validación
             </Button>
           </DialogFooter>
         </DialogContent>
