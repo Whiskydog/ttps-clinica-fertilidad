@@ -11,5 +11,5 @@ export class MedicalInsurance extends BaseEntity {
 
   @Index()
   @Column({ nullable: true, unique: true })
-  externalId: number;
+  externalId: number | null;
 }
