@@ -16,3 +16,13 @@ export type ExternalPatientDebtResponse = {
   numero_grupo: number;
   deuda_total: number;
 };
+
+export type ExternalMedicalInsuranceDetail = {
+  id: number;
+  nombre: string;
+  sigla: string;
+};
+
+export type ExternalMedicalInsuranceResponse = {
+  data: ExternalMedicalInsuranceDetail[];
+};

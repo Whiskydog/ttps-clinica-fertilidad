@@ -2,7 +2,12 @@ import { getHttpExceptionFromAxiosError } from '@common/utils/errors.utils';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ExternalPatientDebtResponse, PatientDebt } from '@repo/contracts';
+import {
+  ExternalMedicalInsuranceDetail,
+  ExternalMedicalInsuranceResponse,
+  ExternalPatientDebtResponse,
+  PatientDebt,
+} from '@repo/contracts';
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 
@@ -15,6 +20,23 @@ export class PaymentsService {
     private readonly httpService: HttpService,
   ) {
     this.apiUrl = this.configService.get<string>('PAYMENTS_API_URL');
+  }
+
+  async getExternalMedicalInsurances(): Promise<
+    ExternalMedicalInsuranceDetail[]
+  > {
+    const url = `${this.apiUrl}/getObrasSociales`;
+
+    const medicalInsurances = await firstValueFrom(
+      this.httpService.get<ExternalMedicalInsuranceResponse>(url).pipe(
+        map((res) => res.data),
+        catchError((error: AxiosError) => {
+          throw getHttpExceptionFromAxiosError(error);
+        }),
+      ),
+    );
+
+    return medicalInsurances.data;
   }
 
   async getOwnDebt(patientId: number): Promise<PatientDebt> {
