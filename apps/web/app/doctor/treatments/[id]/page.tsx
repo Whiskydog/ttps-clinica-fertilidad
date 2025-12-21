@@ -114,6 +114,11 @@ export default function TreatmentDetailPage() {
   const milestones = treatmentData.milestones || [];
   const medicalCoverage = treatmentData.medicalCoverage;
 
+  // Validación: Verificar que exista al menos una orden médica completada con resultados
+  const hasCompletedOrderWithResults = medicalOrdersData?.some(
+    (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+  ) ?? false;
+
   const handleAddNote = () => {
     setSelectedNote(null);
     setNoteSheetOpen(true);
@@ -478,10 +483,20 @@ export default function TreatmentDetailPage() {
                 <p className="text-muted-foreground mb-4">
                   No se ha establecido un protocolo de medicacion para este tratamiento
                 </p>
-                <Button onClick={handleCreateProtocol}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Establecer Protocolo
-                </Button>
+                <div className="relative group inline-block">
+                  <Button
+                    onClick={handleCreateProtocol}
+                    disabled={!hasCompletedOrderWithResults}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Establecer Protocolo
+                  </Button>
+                  {!hasCompletedOrderWithResults && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                      Para crear un protocolo de medicación, primero debe completar al menos una orden médica con resultados de estudios.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : null}
@@ -710,6 +725,7 @@ export default function TreatmentDetailPage() {
         onOpenChange={setProtocolSheetOpen}
         treatmentId={treatment.id}
         protocol={protocol || null}
+        hasCompletedOrderWithResults={hasCompletedOrderWithResults}
         onSuccess={() => setProtocolSheetOpen(false)}
       />
 

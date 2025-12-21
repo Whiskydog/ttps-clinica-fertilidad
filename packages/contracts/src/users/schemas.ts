@@ -23,6 +23,7 @@ export type UserResponse = z.infer<typeof UserResponseSchema>;
 export const DoctorEntitySchema = UserEntitySchema.extend({
   specialty: z.string().max(100).nullable(),
   licenseNumber: z.string().max(50).nullable(),
+  signatureUri: z.string().nullable().optional(),
 });
 export type Doctor = z.infer<typeof DoctorEntitySchema>;
 

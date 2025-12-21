@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalOrder, MedicalOrderStatus, Study } from './entities/medical-order.entity';
@@ -7,6 +7,8 @@ import { InformedConsentService } from '@modules/treatments/services/informed-co
 import { Group1StudiesService } from '@external/group1-studies/group1-studies.service';
 import { Group8NoticesService } from '@external/group8-notices/group8-notices.service';
 import { parseDateFromString } from '@common/utils/date.utils';
+import { User } from '@users/entities/user.entity';
+import { Doctor } from '@users/entities/doctor.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,6 +19,8 @@ export class MedicalOrdersService {
   constructor(
     @InjectRepository(MedicalOrder)
     private medicalOrderRepository: Repository<MedicalOrder>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private readonly studyResultService: StudyResultService,
     private readonly informedConsentService: InformedConsentService,
     private readonly group1StudiesService: Group1StudiesService,
@@ -186,7 +190,7 @@ export class MedicalOrdersService {
 
     return await this.medicalOrderRepository.find({
       where,
-      relations: ['doctor', 'treatment', 'patient'],
+      relations: ['doctor', 'treatment', 'patient', 'studyResults'],
       order: { issueDate: 'DESC' },
     });
   }
@@ -235,7 +239,7 @@ export class MedicalOrdersService {
    */
   async generatePdf(
     orderId: number,
-    doctorSignature: Express.Multer.File,
+    doctorSignature?: Express.Multer.File,
   ): Promise<MedicalOrder> {
     this.logger.log(`Buscando orden médica con ID: ${orderId}`);
 
@@ -250,6 +254,46 @@ export class MedicalOrdersService {
     }
 
     this.logger.log(`Orden encontrada: ${order.code}, paciente: ${order.patient?.firstName} ${order.patient?.lastName}`);
+
+    // Si no se proporciona firma, buscar la firma guardada del doctor
+    let signatureToUse = doctorSignature;
+    if (!signatureToUse) {
+      this.logger.log(`No se proporcionó firma, buscando firma guardada para doctor ID: ${order.doctor.id}`);
+
+      const doctor = await this.userRepository.findOne({
+        where: { id: order.doctor.id },
+      });
+
+      const doctorSignatureUri = (doctor as Doctor)?.signatureUri;
+
+      if (!doctorSignatureUri) {
+        throw new BadRequestException(
+          'No se proporcionó firma y el médico no tiene una firma guardada. Por favor, configure su firma en el sistema.'
+        );
+      }
+
+      // Leer el archivo de firma guardada
+      const signaturePath = path.join(process.cwd(), doctorSignatureUri);
+      if (!fs.existsSync(signaturePath)) {
+        throw new BadRequestException(
+          'La firma guardada del médico no se encuentra en el sistema. Por favor, vuelva a cargar su firma.'
+        );
+      }
+
+      const signatureBuffer = fs.readFileSync(signaturePath);
+      const ext = path.extname(signaturePath);
+      const mimetype = ext === '.png' ? 'image/png' : 'image/jpeg';
+
+      // Crear un objeto File-like para la firma guardada
+      signatureToUse = {
+        buffer: signatureBuffer,
+        originalname: `doctor-${order.doctor.id}-signature${ext}`,
+        mimetype,
+        size: signatureBuffer.length,
+      } as Express.Multer.File;
+
+      this.logger.log(`Usando firma guardada del doctor: ${doctorSignatureUri}`);
+    }
 
     // Mapear categoría al tipo_estudio esperado por la API externa
     const categoryToTipoEstudio: Record<string, string> = {
@@ -300,7 +344,7 @@ export class MedicalOrdersService {
     try {
       const pdfBuffer = await this.group1StudiesService.generarOrdenMedica(
         payload,
-        doctorSignature,
+        signatureToUse,
       );
 
       // La API devuelve el PDF como Buffer binario
