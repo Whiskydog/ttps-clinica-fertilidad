@@ -41,10 +41,6 @@ export default function BookAppointmentForm() {
   const watchAppointment = form.watch("appointment");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (data.doctorId === "-1") {
-      form.setError("doctorId", { message: "Por favor seleccione un médico" });
-      return;
-    }
     if (!data.appointment) {
       form.setError("appointment", {
         message: "Por favor seleccione una cita disponible",
@@ -54,7 +50,6 @@ export default function BookAppointmentForm() {
 
     await bookAppointmentMutation.mutateAsync(
       {
-        doctorId: Number(data.doctorId),
         reason: data.reason,
         appointment: data.appointment,
       },
@@ -160,6 +155,17 @@ export default function BookAppointmentForm() {
                     value={field.value?.toString()}
                     onValueChange={field.onChange}
                   >
+                    <Field key="any" orientation="horizontal">
+                      <RadioGroupItem
+                        id="doctor-any"
+                        value="-1"
+                        checked={field.value === "-1"}
+                        onChange={() => field.onChange("-1")}
+                      />
+                      <FieldLabel htmlFor="doctor-any">
+                        Cualquier médico está bien
+                      </FieldLabel>
+                    </Field>
                     {doctors.map((doctor) => (
                       <Field key={doctor.id} orientation="horizontal">
                         <RadioGroupItem
@@ -226,7 +232,7 @@ export default function BookAppointmentForm() {
                   doctors?.find((doc) => doc.id === Number(watchDoctorId))
                     ?.lastName
                 }`
-              : "No seleccionado"}
+              : "Cualquier médico"}
           </p>
           <p>
             <span className="font-bold">Motivo: </span>

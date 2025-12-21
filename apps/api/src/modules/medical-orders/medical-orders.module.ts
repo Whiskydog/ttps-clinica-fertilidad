@@ -10,10 +10,11 @@ import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { Group1StudiesModule } from '@external/group1-studies/group1-studies.module';
 import { Group8NoticesModule } from '@external/group8-notices/group8-notices.module';
 import { AuditModule } from '@modules/audit/audit.module';
+import { User } from '@users/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MedicalOrder, StudyResult]),
+    TypeOrmModule.forFeature([MedicalOrder, StudyResult, User]),
     UploadsModule,
     forwardRef(() => TreatmentsModule),
     Group1StudiesModule,

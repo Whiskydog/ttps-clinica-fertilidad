@@ -1,10 +1,13 @@
 import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
 import { Patient } from '@modules/users/entities/patient.entity';
+import { DoctorsService } from '@modules/users/services/doctors.service';
 import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -12,19 +15,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   AppointmentDetail,
   ExternalBookingResponse,
   ReasonForVisit,
   TurnoRaw,
 } from '@repo/contracts';
-import { firstValueFrom, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { BookAppointmentDto, mapRawAppointments } from './dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Appointment } from './appointment.entity';
-import { Repository } from 'typeorm';
 import moment from 'moment';
+import { firstValueFrom, forkJoin, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { Repository } from 'typeorm';
+import { Appointment } from './appointment.entity';
+import { BookAppointmentDto, mapRawAppointments } from './dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -34,7 +37,9 @@ export class AppointmentsService {
   constructor(
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
+    @Inject(forwardRef(() => MedicalHistoryService))
     private readonly medicalHistoryService: MedicalHistoryService,
+    private readonly doctorsService: DoctorsService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
@@ -98,7 +103,7 @@ export class AppointmentsService {
     const appointment = this.appointmentRepository.create({
       externalId: externalBooking.id,
       date: moment.utc(externalBooking.fecha_hora).toDate(),
-      doctor: { id: dto.doctorId },
+      doctor: { id: dto.appointment.doctorId },
       medicalHistory: {
         id: patientMedicalHistory.id,
       },
@@ -140,15 +145,49 @@ export class AppointmentsService {
     );
   }
 
-  async getDoctorAvailableSlots(doctorId: number) {
-    const appointmentsAndSlots =
-      await this.getDoctorAppointmentsAndSlots(doctorId);
-    return appointmentsAndSlots.filter(
-      (appointment) => appointment.patientId === null,
+  async getAvailableSlots(): Promise<AppointmentDetail[]> {
+    const doctors = await this.doctorsService.getDoctors();
+    const urls = doctors.map((doctor) => {
+      return `${this.apiUrl}/get_turnos_medico?id_medico=${doctor.id}`;
+    });
+
+    const allAppointmentsObservables = urls.map((url) => {
+      const headers = this.buildAuthHeaders();
+      return this.httpService.get<{ data: TurnoRaw[] }>(url, { headers }).pipe(
+        map((resp) => mapRawAppointments(resp.data.data)),
+        catchError((err) => this.handleAxiosError(err)),
+      );
+    });
+
+    const allAppointmentsArrays = await firstValueFrom(
+      forkJoin(allAppointmentsObservables),
+    );
+
+    const allAppointments = allAppointmentsArrays.flat();
+
+    return allAppointments.filter(
+      (appointment) =>
+        appointment.patientId === null &&
+        moment.utc(appointment.dateTime).isSameOrAfter(moment.utc(), 'day'),
     );
   }
 
-  async getDoctorAvailableSlotsByDate(doctorId: number, date: string) {
+  async getDoctorAvailableSlots(
+    doctorId: number,
+  ): Promise<AppointmentDetail[]> {
+    const appointmentsAndSlots =
+      await this.getDoctorAppointmentsAndSlots(doctorId);
+    return appointmentsAndSlots.filter(
+      (appointment) =>
+        appointment.patientId === null &&
+        moment.utc(appointment.dateTime).isSameOrAfter(moment.utc(), 'day'),
+    );
+  }
+
+  async getDoctorAvailableSlotsByDate(
+    doctorId: number,
+    date: string,
+  ): Promise<AppointmentDetail[]> {
     const appointmentsAndSlots = await this.getDoctorAppointmentsAndSlotsByDate(
       doctorId,
       date,
@@ -179,7 +218,9 @@ export class AppointmentsService {
     );
   }
 
-  private async getDoctorAppointmentsAndSlots(doctorId: number) {
+  private async getDoctorAppointmentsAndSlots(
+    doctorId: number,
+  ): Promise<AppointmentDetail[]> {
     const url = `${this.apiUrl}/get_turnos_medico?id_medico=${doctorId}`;
     const headers = this.buildAuthHeaders();
     const appointmentsObservable = this.httpService

@@ -15,6 +15,7 @@ export enum FertilizationTechnique {
 export enum SemenSource {
   OWN = "own",
   DONATED = "donated",
+  CRYOPRESERVED = "cryopreserved",
 }
 
 export enum PgtResult {

@@ -54,10 +54,39 @@ export class OocyteService {
     });
 
     if (!oocyte) {
-      throw new NotFoundException(`Oocyte with ID ${id} not found`);
+      throw new NotFoundException(`Ovocito con ID ${id} no encontrado`);
     }
 
     return oocyte;
+  }
+
+  async getPatientByOocyteId(id: number): Promise<any> {
+    const oocyte = await this.oocyteRepository.findOne({
+      where: { id },
+      relations: [
+        'puncture',
+        'puncture.treatment',
+        'puncture.treatment.medicalHistory',
+        'puncture.treatment.medicalHistory.patient',
+        'puncture.treatment.medicalHistory.partnerData',
+      ],
+    });
+
+    if (!oocyte) {
+      throw new NotFoundException(`Ovocito con ID ${id} no encontrado`);
+    }
+
+    const patient = oocyte.puncture.treatment.medicalHistory.patient;
+    const partnerData = oocyte.puncture.treatment.medicalHistory.partnerData.find(p => p.isActive);
+    const partnerDni = partnerData?.dni || null;
+
+    return {
+      id: patient.id,
+      dni: patient.dni,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      partnerDni,
+    };
   }
 
   async findByPatientId(patientId: number): Promise<Oocyte[]> {
@@ -96,7 +125,7 @@ export class OocyteService {
         ],
       });
     if (!puncture) {
-      throw new NotFoundException('Puncture record not found');
+      throw new NotFoundException('Registro de punción no encontrado');
     }
     const patient = puncture.treatment.medicalHistory.patient;
     let date = puncture.punctureDateTime;
@@ -191,9 +220,9 @@ export class OocyteService {
 
   async cultivate(id: number, cultivationDate: Date): Promise<void> {
     const oocyte = await this.findOne(id);
-    if (oocyte.currentState !== OocyteState.VERY_IMMATURE) {
+    if (oocyte.currentState !== OocyteState.IMMATURE) {
       throw new BadRequestException(
-        'Solo se pueden cultivar ovocitos muy inmaduros',
+        'Solo se pueden cultivar ovocitos inmaduros',
       );
     }
     const oldState = oocyte.currentState;
@@ -205,5 +234,58 @@ export class OocyteService {
       newState: OocyteState.CULTIVATED,
       transitionDate: new Date(),
     });
+  }
+
+  async mature(id: number): Promise<void> {
+    const oocyte = await this.findOne(id);
+    if (oocyte.currentState !== OocyteState.VERY_IMMATURE) {
+      throw new BadRequestException(
+        'Solo se pueden madurar ovocitos muy inmaduros',
+      );
+    }
+    const oldState = oocyte.currentState;
+    oocyte.currentState = OocyteState.IMMATURE;
+    await this.oocyteRepository.save(oocyte);
+    await this.oocyteStateHistoryService.create({
+      oocyte: oocyte,
+      previousState: oldState,
+      newState: OocyteState.IMMATURE,
+      transitionDate: new Date(),
+    });
+  }
+
+  async finishCultivation(id: number, success: boolean, cause?: string): Promise<void> {
+    const oocyte = await this.findOne(id);
+    if (oocyte.currentState !== OocyteState.CULTIVATED) {
+      throw new BadRequestException(
+        'Solo se puede finalizar el cultivo de ovocitos cultivados',
+      );
+    }
+    const oldState = oocyte.currentState;
+    if (success) {
+      oocyte.currentState = OocyteState.MATURE;
+      await this.oocyteRepository.save(oocyte);
+      await this.oocyteStateHistoryService.create({
+        oocyte: oocyte,
+        previousState: oldState,
+        newState: OocyteState.MATURE,
+        transitionDate: new Date(),
+      });
+    } else {
+      if (!cause) {
+        throw new BadRequestException('Causa de descarte obligatoria cuando no maduró');
+      }
+      oocyte.currentState = OocyteState.DISCARDED;
+      oocyte.discardCause = cause;
+      oocyte.discardDateTime = new Date();
+      await this.oocyteRepository.save(oocyte);
+      await this.oocyteStateHistoryService.create({
+        oocyte: oocyte,
+        previousState: oldState,
+        newState: OocyteState.DISCARDED,
+        transitionDate: new Date(),
+        cause: cause,
+      });
+    }
   }
 }

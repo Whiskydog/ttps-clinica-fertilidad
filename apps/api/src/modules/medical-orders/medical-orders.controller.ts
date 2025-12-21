@@ -247,21 +247,21 @@ export class MedicalOrdersController {
   @UseInterceptors(FileInterceptor('doctorSignature'))
   async generatePdf(
     @Param('id') id: string,
-    @UploadedFile() doctorSignature: Express.Multer.File,
+    @UploadedFile() doctorSignature?: Express.Multer.File,
   ) {
     this.logger.log(`POST /medical-orders/${id}/generate-pdf - Iniciando generación de PDF`);
 
     const orderId = Number(id);
 
-    if (!doctorSignature) {
-      this.logger.warn(`No se recibió firma del médico para orden ${orderId}`);
-      throw new BadRequestException('Se requiere la firma del médico (campo doctorSignature)');
-    }
+    // La firma ahora es opcional - si no se proporciona, se usará la firma guardada del doctor
+    if (doctorSignature) {
+      this.logger.log(`Firma recibida: ${doctorSignature.originalname}, ${doctorSignature.mimetype}, ${doctorSignature.size} bytes`);
 
-    this.logger.log(`Firma recibida: ${doctorSignature.originalname}, ${doctorSignature.mimetype}, ${doctorSignature.size} bytes`);
-
-    if (!doctorSignature.mimetype.includes('png') && !doctorSignature.mimetype.includes('image')) {
-      throw new BadRequestException('La firma debe ser un archivo de imagen');
+      if (!doctorSignature.mimetype.includes('png') && !doctorSignature.mimetype.includes('image')) {
+        throw new BadRequestException('La firma debe ser un archivo de imagen');
+      }
+    } else {
+      this.logger.log(`No se recibió firma, se usará la firma guardada del médico`);
     }
 
     const order = await this.medicalOrdersService.generatePdf(orderId, doctorSignature);
