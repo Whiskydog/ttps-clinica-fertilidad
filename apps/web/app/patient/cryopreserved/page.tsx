@@ -31,7 +31,7 @@ export default function CryopreservedPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg text-gray-600">
-          Cargando productos criopreservados...
+          Cargando células criopreservadas...
         </div>
       </div>
     );
@@ -53,7 +53,7 @@ export default function CryopreservedPage() {
 
         <EmptyState
           icon="cryopreserved"
-          title="No tienes productos criopreservados"
+          title="No tienes células criopreservadas"
           description="Aún no tienes óvulos ni embriones criopreservados. Estos se generan durante el proceso de tratamiento de fertilidad."
           showAppointmentButton={true}
           showHomeButton={true}
