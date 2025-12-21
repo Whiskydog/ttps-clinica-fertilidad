@@ -44,9 +44,6 @@ export default function PuncturesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-
   useEffect(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
     const timer = setTimeout(() => {
@@ -102,13 +99,11 @@ export default function PuncturesPage() {
       if (Array.isArray(data)) {
         setTreatments(data);
       } else {
-        setAlertMessage("Error: invalid data received");
-        setShowAlertModal(true);
+        toast.error("Error: invalid data received");
         setTreatments([]);
       }
     } else {
-      setAlertMessage("Error fetching treatments");
-      setShowAlertModal(true);
+      toast.error("Error fetching treatments");
       setTreatments([]);
     }
     setIsLoading(false);
@@ -156,7 +151,7 @@ export default function PuncturesPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-orange-800">
+        <h1 className="text-3xl font-bold text-blue-800">
           Registro de Punciones
         </h1>
         <Button
@@ -168,9 +163,9 @@ export default function PuncturesPage() {
       </div>
 
       {/* Formulario de Registro */}
-      <Card className="bg-orange-50 border-orange-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-orange-800">
+          <CardTitle className="text-blue-800">
             Registrar Nueva Punción
           </CardTitle>
         </CardHeader>
@@ -178,8 +173,8 @@ export default function PuncturesPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="patientDni" className="text-orange-700">
-                  DNI del Paciente
+                <Label htmlFor="patientDni" className="text-blue-700">
+                  DNI del Paciente *
                 </Label>
                 <Input
                   id="patientDni"
@@ -187,50 +182,50 @@ export default function PuncturesPage() {
                   value={patientDni}
                   onChange={(e) => setPatientDni(e.target.value)}
                   placeholder="Ingrese DNI"
-                  className="border-orange-300 focus:border-orange-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
             </div>
 
-            {isLoading && <p className="text-orange-600">Buscando tratamientos...</p>}
+            {isLoading && <p className="text-blue-600">Buscando tratamientos...</p>}
 
             {treatments.length > 0 && (
               <div>
-                <Label className="text-orange-700">
-                  Tratamientos Actuales Encontrados
+                <Label className="text-blue-700">
+                  Tratamientos Actuales Encontrados *
                 </Label>
-                <div className="border border-orange-300 rounded-lg p-4 bg-orange-50 max-h-60 overflow-y-auto">
+                <div className="border border-blue-300 rounded-lg p-4 bg-blue-50 max-h-60 overflow-y-auto">
                   {treatments.map((treatment) => (
                     <div
                       key={treatment.id}
                       className={`p-3 mb-2 rounded cursor-pointer transition-colors ${
                         form.treatmentId === treatment.id.toString()
-                          ? "bg-orange-200 border-orange-400"
-                          : "bg-white hover:bg-orange-100"
+                          ? "bg-blue-200 border-blue-400"
+                          : "bg-white hover:bg-blue-100"
                       }`}
                       onClick={() => setForm({ ...form, treatmentId: treatment.id.toString() })}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-orange-800">
+                          <p className="font-semibold text-blue-800">
                             {treatment.medicalHistory.patient.lastName}, {treatment.medicalHistory.patient.firstName} ({treatment.medicalHistory.patient.dni})
                           </p>
-                          <p className="text-sm text-orange-700">
+                          <p className="text-sm text-blue-700">
                             Tratamiento ID: {treatment.id} - Objetivo: {treatment.initialObjective}
                           </p>
-                          <p className="text-sm text-orange-600">
+                          <p className="text-sm text-blue-600">
                             Fecha: {new Date(treatment.createdAt).toLocaleDateString('es-ES')}
                           </p>
                           {treatment.status && (
-                            <p className="text-sm text-orange-600">
+                            <p className="text-sm text-blue-600">
                               Estado: {treatment.status}
                             </p>
                           )}
                         </div>
                         <div className="text-right">
                           {form.treatmentId === treatment.id.toString() && (
-                            <span className="text-orange-600 font-semibold">Seleccionado</span>
+                            <span className="text-blue-600 font-semibold">Seleccionado</span>
                           )}
                         </div>
                       </div>
@@ -242,8 +237,8 @@ export default function PuncturesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="punctureDate" className="text-orange-700">
-                  Fecha y Hora de Punción
+                <Label htmlFor="punctureDate" className="text-blue-700">
+                  Fecha y Hora de Punción *
                 </Label>
                 <Input
                   id="punctureDate"
@@ -252,16 +247,16 @@ export default function PuncturesPage() {
                   onChange={(e) =>
                     setForm({ ...form, punctureDate: e.target.value })
                   }
-                  className="border-orange-300 focus:border-orange-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
               <div>
                 <Label
                   htmlFor="operatingRoomNumber"
-                  className="text-orange-700"
+                  className="text-blue-700"
                 >
-                  Número de Quirófano
+                  Número de Quirófano *
                 </Label>
                 <Input
                   id="operatingRoomNumber"
@@ -271,15 +266,15 @@ export default function PuncturesPage() {
                     setForm({ ...form, operatingRoomNumber: e.target.value })
                   }
                   placeholder="Ej: 101"
-                  className="border-orange-300 focus:border-orange-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="observations" className="text-orange-700">
-                Observaciones
+              <Label htmlFor="observations" className="text-blue-700">
+                Observaciones (Opcional)
               </Label>
               <Textarea
                 id="observations"
@@ -288,7 +283,7 @@ export default function PuncturesPage() {
                   setForm({ ...form, observations: e.target.value })
                 }
                 placeholder="Observaciones adicionales..."
-                className="border-orange-300 focus:border-orange-500"
+                className="border-blue-300 focus:border-blue-500"
                 rows={3}
               />
             </div>
@@ -296,7 +291,7 @@ export default function PuncturesPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-orange-600 hover:bg-orange-700"
+              className="w-full bg-blue-600 hover:bg-blue-700"
             >
               {isLoading ? "Registrando..." : "Registrar Punción"}
             </Button>
@@ -305,9 +300,9 @@ export default function PuncturesPage() {
       </Card>
 
       {/* Lista de Punciones */}
-      <Card className="bg-orange-50 border-orange-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-orange-800">
+          <CardTitle className="text-blue-800">
             Punciones Registradas
           </CardTitle>
         </CardHeader>
@@ -346,7 +341,7 @@ export default function PuncturesPage() {
                           `/laboratory-technician/oocytes?punctureId=${puncture.id}`
                         )
                       }
-                      className="bg-orange-600 hover:bg-orange-700"
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       Registrar Ovocitos
                     </Button>
@@ -364,7 +359,7 @@ export default function PuncturesPage() {
             >
               Anterior
             </Button>
-            <span className="text-orange-700">
+            <span className="text-blue-700">
               Página {currentPage} de {totalPages}
             </span>
             <Button
@@ -379,18 +374,6 @@ export default function PuncturesPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={showAlertModal} onOpenChange={setShowAlertModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
-            <DialogDescription>{alertMessage}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowAlertModal(false)}>OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

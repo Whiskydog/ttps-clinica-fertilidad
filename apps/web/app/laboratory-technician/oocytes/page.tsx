@@ -104,9 +104,6 @@ export default function OocytesPage() {
     history: HistoryEntry[];
   }>({ open: false, history: [] });
 
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-
   useEffect(() => {
     const fetchPunctures = async () => {
       const res = await fetch("/api/laboratory/puncture-records", {
@@ -185,12 +182,10 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      setAlertMessage("Ovocito criopreservado");
-      setShowAlertModal(true);
+      toast.success("Ovocito criopreservado");
       fetchOocytes();
     } else {
-      setAlertMessage("Error");
-      setShowAlertModal(true);
+      toast.error("Error al criopreservar ovocito");
     }
   };
 
@@ -208,13 +203,11 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      setAlertMessage("Ovocito descartado");
-      setShowAlertModal(true);
+      toast.success("Ovocito descartado");
       setDiscardModal({ open: false, oocyteId: null, cause: "" });
       fetchOocytes();
     } else {
-      setAlertMessage("Error");
-      setShowAlertModal(true);
+      toast.error("Error al descartar ovocito");
     }
   };
 
@@ -230,13 +223,11 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      setAlertMessage("Ovocito madurado");
-      setShowAlertModal(true);
+      toast.success("Ovocito madurado");
       setMatureModal({ open: false, oocyteId: null });
       fetchOocytes();
     } else {
-      setAlertMessage("Error");
-      setShowAlertModal(true);
+      toast.error("Error al madurar ovocito");
     }
   };
 
@@ -257,13 +248,11 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      setAlertMessage(finishCultivationModal.success ? "Cultivo finalizado: ovocito madurado" : "Cultivo finalizado: ovocito descartado");
-      setShowAlertModal(true);
+      toast.success(finishCultivationModal.success ? "Cultivo finalizado: ovocito madurado" : "Cultivo finalizado: ovocito descartado");
       setFinishCultivationModal({ open: false, oocyteId: null, success: null, cause: "" });
       fetchOocytes();
     } else {
-      setAlertMessage("Error");
-      setShowAlertModal(true);
+      toast.error("Error al finalizar cultivo");
     }
   };
 
@@ -281,13 +270,11 @@ export default function OocytesPage() {
       }
     );
     if (res.ok) {
-      setAlertMessage("Ovocito cultivado");
-      setShowAlertModal(true);
+      toast.success("Ovocito cultivado");
       setCultivateModal({ open: false, oocyteId: null, date: "" });
       fetchOocytes();
     } else {
-      setAlertMessage("Error");
-      setShowAlertModal(true);
+      toast.error("Error al cultivar ovocito");
     }
   };
 
@@ -305,8 +292,7 @@ export default function OocytesPage() {
         history: Array.isArray(history) ? history : [],
       });
     } else {
-      setAlertMessage("Error obteniendo historial");
-      setShowAlertModal(true);
+      toast.error("Error obteniendo historial");
     }
   };
 
@@ -332,7 +318,7 @@ export default function OocytesPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="punctureRecordId" className="text-blue-700">
-                Registro de Punción
+                Registro de Punción *
               </Label>
               <Select
                 value={form.punctureRecordId}
@@ -360,7 +346,7 @@ export default function OocytesPage() {
             </div>
             <div>
               <Label htmlFor="currentState" className="text-blue-700">
-                Estado Inicial
+                Estado Inicial *
               </Label>
               <Select
                 value={form.currentState}
@@ -442,7 +428,7 @@ export default function OocytesPage() {
                           oocyte.isCryopreserved
                             ? "bg-blue-500 text-white border-blue-500"
                             : oocyte.currentState === "cultivated"
-                              ? "bg-green-500 text-white border-green-500"
+                              ? "bg-blue-500 text-white border-blue-500"
                               : oocyte.currentState === "used"
                                 ? "bg-purple-500 text-white border-purple-500"
                                 : oocyte.currentState === "discarded"
@@ -490,7 +476,7 @@ export default function OocytesPage() {
                               })
                             }
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700 h-8 px-2"
+                            className="bg-blue-600 hover:bg-blue-700 h-8 px-2"
                             title="Cultivar"
                           >
                             Cultivar
@@ -770,7 +756,7 @@ export default function OocytesPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-green-800 flex items-center gap-2">
+            <DialogTitle className="text-blue-800 flex items-center gap-2">
               <FlaskConical className="w-5 h-5" />
               Cultivar Ovocito
             </DialogTitle>
@@ -779,7 +765,7 @@ export default function OocytesPage() {
             </p>
           </DialogHeader>
           <div className="space-y-4">
-            <Card className="bg-green-50 border-green-200">
+            <Card className="bg-blue-50 border-blue-200">
               <CardContent className="pt-4">
                 <div>
                   <Label
@@ -798,7 +784,7 @@ export default function OocytesPage() {
                         date: e.target.value,
                       })
                     }
-                    className="border-green-300 focus:border-green-500"
+                    className="border-blue-300 focus:border-blue-500"
                     min={new Date().toISOString().split("T")[0]}
                     required
                   />
@@ -826,7 +812,7 @@ export default function OocytesPage() {
               <Button
                 onClick={handleCultivate}
                 disabled={!cultivateModal.date}
-                className="bg-green-600 hover:bg-green-700 flex-1"
+                className="bg-blue-600 hover:bg-blue-700 flex-1"
               >
                 Iniciar Cultivo
               </Button>
@@ -906,18 +892,6 @@ export default function OocytesPage() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showAlertModal} onOpenChange={setShowAlertModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Notificación</DialogTitle>
-            <DialogDescription>{alertMessage}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowAlertModal(false)}>OK</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

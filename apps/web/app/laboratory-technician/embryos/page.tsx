@@ -122,7 +122,7 @@ export default function EmbryosPage() {
     semenSource: "own",
     donationIdUsed: "",
     dniPareja: "",
-    pgtResult: "",
+    pgtResult: "pending",
   });
 
   useEffect(() => {
@@ -473,7 +473,7 @@ export default function EmbryosPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-green-800">
+        <h1 className="text-3xl font-bold text-blue-800">
           Gestión de Embriones
         </h1>
         <Button onClick={() => window.history.back()} variant="outline">
@@ -482,9 +482,9 @@ export default function EmbryosPage() {
       </div>
 
       {/* Formulario de Creación */}
-      <Card className="bg-green-50 border-green-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-green-800">
+          <CardTitle className="text-blue-800">
             Registrar Nuevo Embrión
           </CardTitle>
         </CardHeader>
@@ -493,7 +493,7 @@ export default function EmbryosPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {partnerDni && (
                 <div>
-                  <Label className="text-green-700">
+                  <Label className="text-blue-700">
                     DNI de la Pareja: {partnerDni}
                   </Label>
                 </div>
@@ -501,7 +501,7 @@ export default function EmbryosPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="oocyteOriginId" className="text-green-700">
+                <Label htmlFor="oocyteOriginId" className="text-blue-700">
                   Ovocito de Origen
                 </Label>
                 <Select
@@ -510,7 +510,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, oocyteOriginId: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione un ovocito maduro no criopreservado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -523,8 +523,8 @@ export default function EmbryosPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="fertilizationDate" className="text-green-700">
-                  Fecha de Fecundación
+                <Label htmlFor="fertilizationDate" className="text-blue-700">
+                  Fecha de Fecundación *
                 </Label>
                 <Input
                   id="fertilizationDate"
@@ -533,7 +533,7 @@ export default function EmbryosPage() {
                   onChange={(e) =>
                     setForm({ ...form, fertilizationDate: e.target.value })
                   }
-                  className="border-green-300 focus:border-green-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
@@ -542,9 +542,9 @@ export default function EmbryosPage() {
               <div>
                 <Label
                   htmlFor="fertilizationTechnique"
-                  className="text-green-700"
+                  className="text-blue-700"
                 >
-                  Técnica de Fecundación
+                  Técnica de Fecundación *
                 </Label>
                 <Select
                   value={form.fertilizationTechnique}
@@ -552,7 +552,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, fertilizationTechnique: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione técnica" />
                   </SelectTrigger>
                   <SelectContent>
@@ -562,8 +562,8 @@ export default function EmbryosPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="technicianId" className="text-green-700">
-                  Técnico
+                <Label htmlFor="technicianId" className="text-blue-700">
+                  Técnico *
                 </Label>
                 <Select
                   value={form.technicianId}
@@ -571,7 +571,7 @@ export default function EmbryosPage() {
                     setForm({ ...form, technicianId: value })
                   }
                 >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
+                  <SelectTrigger className="border-blue-300 focus:border-blue-500">
                     <SelectValue placeholder="Seleccione técnico" />
                   </SelectTrigger>
                   <SelectContent>
@@ -586,8 +586,8 @@ export default function EmbryosPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="qualityScore" className="text-green-700">
-                  Calidad (1-6)
+                <Label htmlFor="qualityScore" className="text-blue-700">
+                  Calidad (1-6) *
                 </Label>
                 <Input
                   id="qualityScore"
@@ -598,14 +598,14 @@ export default function EmbryosPage() {
                   onChange={(e) =>
                     setForm({ ...form, qualityScore: e.target.value })
                   }
-                  className="border-green-300 focus:border-green-500"
+                  className="border-blue-300 focus:border-blue-500"
                   required
                 />
               </div>
               {form.oocyteOriginId && (
                 <div>
-                  <Label htmlFor="semenSource" className="text-green-700">
-                    Fuente de Semen
+                  <Label htmlFor="semenSource" className="text-blue-700">
+                    Fuente de Semen *
                   </Label>
                   <div className="flex gap-2">
                     <Select
@@ -615,7 +615,7 @@ export default function EmbryosPage() {
                         setForm({ ...form, semenSource: value })
                       }
                     >
-                      <SelectTrigger className="border-green-300 focus:border-green-500 flex-1">
+                      <SelectTrigger className="border-blue-300 focus:border-blue-500 flex-1">
                         <SelectValue placeholder="Seleccione fuente" />
                       </SelectTrigger>
                       <SelectContent>
@@ -637,7 +637,7 @@ export default function EmbryosPage() {
                           fetchViabilityDetails();
                           setShowViabilityModal(true);
                         }}
-                        className="border-green-300 text-green-700 hover:bg-green-50"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
                       >
                         Validar Viabilidad
                       </Button>
@@ -648,13 +648,13 @@ export default function EmbryosPage() {
             </div>
             {form.semenSource === "donated" && (
               <div>
-                <Label htmlFor="donationIdUsed" className="text-green-700">
+                <Label htmlFor="donationIdUsed" className="text-blue-700">
                   Esperma Donado
                 </Label>
                 {loadingSperms ? (
-                  <div className="flex items-center justify-center p-4 border border-green-300 rounded-md">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-                    <span className="ml-2 text-green-600">
+                  <div className="flex items-center justify-center p-4 border border-blue-300 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-blue-600">
                       Cargando espermas...
                     </span>
                   </div>
@@ -665,7 +665,7 @@ export default function EmbryosPage() {
                       setForm({ ...form, donationIdUsed: value })
                     }
                   >
-                    <SelectTrigger className="border-green-300 focus:border-green-500">
+                    <SelectTrigger className="border-blue-300 focus:border-blue-500">
                       <SelectValue placeholder="Seleccione un esperma donado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -683,13 +683,13 @@ export default function EmbryosPage() {
             )}
             {form.semenSource === "cryopreserved" && (
               <div>
-                <Label htmlFor="donationIdUsed" className="text-green-700">
+                <Label htmlFor="donationIdUsed" className="text-blue-700">
                   Semen Criopreservado
                 </Label>
                 {loadingCryopreserved ? (
-                  <div className="flex items-center justify-center p-4 border border-green-300 rounded-md">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-                    <span className="ml-2 text-green-600">
+                  <div className="flex items-center justify-center p-4 border border-blue-300 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-blue-600">
                       Cargando semen criopreservado...
                     </span>
                   </div>
@@ -700,7 +700,7 @@ export default function EmbryosPage() {
                       setForm({ ...form, donationIdUsed: value })
                     }
                   >
-                    <SelectTrigger className="border-green-300 focus:border-green-500">
+                    <SelectTrigger className="border-blue-300 focus:border-blue-500">
                       <SelectValue placeholder="Seleccione semen criopreservado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -715,8 +715,8 @@ export default function EmbryosPage() {
               </div>
             )}
             <div>
-              <Label htmlFor="pgtResult" className="text-green-700">
-                Resultado PGT
+              <Label htmlFor="pgtResult" className="text-blue-700">
+                Resultado PGT (Opcional)
               </Label>
               <Select
                 value={form.pgtResult}
@@ -724,7 +724,7 @@ export default function EmbryosPage() {
                   setForm({ ...form, pgtResult: value })
                 }
               >
-                <SelectTrigger className="border-green-300 focus:border-green-500">
+                <SelectTrigger className="border-blue-300 focus:border-blue-500">
                   <SelectValue placeholder="Seleccione resultado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -736,7 +736,7 @@ export default function EmbryosPage() {
             </div>
             <Button
               type="submit"
-              className="bg-green-600 hover:bg-green-700 w-full"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full"
             >
               Registrar Embrión
             </Button>
@@ -745,9 +745,9 @@ export default function EmbryosPage() {
       </Card>
 
       {/* Listado de Embriones */}
-      <Card className="bg-green-50 border-green-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-green-800">
+          <CardTitle className="text-blue-800">
             Embriones Registrados ({embryos.length})
           </CardTitle>
         </CardHeader>
@@ -755,33 +755,33 @@ export default function EmbryosPage() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-green-100">
-                  <TableHead className="font-semibold text-green-800">
+                <TableRow className="bg-blue-100">
+                  <TableHead className="font-semibold text-blue-800">
                     ID
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Identificador
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Fecha de Fertilización
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Calidad
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     PGT
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Estado
                   </TableHead>
-                  <TableHead className="font-semibold text-green-800">
+                  <TableHead className="font-semibold text-blue-800">
                     Acciones
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {embryos.map((embryo) => (
-                  <TableRow key={embryo.id} className="hover:bg-green-25">
+                  <TableRow key={embryo.id} className="hover:bg-blue-25">
                     <TableCell className="font-medium">{embryo.id}</TableCell>
                     <TableCell>
                       <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
@@ -886,7 +886,7 @@ export default function EmbryosPage() {
                           setSelectedEmbryo(embryo);
                           setIsModalOpen(true);
                         }}
-                        className="border-green-300 hover:bg-green-50"
+                        className="border-blue-300 hover:bg-blue-50"
                       >
                         <Eye className="w-3 h-3 mr-1" />
                         Gestionar
@@ -1338,7 +1338,7 @@ export default function EmbryosPage() {
           {selectedEmbryo?.pgtResult === "not_ok" && (
             <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
               <p className="text-red-800 text-sm">
-                <strong>Advertencia:</strong> Este embrión tiene PGT "No Apto". La transferencia está bloqueada por validaciones del sistema.
+                <strong>Advertencia:</strong> Este embrión tiene un resultado de PGT no apto. Por criterios médicos, la transferencia no puede realizarse.
               </p>
             </div>
           )}
