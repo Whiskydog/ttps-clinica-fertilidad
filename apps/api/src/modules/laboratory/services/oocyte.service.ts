@@ -60,6 +60,35 @@ export class OocyteService {
     return oocyte;
   }
 
+  async getPatientByOocyteId(id: number): Promise<any> {
+    const oocyte = await this.oocyteRepository.findOne({
+      where: { id },
+      relations: [
+        'puncture',
+        'puncture.treatment',
+        'puncture.treatment.medicalHistory',
+        'puncture.treatment.medicalHistory.patient',
+        'puncture.treatment.medicalHistory.partnerData',
+      ],
+    });
+
+    if (!oocyte) {
+      throw new NotFoundException(`Ovocito con ID ${id} no encontrado`);
+    }
+
+    const patient = oocyte.puncture.treatment.medicalHistory.patient;
+    const partnerData = oocyte.puncture.treatment.medicalHistory.partnerData.find(p => p.isActive);
+    const partnerDni = partnerData?.dni || null;
+
+    return {
+      id: patient.id,
+      dni: patient.dni,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      partnerDni,
+    };
+  }
+
   async findByPatientId(patientId: number): Promise<Oocyte[]> {
     return this.oocyteRepository.find({
       where: {

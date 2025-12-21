@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@repo/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/card";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import {
@@ -64,6 +64,19 @@ interface SearchForm {
   height: string;
   complexion: string;
   ethnicity: string;
+}
+
+interface LocalDonationForm {
+  patientDni: string;
+  eye_color: string;
+  hair_color: string;
+  hair_type: string;
+  height: string;
+  complexion: string;
+  ethnicity: string;
+  cryoTank: string;
+  cryoRack: string;
+  cryoTube: string;
 }
 
 interface Gamete {
@@ -136,6 +149,18 @@ export default function DonorBankPage() {
     height: "",
     complexion: "",
     ethnicity: "",
+  });
+  const [localDonationForm, setLocalDonationForm] = useState<LocalDonationForm>({
+    patientDni: "",
+    eye_color: "",
+    hair_color: "",
+    hair_type: "",
+    height: "",
+    complexion: "",
+    ethnicity: "",
+    cryoTank: "",
+    cryoRack: "",
+    cryoTube: "",
   });
 
   const API_BASE = process.env.NEXT_PUBLIC_DONOR_BANK_API_BASE;
@@ -295,6 +320,55 @@ export default function DonorBankPage() {
     }
   };
 
+  const handleLocalDonate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const phenotype: any = {};
+      if (localDonationForm.eye_color) phenotype.eye_color = localDonationForm.eye_color;
+      if (localDonationForm.hair_color) phenotype.hair_color = localDonationForm.hair_color;
+      if (localDonationForm.hair_type) phenotype.hair_type = localDonationForm.hair_type;
+      if (localDonationForm.height) phenotype.height = parseInt(localDonationForm.height);
+      if (localDonationForm.complexion) phenotype.complexion = localDonationForm.complexion;
+      if (localDonationForm.ethnicity) phenotype.ethnicity = localDonationForm.ethnicity;
+
+      const response = await fetch("/api/laboratory/cryopreserved-semen", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          patientDni: localDonationForm.patientDni,
+          phenotype,
+          cryoTank: localDonationForm.cryoTank || undefined,
+          cryoRack: localDonationForm.cryoRack || undefined,
+          cryoTube: localDonationForm.cryoTube || undefined,
+          cryopreservationDate: new Date().toISOString(),
+        }),
+      });
+      const data = await response.json();
+      if (data.data.id) {
+        toast.success("Semen criopreservado exitosamente");
+        setLocalDonationForm({
+          patientDni: "",
+          eye_color: "",
+          hair_color: "",
+          hair_type: "",
+          height: "",
+          complexion: "",
+          ethnicity: "",
+          cryoTank: "",
+          cryoRack: "",
+          cryoTube: "",
+        });
+      } else {
+        toast.error("Error al criopreservar semen");
+      }
+    } catch (error) {
+      toast.error("Error de conexión");
+    }
+  };
+
   // const handleClean = async () => {
   //   setShowCleanModal(true);
   // };
@@ -313,7 +387,7 @@ export default function DonorBankPage() {
       </div>
 
       <Tabs defaultValue="storage" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-purple-100">
+        <TabsList className="grid w-full grid-cols-5 bg-purple-100">
           <TabsTrigger
             value="storage"
             className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
@@ -330,13 +404,19 @@ export default function DonorBankPage() {
             value="donate"
             className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
           >
-            Donar
+            Donar Externo
           </TabsTrigger>
           <TabsTrigger
             value="search"
             className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
           >
             Buscar
+          </TabsTrigger>
+          <TabsTrigger
+            value="local"
+            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+          >
+            Donar Local
           </TabsTrigger>
           {/* <TabsTrigger
             value="clean"
@@ -810,6 +890,187 @@ export default function DonorBankPage() {
                   </div>
                 </div>
                 <Button type="submit">Buscar Compatible</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="local">
+          <Card>
+            <CardHeader>
+              <CardTitle>Criopreservar Semen Local</CardTitle>
+              <CardDescription>
+                Dona semen de un paciente para criopreservación local.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLocalDonate} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="patientDni">DNI del Paciente</Label>
+                    <Input
+                      id="patientDni"
+                      value={localDonationForm.patientDni}
+                      onChange={(e) =>
+                        setLocalDonationForm({ ...localDonationForm, patientDni: e.target.value })
+                      }
+                      placeholder="Ingrese DNI"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="height">Altura (cm)</Label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={localDonationForm.height}
+                      onChange={(e) =>
+                        setLocalDonationForm({ ...localDonationForm, height: e.target.value })
+                      }
+                      placeholder="170"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="eye_color">Color de Ojos</Label>
+                    <Select
+                      value={localDonationForm.eye_color}
+                      onValueChange={(value) =>
+                        setLocalDonationForm({ ...localDonationForm, eye_color: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enums.eye_color.values.map((color) => (
+                          <SelectItem key={color} value={color}>
+                            {color}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="hair_color">Color de Cabello</Label>
+                    <Select
+                      value={localDonationForm.hair_color}
+                      onValueChange={(value) =>
+                        setLocalDonationForm({ ...localDonationForm, hair_color: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enums.hair_color.values.map((color) => (
+                          <SelectItem key={color} value={color}>
+                            {color}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="hair_type">Tipo de Cabello</Label>
+                    <Select
+                      value={localDonationForm.hair_type}
+                      onValueChange={(value) =>
+                        setLocalDonationForm({ ...localDonationForm, hair_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enums.hair_type.values.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="complexion">Complexión</Label>
+                    <Select
+                      value={localDonationForm.complexion}
+                      onValueChange={(value) =>
+                        setLocalDonationForm({ ...localDonationForm, complexion: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enums.complexion.values.map((comp) => (
+                          <SelectItem key={comp} value={comp}>
+                            {comp}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="ethnicity">Etnia</Label>
+                    <Select
+                      value={localDonationForm.ethnicity}
+                      onValueChange={(value) =>
+                        setLocalDonationForm({ ...localDonationForm, ethnicity: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enums.ethnicity.values.map((eth) => (
+                          <SelectItem key={eth} value={eth}>
+                            {eth}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="cryoTank">Tanque</Label>
+                    <Input
+                      id="cryoTank"
+                      value={localDonationForm.cryoTank}
+                      onChange={(e) =>
+                        setLocalDonationForm({ ...localDonationForm, cryoTank: e.target.value })
+                      }
+                      placeholder="T001"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cryoRack">Rack</Label>
+                    <Input
+                      id="cryoRack"
+                      value={localDonationForm.cryoRack}
+                      onChange={(e) =>
+                        setLocalDonationForm({ ...localDonationForm, cryoRack: e.target.value })
+                      }
+                      placeholder="R001"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cryoTube">Tubo</Label>
+                    <Input
+                      id="cryoTube"
+                      value={localDonationForm.cryoTube}
+                      onChange={(e) =>
+                        setLocalDonationForm({ ...localDonationForm, cryoTube: e.target.value })
+                      }
+                      placeholder="TB001"
+                    />
+                  </div>
+                </div>
+                <Button type="submit">Criopreservar Semen</Button>
               </form>
             </CardContent>
           </Card>

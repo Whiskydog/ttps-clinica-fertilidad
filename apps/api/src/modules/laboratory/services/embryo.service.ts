@@ -120,6 +120,11 @@ export class EmbryoService {
       }
     }
 
+    // Si es semen criopreservado local, marcar como utilizado
+    if (embryoData.semenSource === 'cryopreserved' && embryoData.donationIdUsed) {
+      await this.laboratoryService.markLocalSemenAsUsed(Number(embryoData.donationIdUsed));
+    }
+
     // Generar uniqueIdentifier automáticamente
     const oocyte = await this.embryoRepository.manager
       .getRepository(Oocyte)

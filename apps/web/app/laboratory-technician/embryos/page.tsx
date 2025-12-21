@@ -69,6 +69,9 @@ export default function EmbryosPage() {
   const [cryoForm, setCryoForm] = useState({ tank: "", rack: "", tube: "" });
   const [donatedSperms, setDonatedSperms] = useState<Gamete[]>([]);
   const [loadingSperms, setLoadingSperms] = useState(false);
+  const [cryopreservedSemen, setCryopreservedSemen] = useState<any[]>([]);
+  const [loadingCryopreserved, setLoadingCryopreserved] = useState(false);
+  const [isViable, setIsViable] = useState<boolean | null>(null);
   const itemsPerPage = 10;
 
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -77,6 +80,18 @@ export default function EmbryosPage() {
 
   const [showPgtModal, setShowPgtModal] = useState(false);
   const [pgtForm, setPgtForm] = useState({ pgtResult: undefined as PgtResult | undefined, pgtDecisionSuggested: "" });
+
+  const [showViabilityModal, setShowViabilityModal] = useState(false);
+  const [viabilityForm, setViabilityForm] = useState({
+    status: 'viable' as 'viable' | 'not_viable',
+    notes: '',
+    studyReference: '',
+  });
+  const [viabilityDetails, setViabilityDetails] = useState<any>(null);
+
+  const [partnerDni, setPartnerDni] = useState<string | null>(null);
+  const [semenOptions, setSemenOptions] = useState<string[]>(['own', 'donated']);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const fetchOocytes = async () => {
     const res = await fetch("/api/laboratory/oocytes/mature", {
@@ -106,6 +121,7 @@ export default function EmbryosPage() {
     qualityScore: "",
     semenSource: "own",
     donationIdUsed: "",
+    dniPareja: "",
     pgtResult: "",
   });
 
@@ -116,14 +132,40 @@ export default function EmbryosPage() {
   }, [currentPage]);
 
   useEffect(() => {
+    if (form.oocyteOriginId) {
+      fetchPatientFromOocyte(form.oocyteOriginId);
+    } else {
+      setPartnerDni(null);
+      setSemenOptions(['own', 'donated']);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [form.oocyteOriginId]);
+
+  useEffect(() => {
     if (form.semenSource === "donated") {
       fetchDonatedSperms();
-    } else {
-      // Clear donated sperms when switching back to own
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
+    } else if (form.semenSource === "cryopreserved") {
+      if (partnerDni) {
+        fetchCryopreservedSemen();
+      }
       setDonatedSperms([]);
       setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
+    } else if (form.semenSource === "own") {
+      checkViability();
+      setDonatedSperms([]);
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+    } else {
+      setDonatedSperms([]);
+      setCryopreservedSemen([]);
+      setForm((prev) => ({ ...prev, donationIdUsed: "" }));
+      setIsViable(null);
     }
-  }, [form.semenSource]);
+  }, [form.semenSource, form.dniPareja, partnerDni]);
 
   const fetchEmbryos = async () => {
     const res = await fetch(
@@ -169,6 +211,120 @@ export default function EmbryosPage() {
       setDonatedSperms([]);
     } finally {
       setLoadingSperms(false);
+    }
+  };
+
+  const fetchCryopreservedSemen = async () => {
+    if (!form.dniPareja) return;
+    setLoadingCryopreserved(true);
+    try {
+      const response = await fetch(`/api/laboratory/cryopreserved-semen/dni/${form.dniPareja}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      const semenData = data.data || data; // Handle nested or direct response
+      if (Array.isArray(semenData)) {
+        setCryopreservedSemen(semenData);
+      } else {
+        toast.error("Error al consultar semen criopreservado");
+        setCryopreservedSemen([]);
+      }
+    } catch {
+      toast.error("Error de conexión");
+      setCryopreservedSemen([]);
+    } finally {
+      setLoadingCryopreserved(false);
+    }
+  };
+
+  const checkViability = async () => {
+    if (!form.dniPareja) {
+      setIsViable(null);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      const viabilityData = data.data || data; // Handle nested or direct response
+      setIsViable(viabilityData.isViable);
+
+      // Also fetch details for the modal
+      if (viabilityData.status !== 'pending') {
+        fetchViabilityDetails();
+      }
+    } catch {
+      setIsViable(false);
+    }
+  };
+
+  const fetchViabilityDetails = async () => {
+    if (!form.dniPareja) return;
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}/details`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await response.json();
+      setViabilityDetails(data.data || data);
+    } catch (error) {
+      console.error('Error fetching viability details:', error);
+    }
+  };
+
+  const handleValidateViability = async () => {
+    if (!form.dniPareja) return;
+
+    try {
+      const response = await fetch(`/api/laboratory/semen-viability/${form.dniPareja}/validate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(viabilityForm),
+      });
+
+      if (response.ok) {
+        toast.success('Viabilidad de semen actualizada correctamente');
+        setShowViabilityModal(false);
+        await checkViability(); // Refresh viability status
+        setViabilityForm({ status: 'viable', notes: '', studyReference: '' });
+      } else {
+        toast.error('Error al actualizar viabilidad');
+      }
+    } catch (error) {
+      console.error('Error validating viability:', error);
+      toast.error('Error de conexión');
+    }
+  };
+
+  const fetchPatientFromOocyte = async (oocyteId: string) => {
+    if (!oocyteId) return;
+    try {
+      const response = await fetch(`/api/laboratory/oocytes/${oocyteId}/patient`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const apiResponse = await response.json();
+      const data = apiResponse.data; // Access the nested data
+      if (data.partnerDni) {
+        setPartnerDni(data.partnerDni);
+        setForm((prev) => ({ ...prev, dniPareja: data.partnerDni }));
+        setSemenOptions(['own', 'donated', 'cryopreserved']);
+        setForceUpdate(prev => prev + 1);
+      } else {
+        setPartnerDni(null);
+        setForm((prev) => ({ ...prev, dniPareja: "" }));
+        setSemenOptions(['own', 'donated']);
+        setForceUpdate(prev => prev + 1);
+      }
+      // Reset validation
+    } catch (error) {
+      toast.error("Error al buscar paciente del ovocito");
+      setPartnerDni(null);
+      setForm((prev) => ({ ...prev, dniPareja: "" }));
+      setSemenOptions(['own', 'donated']);
+      setForceUpdate(prev => prev + 1);
     }
   };
 
@@ -265,6 +421,12 @@ export default function EmbryosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate semen viability for own semen
+    if (form.semenSource === "own" && isViable === false) {
+      toast.error("No se puede crear un embrión con semen propio no viable. Valide la viabilidad primero.");
+      return;
+    }
+
     const selectedSperm = donatedSperms.find(
       (s) => s.id.toString() === form.donationIdUsed
     );
@@ -300,6 +462,7 @@ export default function EmbryosPage() {
         qualityScore: "",
         semenSource: "own",
         donationIdUsed: "",
+        dniPareja: "",
         pgtResult: "",
       });
     } else {
@@ -327,6 +490,15 @@ export default function EmbryosPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {partnerDni && (
+                <div>
+                  <Label className="text-green-700">
+                    DNI de la Pareja: {partnerDni}
+                  </Label>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="oocyteOriginId" className="text-green-700">
@@ -430,25 +602,49 @@ export default function EmbryosPage() {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="semenSource" className="text-green-700">
-                  Fuente de Semen
-                </Label>
-                <Select
-                  value={form.semenSource}
-                  onValueChange={(value) =>
-                    setForm({ ...form, semenSource: value })
-                  }
-                >
-                  <SelectTrigger className="border-green-300 focus:border-green-500">
-                    <SelectValue placeholder="Seleccione fuente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="own">Propio</SelectItem>
-                    <SelectItem value="donated">Donado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {form.oocyteOriginId && (
+                <div>
+                  <Label htmlFor="semenSource" className="text-green-700">
+                    Fuente de Semen
+                  </Label>
+                  <div className="flex gap-2">
+                    <Select
+                      key={`semen-${forceUpdate}`}
+                      value={form.semenSource}
+                      onValueChange={(value) =>
+                        setForm({ ...form, semenSource: value })
+                      }
+                    >
+                      <SelectTrigger className="border-green-300 focus:border-green-500 flex-1">
+                        <SelectValue placeholder="Seleccione fuente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="own">
+                          Propio de la pareja {isViable === false ? "(No viable)" : isViable === true ? "(Viable)" : "(Pendiente)"}
+                        </SelectItem>
+                        <SelectItem value="donated">Donado</SelectItem>
+                        {semenOptions.indexOf('cryopreserved') !== -1 && (
+                          <SelectItem value="cryopreserved">Criopreservado de la pareja</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {form.semenSource === "own" && form.dniPareja && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          fetchViabilityDetails();
+                          setShowViabilityModal(true);
+                        }}
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                      >
+                        Validar Viabilidad
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             {form.semenSource === "donated" && (
               <div>
@@ -478,6 +674,39 @@ export default function EmbryosPage() {
                           ID: {sperm.id} - Altura: {sperm.phenotype?.height}cm,
                           Ojos: {sperm.phenotype?.eye_color}, Cabello:{" "}
                           {sperm.phenotype?.hair_color}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+            {form.semenSource === "cryopreserved" && (
+              <div>
+                <Label htmlFor="donationIdUsed" className="text-green-700">
+                  Semen Criopreservado
+                </Label>
+                {loadingCryopreserved ? (
+                  <div className="flex items-center justify-center p-4 border border-green-300 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                    <span className="ml-2 text-green-600">
+                      Cargando semen criopreservado...
+                    </span>
+                  </div>
+                ) : (
+                  <Select
+                    value={form.donationIdUsed}
+                    onValueChange={(value) =>
+                      setForm({ ...form, donationIdUsed: value })
+                    }
+                  >
+                    <SelectTrigger className="border-green-300 focus:border-green-500">
+                      <SelectValue placeholder="Seleccione semen criopreservado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cryopreservedSemen.map((semen) => (
+                        <SelectItem key={semen.id} value={semen.id.toString()}>
+                          Fecha: {new Date(semen.cryopreservationDate).toLocaleDateString('es-ES')} - Ubicación: Tanque {semen.cryoTank}, Rack {semen.cryoRack}, Tubo {semen.cryoTube}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -800,10 +1029,12 @@ export default function EmbryosPage() {
                       </Label>
                       <p className="text-sm">
                         {selectedEmbryo!.semenSource === "own"
-                          ? "Propio del paciente"
+                          ? "Propio de la pareja"
                           : selectedEmbryo!.semenSource === "donated"
                             ? "Donado"
-                            : "No especificada"}
+                            : selectedEmbryo!.semenSource === "cryopreserved"
+                              ? "Criopreservado de la pareja"
+                              : "No especificada"}
                       </p>
                     </div>
                     {selectedEmbryo!.semenSource === "donated" &&
@@ -811,6 +1042,17 @@ export default function EmbryosPage() {
                         <div className="space-y-1">
                           <Label className="text-sm font-medium text-gray-700">
                             ID de Donación
+                          </Label>
+                          <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                            {selectedEmbryo!.donationIdUsed}
+                          </p>
+                        </div>
+                      )}
+                    {selectedEmbryo!.semenSource === "cryopreserved" &&
+                      selectedEmbryo!.donationIdUsed && (
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium text-gray-700">
+                            ID de Semen Criopreservado
                           </Label>
                           <p className="text-sm font-mono bg-gray-100 p-2 rounded">
                             {selectedEmbryo!.donationIdUsed}
@@ -1208,6 +1450,98 @@ export default function EmbryosPage() {
             </Button>
             <Button onClick={handleUpdatePgt}>
               Actualizar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Validación de Viabilidad de Semen */}
+      <Dialog open={showViabilityModal} onOpenChange={setShowViabilityModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Validar Viabilidad de Semen</DialogTitle>
+            <DialogDescription>
+              Confirme la viabilidad del semen para el DNI: {form.dniPareja}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {viabilityDetails && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <h4 className="font-medium text-sm mb-2">Estado Actual:</h4>
+                <p className="text-sm">
+                  <span className={`font-medium ${
+                    viabilityDetails.status === 'viable' ? 'text-green-600' :
+                    viabilityDetails.status === 'not_viable' ? 'text-red-600' : 'text-yellow-600'
+                  }`}>
+                    {viabilityDetails.status === 'viable' ? 'Viable' :
+                     viabilityDetails.status === 'not_viable' ? 'No Viable' : 'Pendiente'}
+                  </span>
+                  {viabilityDetails.validationDate && (
+                    <span className="text-gray-500 ml-2">
+                      (Validado: {new Date(viabilityDetails.validationDate).toLocaleDateString()})
+                    </span>
+                  )}
+                </p>
+                {viabilityDetails.notes && (
+                  <p className="text-sm text-gray-600 mt-1">Notas: {viabilityDetails.notes}</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm font-medium">Estado de Viabilidad</Label>
+              <Select
+                value={viabilityForm.status}
+                onValueChange={(value: 'viable' | 'not_viable') =>
+                  setViabilityForm({ ...viabilityForm, status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viable">Viable</SelectItem>
+                  <SelectItem value="not_viable">No Viable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="study-reference" className="text-sm font-medium">
+                Referencia del Estudio (Opcional)
+              </Label>
+              <Input
+                id="study-reference"
+                value={viabilityForm.studyReference}
+                onChange={(e) =>
+                  setViabilityForm({ ...viabilityForm, studyReference: e.target.value })
+                }
+                placeholder="Ej: Estudio seminal #12345"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="viability-notes" className="text-sm font-medium">
+                Notas (Opcional)
+              </Label>
+              <textarea
+                id="viability-notes"
+                value={viabilityForm.notes}
+                onChange={(e) =>
+                  setViabilityForm({ ...viabilityForm, notes: e.target.value })
+                }
+                placeholder="Observaciones adicionales..."
+                className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViabilityModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleValidateViability}>
+              Confirmar Validación
             </Button>
           </DialogFooter>
         </DialogContent>
