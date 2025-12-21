@@ -11,13 +11,14 @@ export class Appointment extends BaseEntity {
   treatment: Treatment;
 
   @ManyToOne(() => Doctor, { nullable: false })
-  @JoinColumn({ name: 'doctor_id', referencedColumnName: 'id', })
+  @JoinColumn({ name: 'doctor_id', referencedColumnName: 'id' })
   doctor: Doctor;
 
   @Index()
-  @Column({ unique: true })
+  @Column()
   externalId: string;
-
+  @Column({ name: 'is_overtime', type: 'boolean', default: false })
+  isOvertime: boolean;
   @Column({
     type: 'enum',
     enum: ReasonForVisit,

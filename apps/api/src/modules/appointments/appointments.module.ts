@@ -4,9 +4,16 @@ import { ConfigModule } from '@nestjs/config';
 import { AppointmentsService } from './appointments.service';
 import { AppointmentsController } from './appointments.controller';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
+import { Appointment } from './appointment.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [HttpModule, ConfigModule, MedicalHistoryModule],
+  imports: [
+    TypeOrmModule.forFeature([Appointment]),
+    HttpModule,
+    ConfigModule,
+    MedicalHistoryModule,
+  ],
   providers: [AppointmentsService],
   controllers: [AppointmentsController],
   exports: [AppointmentsService],

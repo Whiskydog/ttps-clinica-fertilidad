@@ -13,6 +13,7 @@ import { MedicalHistory } from '../medical-history/entities/medical-history.enti
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { parseDateFromString } from '@common/utils/date.utils';
 import { MonitoringPlanService } from './services/monitoring-plan.service';
+import { MonitoringPlan } from './entities/monitoring-plan.entity';
 
 @Injectable()
 export class TreatmentService {
@@ -21,6 +22,8 @@ export class TreatmentService {
     private readonly treatmentRepo: Repository<Treatment>,
     @InjectRepository(Monitoring)
     private readonly monitoringRepo: Repository<Monitoring>,
+    @InjectRepository(MonitoringPlan)
+    private readonly monitoringPlanRepo: Repository<Monitoring>,
     @InjectRepository(DoctorNote)
     private readonly doctorNoteRepo: Repository<DoctorNote>,
     @InjectRepository(MedicationProtocol)
@@ -109,6 +112,7 @@ export class TreatmentService {
     // Buscar la fecha más reciente en cada tabla relacionada
     const [
       lastMonitoring,
+      lastMonitoringPlan,
       lastDoctorNote,
       lastProtocol,
       lastMilestone,
@@ -117,6 +121,11 @@ export class TreatmentService {
       treatment,
     ] = await Promise.all([
       this.monitoringRepo.findOne({
+        where: { treatment: { id: treatmentId } },
+        order: { createdAt: 'DESC' },
+        select: ['id', 'createdAt'],
+      }),
+      this.monitoringPlanRepo.findOne({
         where: { treatment: { id: treatmentId } },
         order: { createdAt: 'DESC' },
         select: ['id', 'createdAt'],
@@ -155,6 +164,7 @@ export class TreatmentService {
     // Recopilar todas las fechas válidas
     const dates: Date[] = [];
     if (lastMonitoring?.createdAt) dates.push(lastMonitoring.createdAt);
+    if (lastMonitoringPlan?.createdAt) dates.push(lastMonitoringPlan.createdAt);
     if (lastDoctorNote?.createdAt) dates.push(lastDoctorNote.createdAt);
     if (lastProtocol?.updatedAt) dates.push(lastProtocol.updatedAt);
     if (lastMilestone?.createdAt) dates.push(lastMilestone.createdAt);

@@ -848,6 +848,7 @@ export default function TreatmentDetailPage() {
         onOpenChange={setMonitoringPlanSheetOpen}
         treatmentId={treatment.id}
         protocol={protocol}
+        doctorId={treatment.initialDoctor?.id}
         onSuccess={() => {
           setMonitoringPlanSheetOpen(false);
           queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });

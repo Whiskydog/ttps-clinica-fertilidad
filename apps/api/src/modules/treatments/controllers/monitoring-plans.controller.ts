@@ -20,7 +20,7 @@ import { MonitoringPlanService } from '../services/monitoring-plan.service';
 import { MonitoringPlanStatus } from '../entities/monitoring-plan.entity';
 import { TreatmentsService } from '../treatments.service';
 import moment from 'moment';
-
+import { Logger } from '@nestjs/common';
 @Controller('monitoring-plans')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MonitoringPlansController {
@@ -29,82 +29,140 @@ export class MonitoringPlansController {
     private readonly treatmentsService: TreatmentsService,
   ) {}
 
+  @Post('finalize')
+  @RequireRoles(RoleCode.DOCTOR)
+  async finalizeMonitoringPlans(
+    @Body()
+    body: {
+      treatmentId: number;
+      rows: {
+        sequence: number;
+        plannedDay: number;
+        appointmentId?: number;
+        isOvertime: boolean;
+      }[];
+    },
+    @CurrentUser() user: User,
+  ) {
+   
+    const { treatmentId, rows } = body;
+
+    if (!Array.isArray(rows)) {
+      throw new BadRequestException('rows debe ser un array');
+    }
+
+     await this.monitoringPlanService.deleteByTreatment(treatmentId);
+
+    const treatment = await this.treatmentsService.getTreatmentDetail(
+      treatmentId,
+      user.id,
+      user.role.code as RoleCode,
+    );
+     if (!treatment.protocol.startDate) {
+      throw new BadRequestException(
+        'La fecha de inicio de estimulación no está definida',
+      );
+    }
+
+    const stimulationStart = moment(treatment.protocol.startDate);
+    
+    for (const m of rows) {
+      
+      const estimated = stimulationStart.clone().add(m.plannedDay, 'days');
+      const minDate = estimated.clone().subtract(1, 'day').toDate();
+      const maxDate = estimated.clone().add(1, 'day').toDate();
+
+      const plan = await this.monitoringPlanService.create({
+        treatmentId,
+        plannedDay: m.plannedDay,
+        minDate,
+        maxDate,
+        sequence: m.sequence,
+      });
+     
+      if (m.appointmentId) {
+        await this.monitoringPlanService.assignExternalAppointment(
+          plan.id,
+          m.appointmentId,
+        );
+      } else if (m.isOvertime) {
+        await this.monitoringPlanService.createOvertimeAppointment(plan.id);
+      }
+    }
+
+    await this.monitoringPlanService.sendMonitoringEmail(treatmentId);
+
+    return { success: true };
+  }
+
+  @Get('treatment/:treatmentId/available-slots')
+  @RequireRoles(RoleCode.DOCTOR)
+  getAvailableSlots(@Param('treatmentId', ParseIntPipe) treatmentId: number) {
+    return this.monitoringPlanService.getAvailableSlotsByTreatment(treatmentId);
+  }
+
   @Post()
   @RequireRoles(RoleCode.DOCTOR)
   async createMany(
     @Body()
     body: {
       treatmentId: number;
-      rows: { sequence: number; plannedDay: number }[];
+      monitorings: {
+        sequence: number;
+        plannedDay: number;
+        appointmentId?: number;
+        isOvertime: boolean;
+      }[];
     },
     @CurrentUser() user: User,
   ) {
-    const { treatmentId, rows } = body;
+    const { treatmentId, monitorings } = body;
 
-    if (!treatmentId || !Number.isInteger(treatmentId)) {
-      throw new BadRequestException('treatmentId inválido');
-    }
-    if (!rows?.length) {
-      throw new BadRequestException('No se recibieron planes de monitoreo');
-    }
-
-   
-    const detail = await this.treatmentsService.getTreatmentDetail(
+    await this.monitoringPlanService.deleteByTreatment(treatmentId);
+    await this.treatmentsService.getTreatmentDetail(
       treatmentId,
       user.id,
       user.role.code as RoleCode,
     );
-
-    const protocol = detail.protocol;
-
-    if (!protocol || !protocol.startDate) {
+    const treatment = await this.treatmentsService.getTreatmentDetail(
+      treatmentId,
+      user.id,
+      user.role.code as RoleCode,
+    );
+    if (!treatment.protocol.startDate) {
       throw new BadRequestException(
-        'El tratamiento no tiene protocolo con fecha de inicio',
+        'La fecha de inicio de estimulación no está definida para este tratamiento',
       );
     }
 
-    const stimulationStart = moment(protocol.startDate);
-
-    // Reglas de días
-    const sorted = [...rows].sort((a, b) => a.sequence - b.sequence);
-
-    for (let i = 0; i < sorted.length; i++) {
-      const d = sorted[i].plannedDay;
-
-      if (!Number.isFinite(d) || d < 1 || d > 31) {
-        throw new BadRequestException(
-          `plannedDay inválido (${d}). Debe estar entre 1 y 31.`,
-        );
-      }
-      if (i > 0 && d < sorted[i - 1].plannedDay) {
-        throw new BadRequestException(
-          `plannedDay inválido: el monitoreo ${sorted[i].sequence} no puede ser anterior al ${sorted[i - 1].sequence}`,
-        );
-      }
-    }
-
-    // Idempotente: si ya había planes, los reemplazamos
-    await this.monitoringPlanService.deleteByTreatment(treatmentId);
-
-    // Crear
-    for (const row of sorted) {
-      const estimated = stimulationStart.clone().add(row.plannedDay, 'days');
-
+    const stimulationStart = moment(treatment.protocol.startDate);
+    for (const m of monitorings) {
+      const estimated = stimulationStart.clone().add(m.plannedDay, 'days');
       const minDate = estimated.clone().subtract(1, 'day').toDate();
       const maxDate = estimated.clone().add(1, 'day').toDate();
-      await this.monitoringPlanService.create({
+      const plan = await this.monitoringPlanService.create({
         treatmentId,
-        sequence: row.sequence,
-        plannedDay: row.plannedDay,
+        sequence: m.sequence,
+        plannedDay: m.plannedDay,
         minDate,
         maxDate,
       });
+
+      if (m.appointmentId) {
+        await this.monitoringPlanService.assignExternalAppointment(
+          plan.id,
+          m.appointmentId,
+        );
+      }
+
+      if (m.isOvertime) {
+        await this.monitoringPlanService.createOvertimeAppointment(plan.id);
+      }
     }
 
-    return {
-      message: 'Planes de monitoreo creados correctamente',
-      count: sorted.length,
-    };
+    await this.monitoringPlanService.sendMonitoringEmail(treatmentId);
+
+    return { success: true };
   }
 
   @Get('treatment/:treatmentId')

@@ -25,6 +25,7 @@ import { Group8NoticesModule } from '../external/group8-notices/group8-notices.m
 import { MonitoringPlan } from './entities/monitoring-plan.entity';
 import { MonitoringPlanService } from './services/monitoring-plan.service';
 import { MonitoringPlansController } from './controllers/monitoring-plans.controller';
+import { AppointmentsModule } from '@modules/appointments/appointments.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MonitoringPlansController } from './controllers/monitoring-plans.contro
     MedicalHistoryModule,
     UploadsModule,
     Group8NoticesModule,
+    AppointmentsModule,
   ],
   providers: [
     TreatmentService,

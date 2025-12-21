@@ -4,9 +4,9 @@ import { Treatment } from './treatment.entity';
 import { Appointment } from '@modules/appointments/appointment.entity';
 
 export enum MonitoringPlanStatus {
-  PENDING = 'PENDING', // creado por el médico, sin turno
-  RESERVED = 'RESERVED', // el paciente reservó turno
-  COMPLETED = 'COMPLETED', // monitoreo ya registrado
+  PLANNED = 'PLANNED', // creado por médico
+  RESERVED = 'RESERVED', // tiene appointment asignado
+  COMPLETED = 'COMPLETED', // monitoreo registrado
   CANCELLED = 'CANCELLED',
 }
 
@@ -34,7 +34,7 @@ export class MonitoringPlan extends BaseEntity {
   @Column({
     type: 'enum',
     enum: MonitoringPlanStatus,
-    default: MonitoringPlanStatus.PENDING,
+    default: MonitoringPlanStatus.RESERVED,
   })
   status: MonitoringPlanStatus;
 
