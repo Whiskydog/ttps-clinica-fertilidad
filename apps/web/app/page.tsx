@@ -1,5 +1,4 @@
 import Link from "next/link";
-import ChatbotWidget from "../components/ChatbotWidget";
 
 export default async function Home() {
   return (
@@ -50,8 +49,6 @@ export default async function Home() {
           </div>
         </div>
       </main>
-
-      <ChatbotWidget />
     </div>
   );
 }

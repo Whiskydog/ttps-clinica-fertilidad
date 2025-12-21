@@ -26,6 +26,13 @@ export async function getCurrentTreatment(): Promise<CurrentTreatmentResponse> {
   const payload = await resp.json().catch(() => null);
 
   if (!resp.ok) {
+    if (resp.status === 404) {
+      return {
+        statusCode: 404,
+        message: "No current treatment found",
+        data: null,
+      };
+    }
     const message = payload?.message || `Request failed: ${resp.status}`;
     throw new Error(message);
   }

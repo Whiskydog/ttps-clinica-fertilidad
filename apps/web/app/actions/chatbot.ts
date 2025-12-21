@@ -1,6 +1,8 @@
-import { ApiErrorResponse } from "@repo/contracts";
+"use server";
 
-const backendUrl = process.env.NEXT_PUBLIC_API_URL as string;
+import { cookies } from "next/headers";
+
+const backendUrl = process.env.BACKEND_URL;
 
 export interface ChatbotMessage {
     role: "user" | "model";
@@ -8,32 +10,34 @@ export interface ChatbotMessage {
 }
 
 export interface ChatbotPayload {
-    patientId: number;
-    patientName: string;
-    birthDate: string;
-    gender: string;
     messages: ChatbotMessage[];
 }
 
 export async function sendMessage(payload: ChatbotPayload) {
-    const url = new URL(`${backendUrl}/external/group6/preguntar`);
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("session")?.value;
+
+    if (!sessionToken) {
+        throw new Error("No se encontró el token de sesión");
+    }
+
+    const url = `${backendUrl}/external/group6/preguntar`;
 
     const res = await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify(payload),
         cache: "no-store",
     });
 
     const data = await res.json().catch(() => null);
-    console.log('Chatbot Response:', data);
+
     if (!res.ok) {
         throw new Error(data?.message || "Error al comunicarse con el chatbot");
     }
 
-    // The API returns the direct response from the external service
-    // Adjust based on actual response structure if needed, usually it's { answer: string } or similar
     return data;
 }

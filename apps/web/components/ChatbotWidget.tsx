@@ -2,37 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, User, Bot, Loader2 } from "lucide-react";
-import { sendMessage, ChatbotMessage as ApiChatbotMessage, ChatbotPayload } from "../lib/services/chatbot";
+import { sendMessage, ChatbotPayload } from "../app/actions/chatbot";
 
 interface LocalMessage {
     role: "user" | "assistant";
     content: string;
 }
 
-interface ChatbotWidgetProps {
-    patientData?: {
-        id: number;
-        name: string;
-        birthDate: string;
-        gender: string;
-    };
-}
-
-const GUEST_DATA = {
-    id: 999,
-    name: "Invitado",
-    birthDate: "2000-01-01",
-    gender: "O",
-};
-
-export default function ChatbotWidget({ patientData }: ChatbotWidgetProps) {
+export default function ChatbotWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<LocalMessage[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    const userData = patientData || GUEST_DATA;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,26 +37,24 @@ export default function ChatbotWidget({ patientData }: ChatbotWidgetProps) {
         try {
             // Transform internal messages (simple format) to API format (Gemini format)
             const apiMessages = newHistory.map(msg => ({
-                role: msg.role === "assistant" ? "model" : "user",
+                role: (msg.role === "assistant" ? "model" : "user") as "user" | "model",
                 parts: [{ text: msg.content }]
             }));
 
-            const payload: any = { // Using any cast to matching the updated service type if needed, or strictly typing it
-                patientId: userData.id,
-                patientName: userData.name,
-                birthDate: userData.birthDate,
-                gender: userData.gender,
+            // Payload only needs messages now, backend handles user data
+            const payload: ChatbotPayload = {
                 messages: apiMessages,
             };
 
             const response = await sendMessage(payload);
 
-            // Assuming response is the string answer or an object with 'answer' or 'message'
-            // Adjusting based on common external chatbot behaviors. 
             // If the service returns the full history, replace. If just the new message, push it.
             // Let's assume it returns { answer: "..." } or similar text.
             // If the external service returns a string directly:
-            const answer = typeof response === 'string' ? response : (response.answer || response.message || JSON.stringify(response));
+            const responseData = response.data || response; // Handle both wrapped and unwrapped just in case
+            const answer = typeof responseData === 'string'
+                ? responseData
+                : (responseData.answer || responseData.respuesta || responseData.message || (typeof responseData === 'object' ? JSON.stringify(responseData) : "Respuesta vacía"));
 
             const botMsg: LocalMessage = { role: "assistant", content: answer };
             setMessages((prev) => [...prev, botMsg]);
@@ -111,7 +91,7 @@ export default function ChatbotWidget({ patientData }: ChatbotWidgetProps) {
                             <div>
                                 <h3 className="font-semibold text-sm">Asistente Virtual</h3>
                                 <p className="text-xs text-blue-100">
-                                    {userData.id === 0 ? "Modo Invitado" : `Hola, ${userData.name}`}
+                                    En línea
                                 </p>
                             </div>
                         </div>
