@@ -19,6 +19,7 @@ export default function PaymentsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOS, setSelectedOS] = useState<ObraSocial | null>(null);
     const [processingPayments, setProcessingPayments] = useState<number[]>([]);
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -35,8 +36,16 @@ export default function PaymentsPage() {
         setLoading(false);
     };
 
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
     const getTableData = () => {
-        return obrasSociales.map(os => {
+        let data = obrasSociales.map(os => {
             const osPayments = payments.filter(p => p.obra_social.id === os.id);
 
             const totalDebt = osPayments
@@ -54,10 +63,23 @@ export default function PaymentsPage() {
                 pendingCount: osPayments.filter(p => p.estado_obra_social === 'pendiente').length
             };
         }).filter(os =>
-            os.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-            // ||
-            // os.sigla.toLowerCase().includes(searchTerm.toLowerCase())
+            os.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (os.sigla && os.sigla.toLowerCase().includes(searchTerm.toLowerCase()))
         );
+
+        if (sortConfig) {
+            data.sort((a, b) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+
+        return data;
     };
 
     const handleProcessPayment = async (paymentId: number, groupId: number) => {
@@ -67,15 +89,15 @@ export default function PaymentsPage() {
                 id_grupo: groupId,
                 id_pago: paymentId,
                 obra_social_pagada: true,
-                paciente_pagado: false // Assuming we are only processing OS payment here
+                paciente_pagado: false
             });
 
             if (res.success) {
                 toast("Pago procesado", {
                     description: "El pago ha sido registrado exitosamente.",
+                    action: "success"
                 });
-                await fetchData(); // Refresh data
-                // Close modal if no more pending? or keep open.
+                await fetchData();
             } else {
                 toast("Error", {
                     description: "No se pudo procesar el pago.",
@@ -92,7 +114,6 @@ export default function PaymentsPage() {
     }
 
     const tableData = getTableData();
-    console.log("Table Data:", tableData);
     const totalGlobalDebt = tableData.reduce((acc, curr) => acc + curr.totalDebt, 0);
     const totalGlobalCollected = tableData.reduce((acc, curr) => acc + curr.totalCollected, 0);
 
@@ -149,11 +170,18 @@ export default function PaymentsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Sigla</TableHead>
-                                {/* <TableHead className="text-right">Cobertura</TableHead> */}
-                                <TableHead className="text-right">Deuda Pendiente</TableHead>
-                                <TableHead className="text-right">Cobrado</TableHead>
+                                <TableHead className="cursor-pointer hover:bg-gray-100" onClick={() => handleSort('nombre')}>
+                                    Nombre {sortConfig?.key === 'nombre' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </TableHead>
+                                <TableHead className="cursor-pointer hover:bg-gray-100" onClick={() => handleSort('sigla')}>
+                                    Sigla {sortConfig?.key === 'sigla' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </TableHead>
+                                <TableHead className="text-right cursor-pointer hover:bg-gray-100" onClick={() => handleSort('totalDebt')}>
+                                    Deuda Pendiente {sortConfig?.key === 'totalDebt' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </TableHead>
+                                <TableHead className="text-right cursor-pointer hover:bg-gray-100" onClick={() => handleSort('totalCollected')}>
+                                    Cobrado {sortConfig?.key === 'totalCollected' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
