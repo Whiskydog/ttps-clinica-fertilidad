@@ -1,4 +1,7 @@
+import { usePayments } from "@/hooks/payments/usePayments";
+import { toast } from "@repo/ui";
 import { Button } from "@repo/ui/button";
+import { Spinner } from "@repo/ui/spinner";
 import { motion } from "motion/react";
 
 interface Props {
@@ -6,6 +9,24 @@ interface Props {
 }
 
 export function OwnDebtCard({ debt }: Props) {
+  const { settleOwnDebtMutation } = usePayments();
+  const {
+    mutateAsync: settleOwnDebt,
+    isPending: isSettlingDebt,
+    isSuccess: isDebtSettled,
+  } = settleOwnDebtMutation;
+
+  const handleSettleDebt = async () => {
+    await settleOwnDebt(void 0, {
+      onError: () => {
+        toast.error("Error al pagar la deuda. Intente nuevamente.");
+      },
+      onSuccess: (res) => {
+        toast.success(res.message);
+      },
+    });
+  };
+
   return (
     <motion.div
       layout
@@ -24,8 +45,19 @@ export function OwnDebtCard({ debt }: Props) {
         </p>
       </div>
       <div>
-        <Button variant="destructive" disabled={debt === 0}>
-          Pagar
+        <Button
+          variant="destructive"
+          disabled={debt === 0 || isSettlingDebt || isDebtSettled}
+          onClick={handleSettleDebt}
+        >
+          {isSettlingDebt || isDebtSettled ? (
+            <>
+              <Spinner />
+              Procesando...
+            </>
+          ) : (
+            "Pagar deuda"
+          )}
         </Button>
       </div>
     </motion.div>
