@@ -45,9 +45,11 @@ export class MonitoringPlansController {
       rows: {
         sequence: number;
         plannedDay: number;
-        appointmentId?: number;
+        appointment?: {
+          id: number;
+          dateTime: string;
+        };
         isOvertime: boolean;
-        appointmentDateTime?: string;
       }[];
     },
     @CurrentUser() user: User,
@@ -68,9 +70,7 @@ export class MonitoringPlansController {
         'La fecha de inicio de estimulación no está definida',
       );
     }
-
     const stimulationStart = moment(treatment.protocol.startDate);
-
     for (const m of rows) {
       const estimated = stimulationStart.clone().add(m.plannedDay, 'days');
       const minDate = estimated.clone().subtract(1, 'day').toDate();
@@ -83,15 +83,15 @@ export class MonitoringPlansController {
         maxDate,
         sequence: m.sequence,
       });
-      if (m.appointmentId && m.appointmentDateTime) {
+      if (m.appointment.id && m.appointment.dateTime) {
         await this.appointmentsService.bookAppointment(
           treatment.treatment.medicalHistory.patient,
           {
             reason: ReasonForVisit.StimulationMonitoring,
             appointment: {
-              id: m.appointmentId,
+              id: m.appointment.id,
               doctorId: treatment.treatment.initialDoctor.id,
-              dateTime: m.appointmentDateTime,
+              dateTime: m.appointment.dateTime,
             },
           },
         );
@@ -100,7 +100,7 @@ export class MonitoringPlansController {
       }
     }
 
-    await this.monitoringPlanService.sendMonitoringEmail(treatmentId);
+    // await this.monitoringPlanService.sendMonitoringEmail(treatmentId);
 
     return { success: true };
   }
