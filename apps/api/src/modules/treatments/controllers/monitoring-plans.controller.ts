@@ -15,20 +15,27 @@ import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
-import { RoleCode } from '@repo/contracts';
+import { ReasonForVisit, RoleCode } from '@repo/contracts';
 import { MonitoringPlanService } from '../services/monitoring-plan.service';
 import { MonitoringPlanStatus } from '../entities/monitoring-plan.entity';
 import { TreatmentsService } from '../treatments.service';
 import moment from 'moment';
-import { Logger } from '@nestjs/common';
+import { AppointmentsService } from '@modules/appointments/appointments.service';
+
 @Controller('monitoring-plans')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MonitoringPlansController {
   constructor(
     private readonly monitoringPlanService: MonitoringPlanService,
+    private readonly appointmentsService: AppointmentsService,
     private readonly treatmentsService: TreatmentsService,
   ) {}
-
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  cancelMonitoringPlan(@Param('id', ParseIntPipe) planId: number) {
+    return this.monitoringPlanService.cancel(planId);
+  }
   @Post('finalize')
   @RequireRoles(RoleCode.DOCTOR)
   async finalizeMonitoringPlans(
@@ -40,34 +47,31 @@ export class MonitoringPlansController {
         plannedDay: number;
         appointmentId?: number;
         isOvertime: boolean;
+        appointmentDateTime?: string;
       }[];
     },
     @CurrentUser() user: User,
   ) {
-   
     const { treatmentId, rows } = body;
 
     if (!Array.isArray(rows)) {
       throw new BadRequestException('rows debe ser un array');
     }
 
-     await this.monitoringPlanService.deleteByTreatment(treatmentId);
-
     const treatment = await this.treatmentsService.getTreatmentDetail(
       treatmentId,
       user.id,
       user.role.code as RoleCode,
     );
-     if (!treatment.protocol.startDate) {
+    if (!treatment.protocol.startDate) {
       throw new BadRequestException(
         'La fecha de inicio de estimulación no está definida',
       );
     }
 
     const stimulationStart = moment(treatment.protocol.startDate);
-    
+
     for (const m of rows) {
-      
       const estimated = stimulationStart.clone().add(m.plannedDay, 'days');
       const minDate = estimated.clone().subtract(1, 'day').toDate();
       const maxDate = estimated.clone().add(1, 'day').toDate();
@@ -79,11 +83,17 @@ export class MonitoringPlansController {
         maxDate,
         sequence: m.sequence,
       });
-     
-      if (m.appointmentId) {
-        await this.monitoringPlanService.assignExternalAppointment(
-          plan.id,
-          m.appointmentId,
+      if (m.appointmentId && m.appointmentDateTime) {
+        await this.appointmentsService.bookAppointment(
+          treatment.treatment.medicalHistory.patient,
+          {
+            doctorId: treatment.treatment.initialDoctor.id,
+            reason: ReasonForVisit.StimulationMonitoring,
+            appointment: {
+              id: m.appointmentId,
+              dateTime: m.appointmentDateTime,
+            },
+          },
         );
       } else if (m.isOvertime) {
         await this.monitoringPlanService.createOvertimeAppointment(plan.id);
@@ -99,70 +109,6 @@ export class MonitoringPlansController {
   @RequireRoles(RoleCode.DOCTOR)
   getAvailableSlots(@Param('treatmentId', ParseIntPipe) treatmentId: number) {
     return this.monitoringPlanService.getAvailableSlotsByTreatment(treatmentId);
-  }
-
-  @Post()
-  @RequireRoles(RoleCode.DOCTOR)
-  async createMany(
-    @Body()
-    body: {
-      treatmentId: number;
-      monitorings: {
-        sequence: number;
-        plannedDay: number;
-        appointmentId?: number;
-        isOvertime: boolean;
-      }[];
-    },
-    @CurrentUser() user: User,
-  ) {
-    const { treatmentId, monitorings } = body;
-
-    await this.monitoringPlanService.deleteByTreatment(treatmentId);
-    await this.treatmentsService.getTreatmentDetail(
-      treatmentId,
-      user.id,
-      user.role.code as RoleCode,
-    );
-    const treatment = await this.treatmentsService.getTreatmentDetail(
-      treatmentId,
-      user.id,
-      user.role.code as RoleCode,
-    );
-    if (!treatment.protocol.startDate) {
-      throw new BadRequestException(
-        'La fecha de inicio de estimulación no está definida para este tratamiento',
-      );
-    }
-
-    const stimulationStart = moment(treatment.protocol.startDate);
-    for (const m of monitorings) {
-      const estimated = stimulationStart.clone().add(m.plannedDay, 'days');
-      const minDate = estimated.clone().subtract(1, 'day').toDate();
-      const maxDate = estimated.clone().add(1, 'day').toDate();
-      const plan = await this.monitoringPlanService.create({
-        treatmentId,
-        sequence: m.sequence,
-        plannedDay: m.plannedDay,
-        minDate,
-        maxDate,
-      });
-
-      if (m.appointmentId) {
-        await this.monitoringPlanService.assignExternalAppointment(
-          plan.id,
-          m.appointmentId,
-        );
-      }
-
-      if (m.isOvertime) {
-        await this.monitoringPlanService.createOvertimeAppointment(plan.id);
-      }
-    }
-
-    await this.monitoringPlanService.sendMonitoringEmail(treatmentId);
-
-    return { success: true };
   }
 
   @Get('treatment/:treatmentId')

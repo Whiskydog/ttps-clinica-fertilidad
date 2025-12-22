@@ -83,6 +83,7 @@ export class TreatmentsService {
 
     const monitoringPlans = await this.monitoringPlanRepository.find({
       where: { treatmentId },
+      withDeleted: true,
       order: { sequence: 'ASC' },
     });
 

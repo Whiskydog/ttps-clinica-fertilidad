@@ -33,6 +33,7 @@ import { GenerateProtocolPdfSheet } from "@/components/doctor/treatments/forms/g
 import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monitoring-plan-sheet";
+import { MonitoringFormSheet } from "@/components/doctor/treatments/forms/monitoring-form-sheet";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -45,6 +46,10 @@ export default function TreatmentDetailPage() {
   const [consentSheetOpen, setConsentSheetOpen] = useState(false);
   const [protocolPdfSheetOpen, setProtocolPdfSheetOpen] = useState(false);
   const [monitoringPlanSheetOpen, setMonitoringPlanSheetOpen] = useState(false);
+  const [monitoringFormOpen, setMonitoringFormOpen] = useState(false);
+  const [selectedMonitoringPlan, setSelectedMonitoringPlan] =
+    useState<any>(null);
+
   const queryClient = useQueryClient();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -507,35 +512,59 @@ export default function TreatmentDetailPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {treatmentData.monitoringPlans.map((plan: any) => (
+                {treatmentData.monitoringPlans.map((plan: any, idx: number) => (
                   <div
                     key={plan.id}
                     className="flex justify-between items-center border rounded-lg p-4"
                   >
                     <div>
                       <p className="font-medium">
-                        Monitoreo #{plan.sequence} — Día {plan.plannedDay}
+                        Monitoreo #{idx + 1} — Día {plan.plannedDay}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Rango permitido: {formatDateForDisplay(plan.minDate)} –{" "}
                         {formatDateForDisplay(plan.maxDate)}
                       </p>
                     </div>
+                    {!plan.deletedAt && plan.status !== "COMPLETED" && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedMonitoringPlan(plan);
+                          setMonitoringFormOpen(true);
+                        }}
+                      >
+                        <Activity className="h-4 w-4 mr-2" />
+                        Realizar monitoreo
+                      </Button>
+                    )}
 
-                    <Badge
-                      variant="outline"
-                      className={
-                        plan.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                          : plan.status === "RESERVED"
+                    {plan.deletedAt ? (
+                      <Badge className="bg-red-100 text-red-800 border-red-300">
+                        CANCELADO
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={
+                          plan.status === "PENDING"
                             ? "bg-blue-100 text-blue-800 border-blue-300"
+                            : plan.status === "RESERVED"
+                              ? "bg-blue-100 text-blue-800 border-blue-300"
+                              : plan.status === "COMPLETED"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : "bg-blue-100 text-blue-800 border-blue-300"
+                        }
+                      >
+                        {plan.status === "PENDING"
+                          ? "RESERVADO"
+                          : plan.status === "RESERVED"
+                            ? "RESERVADO"
                             : plan.status === "COMPLETED"
-                              ? "bg-green-100 text-green-800 border-green-300"
-                              : "bg-gray-100 text-gray-800 border-gray-300"
-                      }
-                    >
-                      {plan.status}
-                    </Badge>
+                              ? "COMPLETADO"
+                              : "RESERVADO"}
+                      </Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -853,6 +882,16 @@ export default function TreatmentDetailPage() {
           setMonitoringPlanSheetOpen(false);
           queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
         }}
+      />
+
+      <MonitoringFormSheet
+        open={monitoringFormOpen}
+        onOpenChange={setMonitoringFormOpen}
+        monitoringPlan={selectedMonitoringPlan}
+        treatmentId={treatment.id}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] })
+        }
       />
     </div>
   );

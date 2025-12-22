@@ -76,7 +76,7 @@ export const MonitoringSchema = z.object({
 export type Monitoring = z.infer<typeof MonitoringSchema>;
 
 export const MonitoringPlanStatusEnum = z.enum([
-  "PENDING",
+  "PLANNED",
   "RESERVED",
   "COMPLETED",
   "CANCELLED",
@@ -336,13 +336,13 @@ export type UpdateMedicationProtocolInput = z.infer<
 
 // Monitoring Input Schemas
 export const CreateMonitoringSchema = z.object({
-  treatmentId: z.number(),
   monitoringDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  dayNumber: z.number().nullable().optional(),
-  follicleCount: z.number().nullable().optional(),
+  dayNumber: z.coerce.number().nullable().optional(),
+  follicleCount: z.coerce.number().nullable().optional(),
   follicleSize: z.string().nullable().optional(),
-  estradiolLevel: z.number().nullable().optional(),
+  estradiolLevel: z.coerce.number().nullable().optional(),
   observations: z.string().nullable().optional(),
+  monitoringPlanId: z.coerce.number().nullable().optional(),
 });
 
 export const UpdateMonitoringSchema = CreateMonitoringSchema.partial().extend({

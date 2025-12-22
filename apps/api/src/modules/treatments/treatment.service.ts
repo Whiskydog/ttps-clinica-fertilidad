@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Treatment } from './entities/treatment.entity';
@@ -13,7 +13,11 @@ import { MedicalHistory } from '../medical-history/entities/medical-history.enti
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { parseDateFromString } from '@common/utils/date.utils';
 import { MonitoringPlanService } from './services/monitoring-plan.service';
-import { MonitoringPlan } from './entities/monitoring-plan.entity';
+import {
+  MonitoringPlan,
+  MonitoringPlanStatus,
+} from './entities/monitoring-plan.entity';
+import { CreateMonitoringDto } from './dto/create-monitoring.dto';
 
 @Injectable()
 export class TreatmentService {
@@ -23,7 +27,7 @@ export class TreatmentService {
     @InjectRepository(Monitoring)
     private readonly monitoringRepo: Repository<Monitoring>,
     @InjectRepository(MonitoringPlan)
-    private readonly monitoringPlanRepo: Repository<Monitoring>,
+    private readonly monitoringPlanRepo: Repository<MonitoringPlan>,
     @InjectRepository(DoctorNote)
     private readonly doctorNoteRepo: Repository<DoctorNote>,
     @InjectRepository(MedicationProtocol)
@@ -247,6 +251,45 @@ export class TreatmentService {
         maxDate,
       });
     }
+  }
+  async createMonitoring(treatmentId: number, dto: CreateMonitoringDto) {
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id: treatmentId },
+    });
+
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+
+    const monitoring = this.monitoringRepo.create({
+      treatmentId,
+      treatment,
+      monitoringDate: new Date(dto.monitoringDate),
+      dayNumber: dto.dayNumber ?? null,
+      follicleCount: dto.follicleCount ?? null,
+      follicleSize: dto.follicleSize ?? null,
+      estradiolLevel: dto.estradiolLevel ?? null,
+      observations: dto.observations ?? null,
+    });
+    if (dto.monitoringPlanId) {
+      const plan = await this.monitoringPlanRepo.findOne({
+        where: {
+          id: dto.monitoringPlanId,
+          treatment: { id: treatmentId },
+        },
+      });
+
+      if (!plan) {
+        throw new NotFoundException(
+          `MonitoringPlan ${dto.monitoringPlanId} no encontrado para el tratamiento ${treatmentId}`,
+        );
+      }
+
+      plan.status = MonitoringPlanStatus.COMPLETED;
+      await this.monitoringPlanRepo.save(plan);
+    }
+
+    return this.monitoringRepo.save(monitoring);
   }
 
   async findOne(id: number): Promise<Treatment> {

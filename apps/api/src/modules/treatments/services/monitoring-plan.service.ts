@@ -23,6 +23,19 @@ export class MonitoringPlanService {
     private readonly appointmentsService: AppointmentsService,
     private readonly group8NoticesService: Group8NoticesService,
   ) {}
+  async cancel(planId: number) {
+    const plan = await this.repo.findOne({
+      where: { id: planId },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan no encontrado');
+    }
+
+    await this.repo.softDelete(planId);
+
+    return { success: true };
+  }
 
   async getAvailableSlotsByTreatment(treatmentId: number) {
     const plans = await this.repo.find({
@@ -158,7 +171,6 @@ export class MonitoringPlanService {
     if (!plan) throw new NotFoundException('Monitoring plan not found');
 
     const patient = plan.treatment.medicalHistory.patient;
-
     //  Reserva real en sistema externo
     await this.appointmentsService.reserveExternalSlotByDoctor({
       patientId: patient.id,
@@ -216,29 +228,5 @@ export class MonitoringPlanService {
       subject: 'Monitoreos de estimulación programados',
       htmlBody,
     });
-  }
-
-  async finalizeMonitoringPlans(params: {
-    treatmentId: number;
-    rows: {
-      planId: number;
-      selectedSlotId?: number;
-      isOvertime: boolean;
-    }[];
-  }) {
-    for (const row of params.rows) {
-      if (row.isOvertime) {
-        await this.createOvertimeAppointment(row.planId);
-      } else if (row.selectedSlotId) {
-        await this.assignExternalAppointment(row.planId, row.selectedSlotId);
-      } else {
-        throw new BadRequestException(
-          `Plan ${row.planId} sin turno ni sobreturno`,
-        );
-      }
-    }
-
-    //  mail UNA sola vez 
-    await this.sendMonitoringEmail(params.treatmentId);
   }
 }

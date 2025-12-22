@@ -22,7 +22,8 @@ type MonitoringRow = {
   planId: number;
   sequence: number;
   plannedDay: number;
-  selectedSlotId?: number | null;
+  appointmentId?: number | null;
+  appointmentDateTime?: string | null;
   isOvertime: boolean;
   overtimeTime?: string | null;
 };
@@ -45,8 +46,9 @@ type ExternalSlot = {
 
 type SlotItem = {
   id: number;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:mm
+  date: string;
+  time: string;
+  dateTime: string;
 };
 
 export function MonitoringPlanSheet({
@@ -57,21 +59,22 @@ export function MonitoringPlanSheet({
   doctorId,
   onSuccess,
 }: Props) {
+  const [submitting, setSubmitting] = useState(false);
   const form = useForm<{ rows: MonitoringRow[] }>({
     defaultValues: {
       rows: [
-        { sequence: 1, plannedDay: 7, isOvertime: false, selectedSlotId: null },
+        { sequence: 1, plannedDay: 7, isOvertime: false, appointmentId: null },
         {
           sequence: 2,
           plannedDay: 10,
           isOvertime: false,
-          selectedSlotId: null,
+          appointmentId: null,
         },
         {
           sequence: 3,
           plannedDay: 13,
           isOvertime: false,
-          selectedSlotId: null,
+          appointmentId: null,
         },
       ],
     },
@@ -83,6 +86,7 @@ export function MonitoringPlanSheet({
       id: slot.id,
       date: m.format("YYYY-MM-DD"),
       time: m.format("HH:mm"),
+      dateTime: m.format("YYYY-MM-DD HH:mm"),
     };
   }
 
@@ -119,10 +123,7 @@ export function MonitoringPlanSheet({
 
   // slotsCache: sequence -> { loading, items }
   const [slotsCache, setSlotsCache] = useState<
-    Record<
-      number,
-      { loading: boolean; items: { id: number; time: string; date: string }[] }
-    >
+    Record<number, { loading: boolean; items: SlotItem[] }>
   >({});
 
   async function loadSlotsForRow(
@@ -170,57 +171,67 @@ export function MonitoringPlanSheet({
   }
 
   function markOvertime(index: number) {
-    form.setValue(`rows.${index}.selectedSlotId`, null);
+    form.setValue(`rows.${index}.appointmentId`, null);
     form.setValue(`rows.${index}.isOvertime`, true);
     form.setValue(`rows.${index}.overtimeTime`, "08:00"); // default
   }
 
-  function pickSlot(index: number, slotId: number) {
-    form.setValue(`rows.${index}.selectedSlotId`, slotId);
+  function pickSlot(index: number, slot: SlotItem) {
+    form.setValue(`rows.${index}.appointmentId`, slot.id);
+    form.setValue(`rows.${index}.appointmentDateTime`, slot.dateTime);
     form.setValue(`rows.${index}.isOvertime`, false);
     form.setValue(`rows.${index}.overtimeTime`, null);
   }
 
   async function onSubmit(data: { rows: MonitoringRow[] }) {
+    if (submitting) return;
 
-    for (const r of data.rows) {
-      if (!r.isOvertime && !r.selectedSlotId) {
-        toast.error(
-          `Falta seleccionar turno u sobreturno en el monitoreo #${r.sequence}`
-        );
+    setSubmitting(true);
+
+    try {
+      for (const r of data.rows) {
+        if (!r.isOvertime && !r.appointmentId) {
+          toast.error(
+            `Falta seleccionar turno u sobreturno en el monitoreo #${r.sequence}`
+          );
+          return;
+        }
+
+        if (r.isOvertime && !r.overtimeTime) {
+          toast.error(
+            `Falta indicar la hora del sobreturno en el monitoreo #${r.sequence}`
+          );
+          return;
+        }
+      }
+
+      const result = await finalizeMonitoringPlans({
+        treatmentId,
+        rows: data.rows.map((r) => ({
+          planId: r.planId,
+          appointment: r.isOvertime
+            ? undefined
+            : {
+                id: r.appointmentId!,
+                dateTime: r.appointmentDateTime!,
+              },
+          isOvertime: r.isOvertime,
+          plannedDay: r.plannedDay,
+          sequence: r.sequence,
+        })),
+      });
+
+      if (!result.success) {
+        toast.error(result.error ?? "No se pudo finalizar el plan");
         return;
       }
 
-      if (r.isOvertime && !r.overtimeTime) {
-        toast.error(
-          `Falta indicar la hora del sobreturno en el monitoreo #${r.sequence}`
-        );
-        return;
-      }
+      toast.success("Plan de monitoreos confirmado");
+      resetAndClose();
+      onSuccess();
+    } finally {
+      setSubmitting(false);
     }
-
-    const result = await finalizeMonitoringPlans({
-      treatmentId,
-      rows: data.rows.map((r) => ({
-        planId: r.planId,
-        selectedSlotId: r.isOvertime
-          ? undefined
-          : (r.selectedSlotId ?? undefined),
-        isOvertime: r.isOvertime,
-        overtimeTime: r.isOvertime ? r.overtimeTime! : undefined,
-        plannedDay: r.plannedDay,
-        sequence: r.sequence,
-      })),
-    });
-   
-    if (!result.success) {
-      toast.error(result.error ?? "No se pudo finalizar el plan");
-      return;
-    }
-
-    toast.success("Plan de monitoreos confirmado");
-    resetAndClose();
-    onSuccess();
   }
 
   function resetAndClose() {
@@ -296,7 +307,7 @@ export function MonitoringPlanSheet({
             const items = cache?.items ?? [];
             const loading = cache?.loading ?? false;
 
-            const selectedId = rows[index]?.selectedSlotId ?? null;
+            const selectedId = rows[index]?.appointmentId ?? null;
             const isOvertime = rows[index]?.isOvertime ?? false;
 
             return (
@@ -454,7 +465,7 @@ export function MonitoringPlanSheet({
                             type="button"
                             size="sm"
                             variant={selected ? "default" : "outline"}
-                            onClick={() => pickSlot(index, s.id)}
+                            onClick={() => pickSlot(index, s)}
                           >
                             {moment(s.date).format("DD/MM")}-{s.time}
                           </Button>
@@ -473,15 +484,29 @@ export function MonitoringPlanSheet({
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={resetAndClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetAndClose}
+              disabled={submitting}
+            >
               Cancelar
             </Button>
 
             <Button
               type="submit"
-              disabled={hasErrors || !stimulationStartDate || !doctorId}
+              disabled={
+                submitting || hasErrors || !stimulationStartDate || !doctorId
+              }
             >
-              Confirmar y reservar turnos
+              {submitting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Reservando…
+                </>
+              ) : (
+                "Confirmar y reservar turnos"
+              )}
             </Button>
           </div>
         </form>
