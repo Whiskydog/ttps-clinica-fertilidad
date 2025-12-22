@@ -1,4 +1,5 @@
 import { Group8NoticesModule } from '@modules/external/group8-notices/group8-notices.module';
+import { Oocyte } from '@modules/laboratory/entities/oocyte.entity';
 import { PunctureRecord } from '@modules/laboratory/entities/puncture-record.entity';
 import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
@@ -37,6 +38,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       MedicalHistory,
       MedicalOrder,
       PunctureRecord,
+      Oocyte,
     ]),
     MedicalHistoryModule,
     UploadsModule,
@@ -62,4 +64,4 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     MedicalCoverageService,
   ],
 })
-export class TreatmentsModule {}
+export class TreatmentsModule { }

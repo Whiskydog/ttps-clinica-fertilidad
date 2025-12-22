@@ -4,7 +4,7 @@ import { MedicalHistory } from '@modules/medical-history/entities/medical-histor
 import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
 import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
 import { PaymentsService } from '@modules/payments/payments.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 import { Repository } from 'typeorm';
@@ -14,6 +14,8 @@ import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { Monitoring } from './entities/monitoring.entity';
 import { PostTransferMilestone } from './entities/post-transfer-milestone.entity';
 import { Treatment } from './entities/treatment.entity';
+import { OocyteState } from '@repo/contracts';
+import { Oocyte } from '../laboratory/entities/oocyte.entity';
 
 @Injectable()
 export class TreatmentService {
@@ -34,7 +36,9 @@ export class TreatmentService {
     private readonly punctureRepo: Repository<PunctureRecord>,
     private readonly paymentsService: PaymentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
-  ) {}
+    @InjectRepository(Oocyte)
+    private readonly oocyteRepo: Repository<Oocyte>,
+  ) { }
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -87,6 +91,24 @@ export class TreatmentService {
       treatment.startDate = parseDateFromString(dto.startDate);
     }
     if (dto.status !== undefined) {
+      if (dto.status === TreatmentStatus.closed && treatment.status !== TreatmentStatus.closed) {
+        const pendingOocytes = await this.oocyteRepo.find({
+          where: {
+            puncture: { treatment: { id: treatment.id } },
+          },
+        });
+        const hasActiveOocytes = pendingOocytes.some(
+          (o) =>
+            !o.isCryopreserved &&
+            o.currentState !== OocyteState.USED &&
+            o.currentState !== OocyteState.DISCARDED,
+        );
+        if (hasActiveOocytes) {
+          throw new BadRequestException(
+            'No se puede cerrar el tratamiento porque existen ovocitos pendientes de procesar.',
+          );
+        }
+      }
       treatment.status = dto.status as TreatmentStatus;
     }
     if (dto.closureReason !== undefined) {
