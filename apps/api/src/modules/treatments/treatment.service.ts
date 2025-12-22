@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Treatment } from './entities/treatment.entity';
@@ -12,6 +12,8 @@ import { TreatmentStatus, InitialObjective } from '@repo/contracts';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { parseDateFromString } from '@common/utils/date.utils';
+import { OocyteState } from '@repo/contracts';
+import { Oocyte } from '../laboratory/entities/oocyte.entity';
 
 @Injectable()
 export class TreatmentService {
@@ -30,7 +32,9 @@ export class TreatmentService {
     private readonly medicalOrderRepo: Repository<MedicalOrder>,
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
-  ) {}
+    @InjectRepository(Oocyte)
+    private readonly oocyteRepo: Repository<Oocyte>,
+  ) { }
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -76,6 +80,24 @@ export class TreatmentService {
       treatment.startDate = parseDateFromString(dto.startDate);
     }
     if (dto.status !== undefined) {
+      if (dto.status === TreatmentStatus.closed && treatment.status !== TreatmentStatus.closed) {
+        const pendingOocytes = await this.oocyteRepo.find({
+          where: {
+            puncture: { treatment: { id: treatment.id } },
+          },
+        });
+        const hasActiveOocytes = pendingOocytes.some(
+          (o) =>
+            !o.isCryopreserved &&
+            o.currentState !== OocyteState.USED &&
+            o.currentState !== OocyteState.DISCARDED,
+        );
+        if (hasActiveOocytes) {
+          throw new BadRequestException(
+            'No se puede cerrar el tratamiento porque existen ovocitos pendientes de procesar.',
+          );
+        }
+      }
       treatment.status = dto.status as TreatmentStatus;
     }
     if (dto.closureReason !== undefined) {

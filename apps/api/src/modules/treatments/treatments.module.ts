@@ -11,6 +11,7 @@ import { MedicalHistory } from '../medical-history/entities/medical-history.enti
 import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
 import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
 import { TreatmentService } from '@modules/treatments/treatment.service';
+import { Oocyte } from '../laboratory/entities/oocyte.entity';
 import { TreatmentsService } from '@modules/treatments/treatments.service';
 import { InformedConsentService } from '@modules/treatments/services/informed-consent.service';
 import { PostTransferMilestoneService } from '@modules/treatments/services/post-transfer-milestone.service';
@@ -36,6 +37,7 @@ import { Group8NoticesModule } from '../external/group8-notices/group8-notices.m
       MedicalHistory,
       MedicalOrder,
       PunctureRecord,
+      Oocyte,
     ]),
     MedicalHistoryModule,
     UploadsModule,
@@ -60,4 +62,4 @@ import { Group8NoticesModule } from '../external/group8-notices/group8-notices.m
     MedicalCoverageService,
   ],
 })
-export class TreatmentsModule {}
+export class TreatmentsModule { }
