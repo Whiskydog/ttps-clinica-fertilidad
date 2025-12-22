@@ -169,7 +169,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="firstName">Nombre</FieldLabel>
+                        <FieldLabel htmlFor="firstName">Nombre 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -190,7 +190,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="lastName">Apellido</FieldLabel>
+                        <FieldLabel htmlFor="lastName">Apellido 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -214,7 +214,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="email">Email (login)</FieldLabel>
+                        <FieldLabel htmlFor="email">Email (login) 🞲</FieldLabel>
                         <Input
                           {...field}
                           type="email"
@@ -236,7 +236,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="phone">Teléfono</FieldLabel>
+                        <FieldLabel htmlFor="phone">Teléfono 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -293,7 +293,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="userType">
-                          Tipo de usuario
+                          Tipo de usuario 🞲
                         </FieldLabel>
                         <Select
                           value={field.value}
@@ -329,7 +329,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="password">
-                          Contraseña temporal
+                          Contraseña temporal 🞲
                         </FieldLabel>
                         <div className="flex gap-2">
                           <Input
@@ -558,7 +558,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     />
                   </div>
 
-                
+
                 </div>
               </div>
             )}

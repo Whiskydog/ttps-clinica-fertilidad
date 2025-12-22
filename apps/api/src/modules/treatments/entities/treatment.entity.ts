@@ -1,6 +1,7 @@
 import { BaseEntity } from '@common/entities/base.entity';
 import { Appointment } from '@modules/appointments/appointment.entity';
 import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
+import { PaymentOrder } from '@modules/payments/entities/payment-order.entity';
 import { Doctor } from '@modules/users/entities/doctor.entity';
 import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 import {
@@ -41,6 +42,9 @@ export class Treatment extends BaseEntity {
 
   @OneToMany(() => Appointment, (appointment) => appointment.treatment)
   appointments: Appointment[];
+
+  @OneToOne(() => PaymentOrder, (order) => order.treatment)
+  paymentOrder: PaymentOrder;
 
   @Column({
     type: 'enum',

@@ -70,16 +70,16 @@ export function DoctorNoteFormSheet({
     resolver: zodResolver(formSchema),
     defaultValues: isEditing
       ? {
-          id: note.id,
-          treatmentId,
-          noteDate: normalizeDateForInput(note.noteDate) || new Date().toISOString().split("T")[0],
-          note: note.note || "",
-        }
+        id: note.id,
+        treatmentId,
+        noteDate: normalizeDateForInput(note.noteDate) || new Date().toISOString().split("T")[0],
+        note: note.note || "",
+      }
       : {
-          treatmentId,
-          noteDate: new Date().toISOString().split("T")[0],
-          note: "",
-        },
+        treatmentId,
+        noteDate: new Date().toISOString().split("T")[0],
+        note: "",
+      },
   });
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export function DoctorNoteFormSheet({
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nota *</FormLabel>
+                  <FormLabel>Nota 🞲</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}

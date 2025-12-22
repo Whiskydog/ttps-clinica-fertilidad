@@ -108,7 +108,7 @@ export function ResetPasswordDialog({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="password">
-                    Nueva contraseña temporal
+                    Nueva contraseña temporal 🞲
                   </FieldLabel>
                   <div className="flex gap-2">
                     <Input

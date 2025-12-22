@@ -70,7 +70,12 @@ export default function RegisterPage() {
     }
 
     startTransition(async () => {
-      const res = await signUp(data);
+      const payload = {
+        ...data,
+        occupation: data.occupation || undefined,
+        address: data.address || undefined,
+      };
+      const res = await signUp(payload);
       if ("errors" in res) {
         // Validation errors
         setValidationErrors(res.errors, form.setError, true);
@@ -100,7 +105,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">
           Ingrese sus datos para sacar turno
         </h1>
-        <p className="text-red-500 text-sm mb-6">* Campos obligatorios</p>
+        <p className="text-red-500 text-sm mb-6">🞲 Campos obligatorios</p>
 
         {/* Form */}
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -124,7 +129,7 @@ export default function RegisterPage() {
                           htmlFor="firstName"
                           className="text-gray-700"
                         >
-                          Nombre: *
+                          Nombre: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -150,7 +155,7 @@ export default function RegisterPage() {
                           htmlFor="lastName"
                           className="text-gray-700"
                         >
-                          Apellido: *
+                          Apellido: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -176,7 +181,7 @@ export default function RegisterPage() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="dni" className="text-gray-700">
-                          DNI: *
+                          DNI: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -203,7 +208,7 @@ export default function RegisterPage() {
                           htmlFor="dateOfBirth"
                           className="text-gray-700"
                         >
-                          Fecha de Nacimiento: *
+                          Fecha de Nacimiento: 🞲
                         </FieldLabel>
                         <DateOfBirthInput
                           value={field.value}
@@ -228,7 +233,7 @@ export default function RegisterPage() {
                           htmlFor="biologicalSex"
                           className="text-gray-700"
                         >
-                          Sexo Biológico: *
+                          Sexo Biológico: 🞲
                         </FieldLabel>
                         <Select
                           value={field.value}
@@ -302,7 +307,7 @@ export default function RegisterPage() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="phone" className="text-gray-700">
-                          Teléfono: *
+                          Teléfono: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -326,7 +331,7 @@ export default function RegisterPage() {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="email" className="text-gray-700">
-                          Email: *
+                          Email: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -388,7 +393,7 @@ export default function RegisterPage() {
                           htmlFor="medicalInsuranceName"
                           className="text-gray-700"
                         >
-                          Obra Social / Prepaga: *
+                          Obra Social / Prepaga: 🞲
                         </FieldLabel>
                         <Select
                           value={field.value}
@@ -430,7 +435,7 @@ export default function RegisterPage() {
                           htmlFor="insuranceNumber"
                           className="text-gray-700"
                         >
-                          Número de Socio: *
+                          Número de Socio: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -468,7 +473,7 @@ export default function RegisterPage() {
                           htmlFor="password"
                           className="text-gray-700"
                         >
-                          Contraseña: *
+                          Contraseña: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
@@ -494,7 +499,7 @@ export default function RegisterPage() {
                           htmlFor="confirmPassword"
                           className="text-gray-700"
                         >
-                          Repetir Contraseña: *
+                          Repetir Contraseña: 🞲
                         </FieldLabel>
                         <Input
                           {...field}
