@@ -10,7 +10,7 @@ export async function createMedicalOrder(payload: unknown) {
   if (!validationResult.success) {
     return {
       success: false,
-      error: validationResult.error.errors[0]?.message || "Datos inválidos",
+      error: validationResult.error.message || "Datos inválidos",
     };
   }
 
