@@ -26,3 +26,17 @@ export type ExternalMedicalInsuranceDetail = {
 export type ExternalMedicalInsuranceResponse = {
   data: ExternalMedicalInsuranceDetail[];
 };
+
+export type ExternalPaymentOrder = {
+  id: number;
+  id_obra: number;
+  id_paciente: number;
+  monto_total: number;
+  monto_obra_social: number;
+  monto_paciente: number;
+};
+
+export type ExternalPaymentOrderResponse = {
+  success: boolean;
+  pago: ExternalPaymentOrder;
+};

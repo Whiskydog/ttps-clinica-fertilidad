@@ -1,17 +1,18 @@
+import { parseDateFromString } from '@common/utils/date.utils';
+import { PunctureRecord } from '@modules/laboratory/entities/puncture-record.entity';
+import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
+import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
+import { PaymentsService } from '@modules/payments/payments.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 import { Repository } from 'typeorm';
-import { Treatment } from './entities/treatment.entity';
-import { Monitoring } from './entities/monitoring.entity';
+import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
+import { Monitoring } from './entities/monitoring.entity';
 import { PostTransferMilestone } from './entities/post-transfer-milestone.entity';
-import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
-import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
-import { TreatmentStatus, InitialObjective } from '@repo/contracts';
-import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
-import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
-import { parseDateFromString } from '@common/utils/date.utils';
+import { Treatment } from './entities/treatment.entity';
 
 @Injectable()
 export class TreatmentService {
@@ -30,6 +31,7 @@ export class TreatmentService {
     private readonly medicalOrderRepo: Repository<MedicalOrder>,
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async createTreatment(
@@ -50,6 +52,12 @@ export class TreatmentService {
     });
     const saved = await this.treatmentRepo.save(treatment);
     medicalHistory.currentTreatment = saved;
+
+    await this.paymentsService.registerPaymentOrder(
+      saved.id,
+      medicalHistory.patient.id,
+      medicalHistory.patient.medicalInsurance.externalId,
+    );
 
     return saved;
   }
@@ -190,7 +198,10 @@ export class TreatmentService {
   /**
    * Reasigna un tratamiento a otro médico (solo para Director Médico)
    */
-  async reassignDoctor(treatmentId: number, newDoctorId: number): Promise<Treatment> {
+  async reassignDoctor(
+    treatmentId: number,
+    newDoctorId: number,
+  ): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id: treatmentId },
       relations: ['initialDoctor'],
