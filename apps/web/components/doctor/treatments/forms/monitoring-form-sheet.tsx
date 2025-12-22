@@ -86,7 +86,7 @@ export function MonitoringFormSheet({
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
           <div>
-            <label className="text-sm font-medium">Fecha del monitoreo</label>
+            <label className="text-sm font-medium">Fecha del monitoreo *</label>
             <Input
               type="date"
               min={monitoringPlan.minDate}
@@ -96,32 +96,32 @@ export function MonitoringFormSheet({
           </div>
 
           <div>
-            <label className="text-sm font-medium">Día del tratamiento</label>
+            <label className="text-sm font-medium">Día del tratamiento *</label>
             <Input
               type="number"
-              {...form.register("dayNumber", { valueAsNumber: true })}
+              {...form.register("dayNumber", { valueAsNumber: true, required: true })}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Cantidad de folículos</label>
+            <label className="text-sm font-medium">Cantidad de folículos *</label>
             <Input
               type="number"
-              {...form.register("follicleCount", { valueAsNumber: true })}
+              {...form.register("follicleCount", { valueAsNumber: true, required: true })}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Tamaño de folículos</label>
-            <Input {...form.register("follicleSize")} />
+            <label className="text-sm font-medium">Tamaño de folículos *</label>
+            <Input {...form.register("follicleSize", { required: true })} />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Estradiol (pg/ml)</label>
+            <label className="text-sm font-medium">Estradiol (pg/ml) *</label>
             <Input
               type="number"
               step="0.01"
-              {...form.register("estradiolLevel", { valueAsNumber: true })}
+              {...form.register("estradiolLevel", { valueAsNumber: true, required: true })}
             />
           </div>
 
@@ -150,7 +150,7 @@ export function MonitoringFormSheet({
               >
                 Cerrar
               </Button>
-              <Button type="submit" disabled={saving || cancelling}>
+              <Button type="submit" disabled={!form.formState.isValid || saving || cancelling}>
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Guardar
               </Button>
