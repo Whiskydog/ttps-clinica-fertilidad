@@ -1,4 +1,10 @@
-import { BookAppointmentDto, PostTurnosDto } from '@modules/appointments/dto';
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
+import {
+  AppointmentResponseDto,
+  AppointmentsResponseDto,
+  BookAppointmentDto,
+  PostTurnosDto,
+} from '@modules/appointments/dto';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { Patient } from '@modules/users/entities/patient.entity';
@@ -16,10 +22,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { RoleCode } from '@repo/contracts';
+import { AppointmentDetail, RoleCode } from '@repo/contracts';
 import moment from 'moment';
+import { ZodSerializerDto } from 'nestjs-zod';
+import { Appointment } from './appointment.entity';
 import { AppointmentsService } from './appointments.service';
-import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -29,11 +36,12 @@ export class AppointmentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @EnvelopeMessage('Turno reservado con éxito.')
+  @EnvelopeMessage('Turno reservado con éxito')
+  @ZodSerializerDto(AppointmentResponseDto)
   async bookAppointment(
     @Body() dto: BookAppointmentDto,
     @CurrentUser() user: User,
-  ) {
+  ): Promise<Appointment> {
     if (user.role.code !== RoleCode.PATIENT) {
       this.logger.warn(
         `User with id=${user.id} and role=${user.role} attempted to book an appointment.`,
@@ -41,28 +49,37 @@ export class AppointmentsController {
       throw new BadRequestException('Solo pacientes pueden reservar turnos.');
     }
 
-    await this.appointmentsService.bookAppointment(user as Patient, dto);
+    const appointment = await this.appointmentsService.bookAppointment(
+      user as Patient,
+      dto,
+    );
+
+    return appointment;
   }
 
-  // Obtener turnos del paciente autenticado
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMyAppointments(@CurrentUser() user: User) {
+  @ZodSerializerDto(AppointmentsResponseDto)
+  getMyAppointments(@CurrentUser() user: User): Promise<Appointment[]> {
     return this.appointmentsService.getPatientAppointments(user.id);
   }
 
-  // Crear grilla de turnos para un médico
+  @Get('available')
+  @UseGuards(JwtAuthGuard)
+  getAvailableAppointments(): Promise<AppointmentDetail[]> {
+    return this.appointmentsService.getAvailableSlots();
+  }
+
   @Post('doctor/slots')
   createDoctorSlots(@Body() dto: PostTurnosDto) {
     return this.appointmentsService.createDoctorSlots(dto);
   }
 
-  // Listar turnos disponibles de un médico
   @Get('doctor/:id/available')
   getAvailableDoctorSlots(
     @Param('id', ParseIntPipe) id: number,
     @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
-  ) {
+  ): Promise<AppointmentDetail[]> {
     if (date) {
       this.logger.log(
         `Fetching available doctor slots for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,
@@ -81,7 +98,7 @@ export class AppointmentsController {
   getDoctorAppointments(
     @Param('id', ParseIntPipe) id: number,
     @Query('date', new ParseDatePipe({ optional: true })) date?: Date,
-  ) {
+  ): Promise<AppointmentDetail[]> {
     if (date) {
       this.logger.log(
         `Fetching doctor appointments for doctorId=${id} on date=${moment.utc(date).format('YYYY-MM-DD')}`,

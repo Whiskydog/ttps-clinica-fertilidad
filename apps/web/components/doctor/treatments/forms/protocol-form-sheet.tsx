@@ -19,7 +19,8 @@ import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Badge } from "@repo/ui/badge";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@repo/ui/alert";
 import {
   Form,
   FormControl,
@@ -50,6 +51,7 @@ interface ProtocolFormSheetProps {
   onOpenChange: (open: boolean) => void;
   treatmentId: number;
   protocol?: MedicationProtocol | null;
+  hasCompletedOrderWithResults: boolean;
   onSuccess: () => void;
 }
 
@@ -67,6 +69,7 @@ export function ProtocolFormSheet({
   onOpenChange,
   treatmentId,
   protocol,
+  hasCompletedOrderWithResults,
   onSuccess,
 }: ProtocolFormSheetProps) {
   const queryClient = useQueryClient();
@@ -79,24 +82,24 @@ export function ProtocolFormSheet({
     resolver: zodResolver(isEditMode ? UpdateFormSchema : CreateFormSchema),
     defaultValues: isEditMode
       ? {
-          id: protocol?.id,
-          treatmentId,
-          protocolType: protocol?.protocolType || "",
-          drugName: protocol?.drugName || "",
-          dose: protocol?.dose || "",
-          administrationRoute: protocol?.administrationRoute || "",
-          duration: protocol?.duration || null,
-          startDate: normalizeDateForInput(protocol?.startDate),
-        }
+        id: protocol?.id,
+        treatmentId,
+        protocolType: protocol?.protocolType || "",
+        drugName: protocol?.drugName || "",
+        dose: protocol?.dose || "",
+        administrationRoute: protocol?.administrationRoute || "",
+        duration: protocol?.duration || null,
+        startDate: normalizeDateForInput(protocol?.startDate),
+      }
       : {
-          treatmentId,
-          protocolType: "",
-          drugName: "",
-          dose: "",
-          administrationRoute: "",
-          duration: null,
-          startDate: null,
-        },
+        treatmentId,
+        protocolType: "",
+        drugName: "",
+        dose: "",
+        administrationRoute: "",
+        duration: null,
+        startDate: null,
+      },
   });
 
   useEffect(() => {
@@ -196,12 +199,22 @@ export function ProtocolFormSheet({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 mt-6"
           >
+            {!hasCompletedOrderWithResults && !isEditMode && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Para crear un protocolo de medicación, primero debe completar
+                  al menos una orden médica con resultados de estudios.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <FormField
               control={form.control}
               name="protocolType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Protocolo *</FormLabel>
+                  <FormLabel>Tipo de Protocolo 🞲</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -218,7 +231,7 @@ export function ProtocolFormSheet({
               name="drugName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medicamento Principal *</FormLabel>
+                  <FormLabel>Medicamento Principal 🞲</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Ej: FSH recombinante" />
                   </FormControl>
@@ -330,7 +343,7 @@ export function ProtocolFormSheet({
             <div className="flex gap-3 pt-4">
               <Button
                 type="submit"
-                disabled={form.formState.isSubmitting}
+                disabled={form.formState.isSubmitting || (!hasCompletedOrderWithResults && !isEditMode)}
                 className="flex-1"
               >
                 {form.formState.isSubmitting

@@ -1,4 +1,5 @@
 import { getUser } from "@/app/lib/dal";
+import ChatbotWidget from "@/components/ChatbotWidget";
 import { RoleCode } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import Link from "next/link";
@@ -36,6 +37,9 @@ export default async function PatientLayout({
 
       {/* Page Content */}
       <main className="p-8">{children}</main>
+
+      {/* Chatbot Widget */}
+      <ChatbotWidget />
     </div>
   );
 }

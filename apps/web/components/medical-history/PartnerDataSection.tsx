@@ -42,7 +42,7 @@ export const PartnerDataSection = ({
           if (key === "biologicalSex") {
             return (
               <div key={key} className="form-group">
-                <label className="label">Sexo biológico</label>
+                <label className="label">Sexo biológico 🞲</label>
                 <select
                   name={key}
                   value={medicalData.partner.biologicalSex || ""}
@@ -100,7 +100,9 @@ export const PartnerDataSection = ({
 
           return (
             <div key={key} className="form-group">
-              <label className="label">{getFieldLabel(key)}</label>
+              <label className="label">
+                {getFieldLabel(key)} {isRequired && "🞲"}
+              </label>
               <input
                 name={key}
                 type={
@@ -143,8 +145,8 @@ export const PartnerDataSection = ({
                     ? newPartner(prev.partner)
                     : newPartner,
               }))) as React.Dispatch<
-              React.SetStateAction<PartnerWithGynecology>
-            >
+                React.SetStateAction<PartnerWithGynecology>
+              >
           }
           required={true}
         />

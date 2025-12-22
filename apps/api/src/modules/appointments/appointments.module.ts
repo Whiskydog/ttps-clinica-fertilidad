@@ -1,11 +1,15 @@
-import { Module } from '@nestjs/common';
+import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
+import { UsersModule } from '@modules/users/users.module';
 import { HttpModule } from '@nestjs/axios';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppointmentsService } from './appointments.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Appointment } from './appointment.entity';
 import { AppointmentsController } from './appointments.controller';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { Appointment } from './appointment.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppointmentsService } from './appointments.service';
 
 @Module({
   imports: [
@@ -13,6 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     HttpModule,
     ConfigModule,
     MedicalHistoryModule,
+    forwardRef(() => UsersModule),
   ],
   providers: [AppointmentsService],
   controllers: [AppointmentsController],

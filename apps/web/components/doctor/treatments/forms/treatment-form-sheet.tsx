@@ -144,7 +144,7 @@ export function TreatmentFormSheet({
               name="initialObjective"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Objetivo del Tratamiento</FormLabel>
+                  <FormLabel>Objetivo del Tratamiento 🞲</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -226,7 +226,7 @@ export function TreatmentFormSheet({
                   name="closureDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha de Cierre *</FormLabel>
+                      <FormLabel>Fecha de Cierre 🞲</FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -244,7 +244,7 @@ export function TreatmentFormSheet({
                   name="closureReason"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Razón de Cierre *</FormLabel>
+                      <FormLabel>Razón de Cierre 🞲</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}

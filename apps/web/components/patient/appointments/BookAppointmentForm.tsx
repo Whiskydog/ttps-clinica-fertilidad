@@ -41,10 +41,6 @@ export default function BookAppointmentForm() {
   const watchAppointment = form.watch("appointment");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (data.doctorId === "-1") {
-      form.setError("doctorId", { message: "Por favor seleccione un médico" });
-      return;
-    }
     if (!data.appointment) {
       form.setError("appointment", {
         message: "Por favor seleccione una cita disponible",
@@ -54,7 +50,6 @@ export default function BookAppointmentForm() {
 
     await bookAppointmentMutation.mutateAsync(
       {
-        doctorId: Number(data.doctorId),
         reason: data.reason,
         appointment: data.appointment,
       },
@@ -102,7 +97,7 @@ export default function BookAppointmentForm() {
                       Primera consulta
                     </FieldLabel>
                   </Field>
-                  <Field orientation="horizontal">
+                  {/* <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-stimulation-monitoring"
                       value={ReasonForVisit.StimulationMonitoring}
@@ -119,7 +114,7 @@ export default function BookAppointmentForm() {
                     <FieldLabel htmlFor={`reason-egg-retrieval`}>
                       Punción ovárica
                     </FieldLabel>
-                  </Field>
+                  </Field> */}
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-embryo-transfer"
@@ -160,6 +155,17 @@ export default function BookAppointmentForm() {
                     value={field.value?.toString()}
                     onValueChange={field.onChange}
                   >
+                    <Field key="any" orientation="horizontal">
+                      <RadioGroupItem
+                        id="doctor-any"
+                        value="-1"
+                        checked={field.value === "-1"}
+                        onChange={() => field.onChange("-1")}
+                      />
+                      <FieldLabel htmlFor="doctor-any">
+                        Cualquier médico está bien
+                      </FieldLabel>
+                    </Field>
                     {doctors.map((doctor) => (
                       <Field key={doctor.id} orientation="horizontal">
                         <RadioGroupItem
@@ -219,14 +225,12 @@ export default function BookAppointmentForm() {
           <p>
             <span className="font-bold">Médico: </span>
             {watchDoctorId && watchDoctorId !== "-1"
-              ? `Dr. ${
-                  doctors?.find((doc) => doc.id === Number(watchDoctorId))
-                    ?.firstName
-                } ${
-                  doctors?.find((doc) => doc.id === Number(watchDoctorId))
-                    ?.lastName
-                }`
-              : "No seleccionado"}
+              ? `Dr. ${doctors?.find((doc) => doc.id === Number(watchDoctorId))
+                ?.firstName
+              } ${doctors?.find((doc) => doc.id === Number(watchDoctorId))
+                ?.lastName
+              }`
+              : "Cualquier médico"}
           </p>
           <p>
             <span className="font-bold">Motivo: </span>

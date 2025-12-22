@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Treatment } from './entities/treatment.entity';
 import { Monitoring } from './entities/monitoring.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
@@ -130,7 +130,7 @@ export class TreatmentsService {
     const treatments = await this.treatmentRepository.find({
       where: {
         medicalHistory: { id: medicalHistory.id },
-        status: TreatmentStatus.closed,
+        status: In([TreatmentStatus.closed, TreatmentStatus.completed]),
       },
       relations: ['initialDoctor'],
       order: { createdAt: 'DESC' },

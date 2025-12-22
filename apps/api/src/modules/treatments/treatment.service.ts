@@ -1,10 +1,18 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { parseDateFromString } from '@common/utils/date.utils';
+import { PunctureRecord } from '@modules/laboratory/entities/puncture-record.entity';
+import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
+import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
+import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
+import { PaymentsService } from '@modules/payments/payments.service';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 import { Repository } from 'typeorm';
-import { Treatment } from './entities/treatment.entity';
-import { Monitoring } from './entities/monitoring.entity';
+import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
+import { Monitoring } from './entities/monitoring.entity';
 import { PostTransferMilestone } from './entities/post-transfer-milestone.entity';
 import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
 import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
@@ -18,6 +26,9 @@ import {
   MonitoringPlanStatus,
 } from './entities/monitoring-plan.entity';
 import { CreateMonitoringDto } from './dto/create-monitoring.dto';
+import { Treatment } from './entities/treatment.entity';
+import { OocyteState } from '@repo/contracts';
+import { Oocyte } from '../laboratory/entities/oocyte.entity';
 
 @Injectable()
 export class TreatmentService {
@@ -40,6 +51,13 @@ export class TreatmentService {
     private readonly punctureRepo: Repository<PunctureRecord>,
     private readonly monitoringPlanService: MonitoringPlanService,
   ) {}
+    private readonly paymentsService: PaymentsService,
+    private readonly medicalHistoryService: MedicalHistoryService,
+    @InjectRepository(Oocyte)
+    private readonly oocyteRepo: Repository<Oocyte>,
+    @InjectRepository(MedicalHistory)
+    private readonly medicalHistoryRepo: Repository<MedicalHistory>,
+  ) { }
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -59,6 +77,13 @@ export class TreatmentService {
     });
     const saved = await this.treatmentRepo.save(treatment);
     medicalHistory.currentTreatment = saved;
+    await this.medicalHistoryService.save(medicalHistory);
+
+    await this.paymentsService.registerPaymentOrder(
+      saved.id,
+      medicalHistory.patient.id,
+      medicalHistory.patient.medicalInsurance.externalId,
+    );
 
     return saved;
   }
@@ -72,6 +97,7 @@ export class TreatmentService {
   async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -85,7 +111,36 @@ export class TreatmentService {
       treatment.startDate = parseDateFromString(dto.startDate);
     }
     if (dto.status !== undefined) {
+      if (dto.status === TreatmentStatus.closed && treatment.status !== TreatmentStatus.closed) {
+        const pendingOocytes = await this.oocyteRepo.find({
+          where: {
+            puncture: { treatment: { id: treatment.id } },
+          },
+        });
+        const hasActiveOocytes = pendingOocytes.some(
+          (o) =>
+            !o.isCryopreserved &&
+            o.currentState !== OocyteState.USED &&
+            o.currentState !== OocyteState.DISCARDED,
+        );
+        if (hasActiveOocytes) {
+          throw new BadRequestException(
+            'No se puede cerrar el tratamiento porque existen ovocitos pendientes de procesar.',
+          );
+        }
+      }
       treatment.status = dto.status as TreatmentStatus;
+
+      // Si el tratamiento se cierra o completa, liberar la historia clínica (ya no es el tratamiento actual)
+      if (
+        treatment.status === TreatmentStatus.closed ||
+        treatment.status === TreatmentStatus.completed
+      ) {
+        if (treatment.medicalHistory) {
+          treatment.medicalHistory.currentTreatment = null;
+          await this.medicalHistoryRepo.save(treatment.medicalHistory);
+        }
+      }
     }
     if (dto.closureReason !== undefined) {
       treatment.closureReason = dto.closureReason;
@@ -190,6 +245,7 @@ export class TreatmentService {
   async closeTreatmentByInactivity(treatmentId: number): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id: treatmentId },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -199,6 +255,11 @@ export class TreatmentService {
     treatment.status = TreatmentStatus.closed;
     treatment.closureReason = 'Cierre automático por inactividad (60 días)';
     treatment.closureDate = new Date();
+
+    if (treatment.medicalHistory) {
+      treatment.medicalHistory.currentTreatment = null;
+      await this.medicalHistoryRepo.save(treatment.medicalHistory);
+    }
 
     return this.treatmentRepo.save(treatment);
   }

@@ -8,6 +8,8 @@ import {
   Users,
   FileText,
   Shield,
+  PenTool,
+  CreditCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,9 +61,19 @@ export function MedicalDirectorLayoutClient({
       icon: FileText,
     },
     {
+      name: "Mi Firma",
+      path: "/doctor/signature",
+      icon: PenTool,
+    },
+    {
       name: "Auditoría",
       path: "/medical-director/audit",
       icon: Shield,
+    },
+    {
+      name: "Pagos",
+      path: "/medical-director/pagos",
+      icon: CreditCard,
     },
   ];
 

@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { LaboratoryService } from './laboratory.service';
 import { PunctureRecordService } from './services/puncture-record.service';
@@ -23,11 +24,12 @@ import {
   UpdateOocyteStateHistoryDto,
   CreateEmbryoDto,
   UpdateEmbryoDto,
+  UpdateEmbryoPgtDto,
 } from './dto';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/role-auth.guard';
 import { RequireRoles } from '@auth/decorators/require-roles.decorator';
-import { RoleCode, OocyteState, EmbryoDisposition } from '@repo/contracts';
+import { RoleCode, OocyteState, EmbryoDisposition, PgtResult } from '@repo/contracts';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
 import { User } from '@users/entities/user.entity';
 import { parseDateFromString } from '@common/utils/date.utils';
@@ -222,12 +224,47 @@ export class LaboratoryController {
     };
   }
 
+  @Post('oocytes/:id/mature')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async matureOocyte(@Param('id') id: string) {
+    const oocyteId = Number(id);
+    await this.oocyteService.mature(oocyteId);
+    return {
+      message: 'Oocito madurado correctamente',
+    };
+  }
+
+  @Post('oocytes/:id/finish-cultivation')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async finishCultivation(
+    @Param('id') id: string,
+    @Body() body: { success: boolean; cause?: string },
+  ) {
+    const oocyteId = Number(id);
+    await this.oocyteService.finishCultivation(oocyteId, body.success, body.cause);
+    return {
+      message: body.success
+        ? 'Cultivo finalizado: ovocito madurado correctamente'
+        : 'Cultivo finalizado: ovocito descartado',
+    };
+  }
+
   @Get('oocytes/:id/state-history')
   @UseGuards(RolesGuard)
   @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
   async getOocyteStateHistory(@Param('id') id: string) {
     const oocyteId = Number(id);
     return this.oocyteStateHistoryService.findByOocyteId(oocyteId);
+  }
+
+  @Get('oocytes/:id/patient')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.LAB_TECHNICIAN, RoleCode.DOCTOR)
+  async getPatientByOocyteId(@Param('id') id: string) {
+    const oocyteId = Number(id);
+    return this.oocyteService.getPatientByOocyteId(oocyteId);
   }
 
   @Get('oocytes/puncture-record/:punctureRecordId')
@@ -531,5 +568,98 @@ export class LaboratoryController {
   ) {
     const embryoId = Number(id);
     return this.embryoService.discard(embryoId, body.cause);
+  }
+
+  @Patch('embryos/:id/pgt')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async updateEmbryoPgt(
+    @Param('id') id: string,
+    @Body() dto: UpdateEmbryoPgtDto,
+  ) {
+    const embryoId = Number(id);
+    return this.embryoService.updatePgt(embryoId, dto.pgtResult, dto.pgtDecisionSuggested);
+  }
+
+  // ============================================
+  // Cryopreserved Semen Endpoints
+  // ============================================
+
+  @Post('cryopreserved-semen')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async createCryopreservedSemen(@Body() body: {
+    patientDni: string;
+    phenotype?: any;
+    cryoTank?: string;
+    cryoRack?: string;
+    cryoTube?: string;
+    cryopreservationDate?: string;
+  }) {
+    const data = {
+      ...body,
+      cryopreservationDate: body.cryopreservationDate ? new Date(body.cryopreservationDate) : undefined,
+    };
+    return this.laboratoryService.createCryopreservedSemen(data);
+  }
+
+  @Get('cryopreserved-semen/dni/:dni')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async getCryopreservedSemenByDni(@Param('dni') dni: string) {
+    return this.laboratoryService.findCryopreservedSemenByDni(dni);
+  }
+
+  @Get('cryopreserved-semen/:id')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async getCryopreservedSemenById(@Param('id') id: string) {
+    const semenId = Number(id);
+    if (isNaN(semenId)) {
+      throw new BadRequestException('ID inválido');
+    }
+    return this.laboratoryService.findCryopreservedSemenById(semenId);
+  }
+
+  @Post('cryopreserved-semen/:id/use')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async markLocalSemenAsUsed(@Param('id') id: string) {
+    const semenId = Number(id);
+    await this.laboratoryService.markLocalSemenAsUsed(semenId);
+    return { success: true };
+  }
+
+  @Get('semen-viability/:dni')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async checkSemenViability(@Param('dni') dni: string) {
+    const result = await this.laboratoryService.checkSemenViability(dni);
+    return result;
+  }
+
+  @Post('semen-viability/:dni/validate')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async setSemenViability(
+    @Param('dni') dni: string,
+    @Body() body: {
+      status: 'viable' | 'not_viable';
+      notes?: string;
+      studyReference?: string;
+    },
+    @CurrentUser() user: User,
+  ) {
+    const result = await this.laboratoryService.setSemenViability(
+      dni,
+      body.status,
+      body.notes,
+      user.id.toString(),
+      body.studyReference,
+    );
+    return {
+      message: `Viabilidad de semen ${body.status === 'viable' ? 'confirmada' : 'rechazada'}`,
+      data: result,
+    };
+  }
+
+  @Get('semen-viability/:dni/details')
+  @RequireRoles(RoleCode.LAB_TECHNICIAN)
+  async getSemenViabilityDetails(@Param('dni') dni: string) {
+    const result = await this.laboratoryService.getSemenViability(dni);
+    return result;
   }
 }
