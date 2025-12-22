@@ -93,7 +93,7 @@ export function GenerateProtocolPdfSheet({
   const handleDownload = () => {
     const url = generatedPdfUrl || existingPdfUrl;
     if (url) {
-      window.open(getFileUrl(url), "_blank");
+      window.open(getFileUrl(url) || undefined, "_blank");
     }
   };
 
