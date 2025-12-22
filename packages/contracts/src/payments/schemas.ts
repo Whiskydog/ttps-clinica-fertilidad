@@ -40,3 +40,28 @@ export type ExternalPaymentOrderResponse = {
   success: boolean;
   pago: ExternalPaymentOrder;
 };
+
+export type ExternalPaymentRequest = {
+  id_grupo: number;
+  id_pago: number;
+  obra_social_pagada?: boolean;
+  paciente_pagado?: boolean;
+};
+
+export type ExternalPaymentResponse = {
+  success: boolean;
+  message: string;
+  actualizado: {
+    estado_obra_social?: "pagado" | "pendiente";
+    estado_paciente?: "pagado" | "pendiente";
+  };
+  pago: {
+    id: number;
+    grupo: number;
+    id_obra: number;
+    id_paciente: number;
+    monto_total: number;
+    estado_obra_social: "pagado" | "pendiente";
+    estado_paciente: "pagado" | "pendiente";
+  };
+};
