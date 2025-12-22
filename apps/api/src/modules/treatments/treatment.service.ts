@@ -30,7 +30,9 @@ export class TreatmentService {
     private readonly medicalOrderRepo: Repository<MedicalOrder>,
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
-  ) {}
+    @InjectRepository(MedicalHistory)
+    private readonly medicalHistoryRepo: Repository<MedicalHistory>,
+  ) { }
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -63,6 +65,7 @@ export class TreatmentService {
   async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -77,6 +80,17 @@ export class TreatmentService {
     }
     if (dto.status !== undefined) {
       treatment.status = dto.status as TreatmentStatus;
+
+      // Si el tratamiento se cierra o completa, liberar la historia clínica (ya no es el tratamiento actual)
+      if (
+        treatment.status === TreatmentStatus.closed ||
+        treatment.status === TreatmentStatus.completed
+      ) {
+        if (treatment.medicalHistory) {
+          treatment.medicalHistory.currentTreatment = null;
+          await this.medicalHistoryRepo.save(treatment.medicalHistory);
+        }
+      }
     }
     if (dto.closureReason !== undefined) {
       treatment.closureReason = dto.closureReason;
