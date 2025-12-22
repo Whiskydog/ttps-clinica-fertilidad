@@ -101,6 +101,7 @@ export function TreatmentFormSheet({
       }
 
       queryClient.invalidateQueries({ queryKey: ["treatmentDetail"] });
+      queryClient.invalidateQueries({ queryKey: ["patientTreatments"] });
       toast.success("Tratamiento actualizado correctamente");
       onSuccess();
     } catch (error) {
