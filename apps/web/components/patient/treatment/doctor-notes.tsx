@@ -1,5 +1,5 @@
 'use client';
-
+import { utc } from "moment"
 import { TreatmentDetail } from '@repo/contracts';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
 
@@ -18,7 +18,7 @@ export function DoctorNotes({ notes }: DoctorNotesProps) {
           {notes?.map((note) => (
             <div key={note.id} className="text-sm">
               <span className="font-semibold">
-                {new Date(note.noteDate).toLocaleDateString('es-AR')}:
+                {utc(note.noteDate).format('DD/MM/YYYY')}
               </span>{' '}
               {note.note || 'No hay contenido'}
             </div>
