@@ -34,7 +34,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
       <h3 className="section-title">{title}</h3>
       <div className="grid-form">
         <div className="form-group">
-          <label className="label">Menarquia (edad)</label>
+          <label className="label">Menarquia (edad) {required && "🞲"}</label>
           <input
             type="number"
             name="menarcheAge"
@@ -48,7 +48,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Regularidad del ciclo</label>
+          <label className="label">Regularidad del ciclo {required && "🞲"}</label>
           <select
             name="cycleRegularity"
             value={state.cycleRegularity ?? ""}
@@ -63,7 +63,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           </select>
         </div>
         <div className="form-group">
-          <label className="label">Duración del ciclo (días)</label>
+          <label className="label">Duración del ciclo (días) {required && "🞲"}</label>
           <input
             type="number"
             name="cycleDurationDays"
@@ -77,7 +77,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Características del sangrado</label>
+          <label className="label">Características del sangrado {required && "🞲"}</label>
           <input
             type="text"
             name="bleedingCharacteristics"
@@ -90,7 +90,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Gestaciones</label>
+          <label className="label">Gestaciones {required && "🞲"}</label>
           <input
             type="number"
             name="gestations"
@@ -104,7 +104,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Partos</label>
+          <label className="label">Partos {required && "🞲"}</label>
           <input
             type="number"
             name="births"
@@ -118,7 +118,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Abortos</label>
+          <label className="label">Abortos {required && "🞲"}</label>
           <input
             type="number"
             name="abortions"
@@ -132,7 +132,7 @@ export function GynecologicalHistoryForm<T extends GynecologicalFormData>({
           />
         </div>
         <div className="form-group">
-          <label className="label">Embarazos ectópicos</label>
+          <label className="label">Embarazos ectópicos {required && "🞲"}</label>
           <input
             type="number"
             name="ectopicPregnancies"

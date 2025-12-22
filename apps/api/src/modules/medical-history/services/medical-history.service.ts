@@ -124,7 +124,7 @@ export class MedicalHistoryService {
   async findById(id: number) {
     return this.medicalHistoryRepo.findOne({
       where: { id },
-      relations: ['currentTreatment'],
+      relations: ['currentTreatment', 'patient', 'patient.medicalInsurance'],
     });
   }
 
