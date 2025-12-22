@@ -54,8 +54,9 @@ export default function PaymentsPage() {
                 pendingCount: osPayments.filter(p => p.estado_obra_social === 'pendiente').length
             };
         }).filter(os =>
-            os.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            os.sigla.toLowerCase().includes(searchTerm.toLowerCase())
+            os.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+            // ||
+            // os.sigla.toLowerCase().includes(searchTerm.toLowerCase())
         );
     };
 
