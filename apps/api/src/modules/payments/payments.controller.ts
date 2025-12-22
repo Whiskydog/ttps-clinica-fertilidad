@@ -1,3 +1,4 @@
+import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { RequireRoles } from '@modules/auth/decorators/require-roles.decorator';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
@@ -11,7 +12,7 @@ import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) { }
+  constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get('own-debt')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,6 +20,14 @@ export class PaymentsController {
   @ZodSerializerDto(PatientDebtResponseDto)
   getOwnDebt(@CurrentUser() user: User) {
     return this.paymentsService.getOwnDebt(user.id);
+  }
+
+  @Post('settle-own-debt')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.PATIENT)
+  @EnvelopeMessage('La deuda ha sido saldada correctamente.')
+  settleOwnDebt(@CurrentUser() user: User) {
+    return this.paymentsService.settlePatientDebt(user.id);
   }
 
   @Get('obras-sociales')
@@ -38,12 +47,15 @@ export class PaymentsController {
   @Post('register')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.DIRECTOR)
-  registerPayment(@Body() payload: {
-    id_grupo: number;
-    id_pago: number;
-    obra_social_pagada: boolean;
-    paciente_pagado: boolean;
-  }) {
+  registerPayment(
+    @Body()
+    payload: {
+      id_grupo: number;
+      id_pago: number;
+      obra_social_pagada: boolean;
+      paciente_pagado: boolean;
+    },
+  ) {
     return this.paymentsService.registerPayment(payload);
   }
 }

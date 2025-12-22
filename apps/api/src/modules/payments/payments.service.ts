@@ -8,10 +8,19 @@ import {
   ExternalMedicalInsuranceResponse,
   ExternalPatientDebtResponse,
   ExternalPaymentOrderResponse,
+  ExternalPaymentRequest,
+  ExternalPaymentResponse,
   PatientDebt,
 } from '@repo/contracts';
-import { AxiosError } from 'axios';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
+import {
+  catchError,
+  firstValueFrom,
+  forkJoin,
+  map,
+  Observable,
+  of,
+} from 'rxjs';
 import { Repository } from 'typeorm';
 import { PaymentOrder } from './entities/payment-order.entity';
 import { Group5PaymentsService } from '../external/group5-payments/group5-payments.service';
@@ -110,6 +119,45 @@ export class PaymentsService {
     });
 
     return await this.paymentOrdersRepository.save(paymentOrder);
+  }
+
+  async settlePatientDebt(patientId: number) {
+    const patientPaymentOrders = await this.paymentOrdersRepository.find({
+      where: {
+        patient: { id: patientId },
+      },
+    });
+
+    const observables: Observable<
+      AxiosResponse<ExternalPaymentResponse, ExternalPaymentRequest>
+    >[] = [];
+
+    for (const order of patientPaymentOrders) {
+      observables.push(
+        this.httpService.post<ExternalPaymentResponse, ExternalPaymentRequest>(
+          `${this.apiUrl}/registrar-pago-obra-social`,
+          {
+            id_grupo: 7,
+            id_pago: order.externalId,
+            paciente_pagado: true,
+          },
+        ),
+      );
+    }
+
+    await firstValueFrom(
+      forkJoin(observables).pipe(
+        catchError((error: AxiosError) => {
+          throw getHttpExceptionFromAxiosError(error);
+        }),
+      ),
+    );
+
+    for (const order of patientPaymentOrders) {
+      order.patientDue = 0;
+    }
+    
+    this.paymentOrdersRepository.save(patientPaymentOrders);
   }
 
   getObrasSociales() {

@@ -1,5 +1,6 @@
 import {
   ApiErrorResponse,
+  ApiResponse,
   PatientDebt,
   PatientDebtResponse,
 } from "@repo/contracts";
@@ -25,4 +26,24 @@ export async function getOwnDebt(): Promise<PatientDebt> {
   }
 
   return (payload as PatientDebtResponse).data;
+}
+
+export async function settleOwnDebt(): Promise<ApiResponse<null>> {
+  const url = new URL(`${backendUrl}/payments/settle-own-debt`);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+
+  const payload: ApiResponse<null> | ApiErrorResponse = await res
+    .json()
+    .catch(() => null);
+  if (!res.ok) {
+    throw new Error(payload.message);
+  }
+
+  return payload as ApiResponse<null>;
 }
