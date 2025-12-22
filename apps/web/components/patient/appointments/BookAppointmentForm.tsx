@@ -97,7 +97,7 @@ export default function BookAppointmentForm() {
                       Primera consulta
                     </FieldLabel>
                   </Field>
-                  <Field orientation="horizontal">
+                  {/* <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-stimulation-monitoring"
                       value={ReasonForVisit.StimulationMonitoring}
@@ -114,7 +114,7 @@ export default function BookAppointmentForm() {
                     <FieldLabel htmlFor={`reason-egg-retrieval`}>
                       Punción ovárica
                     </FieldLabel>
-                  </Field>
+                  </Field> */}
                   <Field orientation="horizontal">
                     <RadioGroupItem
                       id="reason-embryo-transfer"
@@ -225,13 +225,11 @@ export default function BookAppointmentForm() {
           <p>
             <span className="font-bold">Médico: </span>
             {watchDoctorId && watchDoctorId !== "-1"
-              ? `Dr. ${
-                  doctors?.find((doc) => doc.id === Number(watchDoctorId))
-                    ?.firstName
-                } ${
-                  doctors?.find((doc) => doc.id === Number(watchDoctorId))
-                    ?.lastName
-                }`
+              ? `Dr. ${doctors?.find((doc) => doc.id === Number(watchDoctorId))
+                ?.firstName
+              } ${doctors?.find((doc) => doc.id === Number(watchDoctorId))
+                ?.lastName
+              }`
               : "Cualquier médico"}
           </p>
           <p>
