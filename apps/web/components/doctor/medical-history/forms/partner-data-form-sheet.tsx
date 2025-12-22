@@ -66,7 +66,7 @@ const PartnerFormSchema = z.object({
     .or(z.literal(""))
     .nullable(),
   biologicalSex: z.nativeEnum(BiologicalSex, {
-    required_error: "Sexo biológico requerido",
+    error: "Sexo biológico requerido",
   }),
   genitalBackgrounds: z.string().nullable().optional(),
   // Gynecological history (for female partners - ROPA)
@@ -221,7 +221,7 @@ export function PartnerDataFormSheet({
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre *</FormLabel>
+                      <FormLabel>Nombre 🞲</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Ej: Juan" />
                       </FormControl>
@@ -235,7 +235,7 @@ export function PartnerDataFormSheet({
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Apellido *</FormLabel>
+                      <FormLabel>Apellido 🞲</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Ej: Pérez" />
                       </FormControl>
@@ -249,7 +249,7 @@ export function PartnerDataFormSheet({
                   name="dni"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>DNI *</FormLabel>
+                      <FormLabel>DNI 🞲</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Ej: 12345678" />
                       </FormControl>
@@ -263,7 +263,7 @@ export function PartnerDataFormSheet({
                   name="birthDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha de nacimiento *</FormLabel>
+                      <FormLabel>Fecha de nacimiento 🞲</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -277,7 +277,7 @@ export function PartnerDataFormSheet({
                   name="biologicalSex"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sexo biológico *</FormLabel>
+                      <FormLabel>Sexo biológico 🞲</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}

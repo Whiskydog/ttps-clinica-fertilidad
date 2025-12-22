@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/card";
 import { Button } from "@repo/ui/button";
-import { Users, FileText, Shield, ArrowRight } from "lucide-react";
+import { Users, FileText, Shield, ArrowRight, CreditCard } from "lucide-react";
 
 export default function MedicalDirectorDashboard() {
   const quickActions = [
@@ -25,6 +25,13 @@ export default function MedicalDirectorDashboard() {
       href: "/medical-director/audit",
       icon: Shield,
       color: "bg-purple-500 hover:bg-purple-600",
+    },
+    {
+      title: "Procesar Pagos",
+      description: "Gestión de pagos y deudas de Obras Sociales",
+      href: "/medical-director/pagos",
+      icon: CreditCard,
+      color: "bg-pink-500 hover:bg-pink-600",
     },
   ];
 

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { PatientsService } from '@users/services/patients.service';
 
 @Injectable()
 export class Group6ChatbotService {
@@ -10,7 +11,10 @@ export class Group6ChatbotService {
   private readonly secret =
     process.env.CHATBOT_SECRET || 'DUMMY_CHATBOT_SECRET';
 
-  constructor(private readonly http: HttpService) {}
+  constructor(
+    private readonly http: HttpService,
+    private readonly patientsService: PatientsService,
+  ) { }
 
   private headers() {
     return {
@@ -19,15 +23,34 @@ export class Group6ChatbotService {
     };
   }
 
-  preguntar(payload: {
-    patientId: number;
-    patientName: string;
-    birthDate: string;
-    gender: string;
-    messages: any[];
-  }) {
-    return firstValueFrom(
-      this.http.post(this.baseUrl, payload, { headers: this.headers() }),
-    ).then((r) => r.data);
+  async preguntar(patientId: number, messages: any[]) {
+    // 1. Fetch Patient Data from DB
+    const patient = await this.patientsService.getPatientById(patientId);
+    if (!patient) {
+      throw new BadRequestException('Patient data not found');
+    }
+
+    // 2. Construct Payload expected by External API
+    // Ensure dates are string formatted if needed, usually simple YYYY-MM-DD or standard ISO
+    const payload = {
+      patientId: patient.id,
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      birthDate: patient.dateOfBirth, // getPatientById returns string formatted YYYY-MM-DD if it was Date instance
+      gender: patient.biologicalSex || 'O', // Fallback if null, though contract says required
+      messages: messages,
+    };
+
+    console.log('Sending payload to Chatbot:', JSON.stringify(payload, null, 2));
+
+    // 3. Call External API
+    try {
+      const response = await firstValueFrom(
+        this.http.post(this.baseUrl, payload, { headers: this.headers() }),
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Chatbot API Error:', error?.response?.data || error);
+      throw error;
+    }
   }
 }
