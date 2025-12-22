@@ -8,6 +8,7 @@ import {
 import { UserEntitySchema } from "../users";
 import { ApiResponseSchema } from "../common/api";
 import moment from "moment";
+export type MonitoringPlan = z.infer<typeof MonitoringPlanSchema>;
 
 export const InitialObjectiveEnum = z.enum(
   Object.values(InitialObjective) as [string, ...string[]]
@@ -73,6 +74,56 @@ export const MonitoringSchema = z.object({
 });
 
 export type Monitoring = z.infer<typeof MonitoringSchema>;
+
+export const MonitoringPlanStatusEnum = z.enum([
+  "PLANNED",
+  "RESERVED",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+export const CreateMonitoringPlanSchema = z.object({
+  treatmentId: z.number(),
+  sequence: z.number().min(1),
+  plannedDay: z.number().nullable().optional(),
+  minDate: z.string(), // YYYY-MM-DD
+  maxDate: z.string(), // YYYY-MM-DD
+});
+export const CreateMonitoringPlansSchema = z.object({
+  treatmentId: z.number(),
+  rows: z
+    .array(
+      z.object({
+        sequence: z.number().min(1),
+        plannedDay: z.number().min(1).max(31),
+      })
+    )
+    .min(1),
+});
+export const UpdateMonitoringPlanSchema = z.object({
+  id: z.number(),
+  status: MonitoringPlanStatusEnum.optional(),
+  appointmentId: z.number().nullable().optional(),
+});
+
+export type CreateMonitoringPlanDto = z.infer<
+  typeof CreateMonitoringPlanSchema
+>;
+export type UpdateMonitoringPlanDto = z.infer<
+  typeof UpdateMonitoringPlanSchema
+>;
+export const MonitoringPlanSchema = z.object({
+  id: z.number(),
+  treatmentId: z.number(),
+  sequence: z.number(),
+  plannedDay: z.number().nullable(),
+  minDate: z.string(),
+  maxDate: z.string(),
+  status: MonitoringPlanStatusEnum,
+  appointmentId: z.number().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
 
 // Protocolo de medicación
 export const MedicationProtocolSchema = z.object({
@@ -170,6 +221,7 @@ export const TreatmentDetailSchema = z.object({
   informedConsent: InformedConsentSchema.nullable().optional(),
   milestones: z.array(PostTransferMilestoneSchema).optional(),
   medicalCoverage: MedicalCoverageSchema.nullable().optional(),
+  monitoringPlans: z.array(MonitoringPlanSchema).optional(),
 });
 
 export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
@@ -284,13 +336,13 @@ export type UpdateMedicationProtocolInput = z.infer<
 
 // Monitoring Input Schemas
 export const CreateMonitoringSchema = z.object({
-  treatmentId: z.number(),
   monitoringDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  dayNumber: z.number().nullable().optional(),
-  follicleCount: z.number().nullable().optional(),
+  dayNumber: z.coerce.number().nullable().optional(),
+  follicleCount: z.coerce.number().nullable().optional(),
   follicleSize: z.string().nullable().optional(),
-  estradiolLevel: z.number().nullable().optional(),
+  estradiolLevel: z.coerce.number().nullable().optional(),
   observations: z.string().nullable().optional(),
+  monitoringPlanId: z.coerce.number().nullable().optional(),
 });
 
 export const UpdateMonitoringSchema = CreateMonitoringSchema.partial().extend({

@@ -14,6 +14,8 @@ import {
   CreateMedicationProtocolSchema,
   UpdateMedicationProtocolSchema,
   CreateTreatmentResponseSchema,
+  CreateMonitoringPlanSchema,
+  UpdateMonitoringPlanSchema,
 } from '@repo/contracts';
 
 export class CreateTreatmentDto extends createZodDto(CreateTreatmentSchema) {}
@@ -50,12 +52,8 @@ export class UpdateMedicalCoverageDto extends createZodDto(
 ) {}
 
 // Manual DTOs for DoctorNote to avoid validation conflicts
-export class CreateDoctorNoteDto extends createZodDto(
-  CreateDoctorNoteSchema,
-) {}
-export class UpdateDoctorNoteDto extends createZodDto(
-  UpdateDoctorNoteSchema,
-) {}
+export class CreateDoctorNoteDto extends createZodDto(CreateDoctorNoteSchema) {}
+export class UpdateDoctorNoteDto extends createZodDto(UpdateDoctorNoteSchema) {}
 
 // DTO for MedicationProtocol
 export class CreateMedicationProtocolDto extends createZodDto(
@@ -63,4 +61,12 @@ export class CreateMedicationProtocolDto extends createZodDto(
 ) {}
 export class UpdateMedicationProtocolDto extends createZodDto(
   UpdateMedicationProtocolSchema,
+) {}
+// DTO for MonitoringPlan
+export class CreateMonitoringPlanDto extends createZodDto(
+  CreateMonitoringPlanSchema,
+) {}
+
+export class UpdateMonitoringPlanDto extends createZodDto(
+  UpdateMonitoringPlanSchema,
 ) {}

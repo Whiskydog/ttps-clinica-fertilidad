@@ -32,6 +32,8 @@ import { InformedConsentFormSheet } from "@/components/doctor/treatments/forms/i
 import { GenerateProtocolPdfSheet } from "@/components/doctor/treatments/forms/generate-protocol-pdf-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
+import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monitoring-plan-sheet";
+import { MonitoringFormSheet } from "@/components/doctor/treatments/forms/monitoring-form-sheet";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -43,6 +45,11 @@ export default function TreatmentDetailPage() {
   const [createOrderSheetOpen, setCreateOrderSheetOpen] = useState(false);
   const [consentSheetOpen, setConsentSheetOpen] = useState(false);
   const [protocolPdfSheetOpen, setProtocolPdfSheetOpen] = useState(false);
+  const [monitoringPlanSheetOpen, setMonitoringPlanSheetOpen] = useState(false);
+  const [monitoringFormOpen, setMonitoringFormOpen] = useState(false);
+  const [selectedMonitoringPlan, setSelectedMonitoringPlan] =
+    useState<any>(null);
+
   const queryClient = useQueryClient();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -113,11 +120,8 @@ export default function TreatmentDetailPage() {
   const informedConsent = treatmentData.informedConsent;
   const milestones = treatmentData.milestones || [];
   const medicalCoverage = treatmentData.medicalCoverage;
-
-  // Validación: Verificar que exista al menos una orden médica completada con resultados
-  const hasCompletedOrderWithResults = medicalOrdersData?.some(
-    (order: any) => order.status === 'completed' && order.studyResults?.length > 0
-  ) ?? false;
+  const canPlanMonitoring =
+    !!protocol && !!informedConsent && !!informedConsent.pdfUri;
 
   const handleAddNote = () => {
     setSelectedNote(null);
@@ -171,7 +175,7 @@ export default function TreatmentDetailPage() {
                   variant="secondary"
                   className="bg-yellow-100 text-yellow-700 border-yellow-300"
                 >
-                  No establecido
+                  Sin crear
                 </Badge>
               ) : informedConsent.pdfUri ? (
                 <Badge
@@ -372,83 +376,6 @@ export default function TreatmentDetailPage() {
             </div>
           </div>
 
-
-          {/* Medical Orders Section */}
-          <div className="border rounded-lg p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Órdenes Médicas
-              </h2>
-              <div className="relative group">
-                <Button
-                  onClick={() => setCreateOrderSheetOpen(true)}
-                // disabled={!informedConsent || !informedConsent.pdfUri}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Orden Médica
-                </Button>
-                {/* {(!informedConsent || !informedConsent.pdfUri) && (
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                {!informedConsent
-                  ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
-                  : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
-              </div>
-            )} */}
-              </div>
-            </div>
-
-            {ordersLoading ? (
-              <div className="text-center py-8">
-                <div className="loading-spinner mx-auto"></div>
-              </div>
-            ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No hay órdenes médicas registradas</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {medicalOrdersData.map((order: any) => (
-                  <div
-                    key={order.id}
-                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <p className="font-medium">#{order.code}</p>
-                          <Badge
-                            variant="outline"
-                            className={
-                              order.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }
-                          >
-                            {order.status === "completed"
-                              ? "Completada"
-                              : "Pendiente"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {order.category}
-                        </p>
-                        <p className="text-sm">
-                          {new Date(order.issueDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Link href={`/doctor/medical-orders/${order.id}`}>
-                        <Button variant="outline" size="sm">
-                          Ver Detalle
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Protocol Section */}
           {protocol ? (
             <div className="border rounded-lg p-6 bg-card">
@@ -459,7 +386,10 @@ export default function TreatmentDetailPage() {
                     Protocolo de Medicacion
                   </h2>
                   {protocol.pdfUrl && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-700"
+                    >
                       PDF Generado
                     </Badge>
                   )}
@@ -558,32 +488,94 @@ export default function TreatmentDetailPage() {
               <div className="text-center py-8">
                 <Pill className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  No se ha establecido un protocolo de medicacion para este tratamiento
+                  No se ha establecido un protocolo de medicacion para este
+                  tratamiento
                 </p>
-                <div className="relative group inline-block">
-                  <Button
-                    onClick={handleCreateProtocol}
-                    disabled={!hasCompletedOrderWithResults}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Establecer Protocolo
-                  </Button>
-                  {!hasCompletedOrderWithResults && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                      Para crear un protocolo de medicación, primero debe completar al menos una orden médica con resultados de estudios.
-                    </div>
-                  )}
-                </div>
+                <Button onClick={handleCreateProtocol}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Establecer Protocolo
+                </Button>
               </div>
             </div>
           ) : null}
+          {/* Monitoring Plans Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Monitoreos Planificados</h2>
+            </div>
 
+            {!treatmentData.monitoringPlans ||
+            treatmentData.monitoringPlans.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p>No hay días de monitoreo planificados</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {treatmentData.monitoringPlans.map((plan: any, idx: number) => (
+                  <div
+                    key={plan.id}
+                    className="flex justify-between items-center border rounded-lg p-4"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        Monitoreo #{idx + 1} — Día {plan.plannedDay}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Rango permitido: {formatDateForDisplay(plan.minDate)} –{" "}
+                        {formatDateForDisplay(plan.maxDate)}
+                      </p>
+                    </div>
+                    {!plan.deletedAt && plan.status !== "COMPLETED" && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedMonitoringPlan(plan);
+                          setMonitoringFormOpen(true);
+                        }}
+                      >
+                        <Activity className="h-4 w-4 mr-2" />
+                        Realizar monitoreo
+                      </Button>
+                    )}
+
+                    {plan.deletedAt ? (
+                      <Badge className="bg-red-100 text-red-800 border-red-300">
+                        CANCELADO
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={
+                          plan.status === "PENDING"
+                            ? "bg-blue-100 text-blue-800 border-blue-300"
+                            : plan.status === "RESERVED"
+                              ? "bg-blue-100 text-blue-800 border-blue-300"
+                              : plan.status === "COMPLETED"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : "bg-blue-100 text-blue-800 border-blue-300"
+                        }
+                      >
+                        {plan.status === "PENDING"
+                          ? "RESERVADO"
+                          : plan.status === "RESERVED"
+                            ? "RESERVADO"
+                            : plan.status === "COMPLETED"
+                              ? "COMPLETADO"
+                              : "RESERVADO"}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {/* Monitorings Section */}
           {monitorings.length > 0 && (
             <div className="border rounded-lg p-6 bg-card">
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Monitoreos</h2>
+                <h2 className="text-xl font-semibold">Monitoreos Realizados</h2>
               </div>
               <div className="space-y-4">
                 {monitorings.map((monitoring: any) => (
@@ -669,12 +661,109 @@ export default function TreatmentDetailPage() {
             )}
           </div>
 
+          {/* Medical Orders Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Órdenes Médicas
+              </h2>
+              <div className="relative group">
+                <Button
+                  onClick={() => setCreateOrderSheetOpen(true)}
+                  disabled={!informedConsent || !informedConsent.pdfUri}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Orden Médica
+                </Button>
+                {(!informedConsent || !informedConsent.pdfUri) && (
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                    {!informedConsent
+                      ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
+                      : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {ordersLoading ? (
+              <div className="text-center py-8">
+                <div className="loading-spinner mx-auto"></div>
+              </div>
+            ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No hay órdenes médicas registradas</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {medicalOrdersData.map((order: any) => (
+                  <div
+                    key={order.id}
+                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">#{order.code}</p>
+                          <Badge
+                            variant="outline"
+                            className={
+                              order.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }
+                          >
+                            {order.status === "completed"
+                              ? "Completada"
+                              : "Pendiente"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {order.category}
+                        </p>
+                        <p className="text-sm">
+                          {new Date(order.issueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Link href={`/doctor/medical-orders/${order.id}`}>
+                        <Button variant="outline" size="sm">
+                          Ver Detalle
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Sidebar - Quick Actions */}
         <div className="lg:col-span-1">
           <div className="border rounded-lg p-4 bg-card space-y-3 sticky top-6">
             <h3 className="font-semibold mb-3">ACCIONES RÁPIDAS</h3>
+            <div className="relative group">
+              <Button
+                variant="default"
+                className="w-full justify-start"
+                disabled={!canPlanMonitoring}
+                onClick={() => setMonitoringPlanSheetOpen(true)}
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                PLANIFICAR MONITOREOS
+              </Button>
+
+              {!canPlanMonitoring && (
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-72 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                  {!informedConsent
+                    ? "Se requiere consentimiento informado firmado"
+                    : !informedConsent.pdfUri
+                      ? "El consentimiento debe tener un PDF cargado"
+                      : "Debe existir un protocolo de estimulación activo"}
+                </div>
+              )}
+            </div>
+
             <div className="relative group">
               <Button
                 variant="default"
@@ -727,7 +816,6 @@ export default function TreatmentDetailPage() {
         onOpenChange={setProtocolSheetOpen}
         treatmentId={treatment.id}
         protocol={protocol || null}
-        hasCompletedOrderWithResults={hasCompletedOrderWithResults}
         onSuccess={() => setProtocolSheetOpen(false)}
       />
 
@@ -778,10 +866,33 @@ export default function TreatmentDetailPage() {
           existingPdfUrl={protocol.pdfUrl}
           onSuccess={() => {
             setProtocolPdfSheetOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+            queryClient.invalidateQueries({
+              queryKey: ["treatmentDetail", id],
+            });
           }}
         />
       )}
+      <MonitoringPlanSheet
+        open={monitoringPlanSheetOpen}
+        onOpenChange={setMonitoringPlanSheetOpen}
+        treatmentId={treatment.id}
+        protocol={protocol}
+        doctorId={treatment.initialDoctor?.id}
+        onSuccess={() => {
+          setMonitoringPlanSheetOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+        }}
+      />
+
+      <MonitoringFormSheet
+        open={monitoringFormOpen}
+        onOpenChange={setMonitoringFormOpen}
+        monitoringPlan={selectedMonitoringPlan}
+        treatmentId={treatment.id}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] })
+        }
+      />
     </div>
   );
 }

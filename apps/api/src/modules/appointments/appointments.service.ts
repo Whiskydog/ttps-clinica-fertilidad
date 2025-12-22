@@ -28,6 +28,11 @@ import { catchError, map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { BookAppointmentDto, mapRawAppointments } from './dto';
+import { Appointment } from './appointment.entity';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
+import { Doctor } from '@modules/users/entities/doctor.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AppointmentsService {
@@ -44,6 +49,24 @@ export class AppointmentsService {
     private readonly configService: ConfigService,
   ) {
     this.apiUrl = this.configService.getOrThrow<string>('API_URL_TURNOS');
+  }
+
+  async createLocalAppointment(params: {
+    treatment?: Treatment;
+    doctor: Doctor;
+    externalId: string;
+    isOvertime: boolean;
+    reason: ReasonForVisit;
+  }): Promise<Appointment> {
+    const appointment = this.appointmentRepository.create({
+      treatment: params.treatment ?? null,
+      doctor: params.doctor,
+      externalId: params.externalId,
+      isOvertime: params.isOvertime,
+      reason: params.reason,
+    });
+
+    return this.appointmentRepository.save(appointment);
   }
 
   async bookAppointment(
@@ -217,6 +240,24 @@ export class AppointmentsService {
       (appointment) => appointment.patientId !== null,
     );
   }
+  async reserveExternalSlotByDoctor(params: {
+    patientId: number;
+    externalSlotId: number;
+  }): Promise<void> {
+    const url = `${this.apiUrl}/reservar_turno`;
+    const headers = this.buildAuthHeaders(true);
+
+    const body = {
+      id_paciente: params.patientId,
+      id_turno: params.externalSlotId,
+    };
+
+    await firstValueFrom(
+      this.httpService
+        .patch(url, body, { headers })
+        .pipe(catchError((err) => this.handleAxiosError(err))),
+    );
+  }
 
   private async getDoctorAppointmentsAndSlots(
     doctorId: number,
@@ -287,6 +328,7 @@ export class AppointmentsService {
         exception = new HttpException({ message }, statusCode);
       }
     }
+
     // Re-emite como error de RxJS para que Nest lo serialice como HTTP
     return throwError(() => exception);
   }

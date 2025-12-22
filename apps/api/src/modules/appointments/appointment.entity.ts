@@ -26,9 +26,10 @@ export class Appointment extends BaseEntity {
   doctor: Doctor;
 
   @Index()
-  @Column({ unique: true })
-  externalId: number;
-
+  @Column()
+  externalId: string;
+  @Column({ name: 'is_overtime', type: 'boolean', default: false })
+  isOvertime: boolean;
   @Column({
     type: 'enum',
     enum: ReasonForVisit,

@@ -94,4 +94,11 @@ export class MedicationProtocolService {
 
     return await this.medicationProtocolRepository.save(protocol);
   }
+
+  async findByTreatment(treatmentId: number): Promise<MedicationProtocol> {
+    const protocol = await this.medicationProtocolRepository.findOne({
+      where: { treatmentId },
+    });
+    return protocol;
+  }
 }

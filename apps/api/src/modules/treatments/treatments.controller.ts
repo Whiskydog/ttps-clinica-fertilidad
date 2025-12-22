@@ -47,7 +47,7 @@ import { User } from '@users/entities/user.entity';
 import { parseDateFromString } from '@common/utils/date.utils';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { EnvelopeMessage } from '@common/decorators/envelope-message.decorator';
-
+import { CreateMonitoringDto } from './dto/create-monitoring.dto';
 @Controller('treatments')
 @UseGuards(JwtAuthGuard)
 export class TreatmentsController {
@@ -422,6 +422,19 @@ export class TreatmentsController {
       message: 'Protocolo de medicación actualizado correctamente',
       id: updated.id,
     };
+  }
+
+  // ============================================
+  // Endpoints para crear un monitoreo
+  // ============================================
+  @Post(':id/monitorings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR)
+  async createMonitoring(
+    @Param('id', ParseIntPipe) treatmentId: number,
+    @Body() dto: CreateMonitoringDto,
+  ) {
+    return this.treatmentService.createMonitoring(treatmentId, dto);
   }
 
   // ============================================

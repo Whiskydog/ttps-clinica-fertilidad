@@ -1,3 +1,4 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { parseDateFromString } from '@common/utils/date.utils';
 import { PunctureRecord } from '@modules/laboratory/entities/puncture-record.entity';
 import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
@@ -13,6 +14,18 @@ import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { Monitoring } from './entities/monitoring.entity';
 import { PostTransferMilestone } from './entities/post-transfer-milestone.entity';
+import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
+import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
+import { TreatmentStatus, InitialObjective } from '@repo/contracts';
+import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
+import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
+import { parseDateFromString } from '@common/utils/date.utils';
+import { MonitoringPlanService } from './services/monitoring-plan.service';
+import {
+  MonitoringPlan,
+  MonitoringPlanStatus,
+} from './entities/monitoring-plan.entity';
+import { CreateMonitoringDto } from './dto/create-monitoring.dto';
 import { Treatment } from './entities/treatment.entity';
 import { OocyteState } from '@repo/contracts';
 import { Oocyte } from '../laboratory/entities/oocyte.entity';
@@ -24,6 +37,8 @@ export class TreatmentService {
     private readonly treatmentRepo: Repository<Treatment>,
     @InjectRepository(Monitoring)
     private readonly monitoringRepo: Repository<Monitoring>,
+    @InjectRepository(MonitoringPlan)
+    private readonly monitoringPlanRepo: Repository<MonitoringPlan>,
     @InjectRepository(DoctorNote)
     private readonly doctorNoteRepo: Repository<DoctorNote>,
     @InjectRepository(MedicationProtocol)
@@ -34,6 +49,8 @@ export class TreatmentService {
     private readonly medicalOrderRepo: Repository<MedicalOrder>,
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
+    private readonly monitoringPlanService: MonitoringPlanService,
+  ) {}
     private readonly paymentsService: PaymentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
     @InjectRepository(Oocyte)
@@ -154,6 +171,7 @@ export class TreatmentService {
     // Buscar la fecha más reciente en cada tabla relacionada
     const [
       lastMonitoring,
+      lastMonitoringPlan,
       lastDoctorNote,
       lastProtocol,
       lastMilestone,
@@ -162,6 +180,11 @@ export class TreatmentService {
       treatment,
     ] = await Promise.all([
       this.monitoringRepo.findOne({
+        where: { treatment: { id: treatmentId } },
+        order: { createdAt: 'DESC' },
+        select: ['id', 'createdAt'],
+      }),
+      this.monitoringPlanRepo.findOne({
         where: { treatment: { id: treatmentId } },
         order: { createdAt: 'DESC' },
         select: ['id', 'createdAt'],
@@ -200,6 +223,7 @@ export class TreatmentService {
     // Recopilar todas las fechas válidas
     const dates: Date[] = [];
     if (lastMonitoring?.createdAt) dates.push(lastMonitoring.createdAt);
+    if (lastMonitoringPlan?.createdAt) dates.push(lastMonitoringPlan.createdAt);
     if (lastDoctorNote?.createdAt) dates.push(lastDoctorNote.createdAt);
     if (lastProtocol?.updatedAt) dates.push(lastProtocol.updatedAt);
     if (lastMilestone?.createdAt) dates.push(lastMilestone.createdAt);
@@ -258,5 +282,85 @@ export class TreatmentService {
 
     treatment.initialDoctor = { id: newDoctorId } as any;
     return this.treatmentRepo.save(treatment);
+  }
+
+  async createDefaultMonitoringPlans(
+    treatmentId: number,
+    stimulationStartDate: Date,
+  ) {
+    const sequences = [
+      { sequence: 1, plannedDay: 7 },
+      { sequence: 2, plannedDay: 10 },
+      { sequence: 3, plannedDay: 13 },
+    ];
+
+    for (const { sequence, plannedDay } of sequences) {
+      const baseDate = new Date(stimulationStartDate);
+      baseDate.setDate(baseDate.getDate() + plannedDay);
+
+      const minDate = new Date(baseDate);
+      minDate.setDate(minDate.getDate() - 1);
+
+      const maxDate = new Date(baseDate);
+      maxDate.setDate(maxDate.getDate() + 1);
+
+      await this.monitoringPlanService.create({
+        treatmentId,
+        sequence,
+        plannedDay,
+        minDate,
+        maxDate,
+      });
+    }
+  }
+  async createMonitoring(treatmentId: number, dto: CreateMonitoringDto) {
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id: treatmentId },
+    });
+
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+
+    const monitoring = this.monitoringRepo.create({
+      treatmentId,
+      treatment,
+      monitoringDate: new Date(dto.monitoringDate),
+      dayNumber: dto.dayNumber ?? null,
+      follicleCount: dto.follicleCount ?? null,
+      follicleSize: dto.follicleSize ?? null,
+      estradiolLevel: dto.estradiolLevel ?? null,
+      observations: dto.observations ?? null,
+    });
+    if (dto.monitoringPlanId) {
+      const plan = await this.monitoringPlanRepo.findOne({
+        where: {
+          id: dto.monitoringPlanId,
+          treatment: { id: treatmentId },
+        },
+      });
+
+      if (!plan) {
+        throw new NotFoundException(
+          `MonitoringPlan ${dto.monitoringPlanId} no encontrado para el tratamiento ${treatmentId}`,
+        );
+      }
+
+      plan.status = MonitoringPlanStatus.COMPLETED;
+      await this.monitoringPlanRepo.save(plan);
+    }
+
+    return this.monitoringRepo.save(monitoring);
+  }
+
+  async findOne(id: number): Promise<Treatment> {
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id },
+      relations: ['medicalHistory', 'initialDoctor'],
+    });
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+    return treatment;
   }
 }

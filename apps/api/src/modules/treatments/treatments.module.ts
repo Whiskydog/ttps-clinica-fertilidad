@@ -22,6 +22,11 @@ import { TreatmentService } from '@modules/treatments/treatment.service';
 import { TreatmentsController } from '@modules/treatments/treatments.controller';
 import { TreatmentsService } from '@modules/treatments/treatments.service';
 import { UploadsModule } from '@modules/uploads/uploads.module';
+import { Group8NoticesModule } from '../external/group8-notices/group8-notices.module';
+import { MonitoringPlan } from './entities/monitoring-plan.entity';
+import { MonitoringPlanService } from './services/monitoring-plan.service';
+import { MonitoringPlansController } from './controllers/monitoring-plans.controller';
+import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -30,6 +35,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forFeature([
       Treatment,
       Monitoring,
+      MonitoringPlan,
       MedicationProtocol,
       DoctorNote,
       InformedConsent,
@@ -44,6 +50,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     UploadsModule,
     PaymentsModule,
     Group8NoticesModule,
+    AppointmentsModule,
   ],
   providers: [
     TreatmentService,
@@ -54,14 +61,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DoctorNoteService,
     MedicationProtocolService,
     MedicationPdfService,
+    MonitoringPlanService,
   ],
-  controllers: [TreatmentsController],
+  controllers: [TreatmentsController, MonitoringPlansController],
   exports: [
     TreatmentService,
     TreatmentsService,
     InformedConsentService,
     PostTransferMilestoneService,
     MedicalCoverageService,
+    MonitoringPlanService,
   ],
 })
 export class TreatmentsModule { }

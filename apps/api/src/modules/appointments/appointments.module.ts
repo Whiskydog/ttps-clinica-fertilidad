@@ -6,6 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Appointment } from './appointment.entity';
 import { AppointmentsController } from './appointments.controller';
+import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
+import { Appointment } from './appointment.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppointmentsService } from './appointments.service';
 
 @Module({
