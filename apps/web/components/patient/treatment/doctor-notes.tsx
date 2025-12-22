@@ -20,7 +20,7 @@ export function DoctorNotes({ notes }: DoctorNotesProps) {
               <span className="font-semibold">
                 {new Date(note.noteDate).toLocaleDateString('es-AR')}:
               </span>{' '}
-              {note.content || 'No hay contenido'}
+              {note.note || 'No hay contenido'}
             </div>
           )) || <p>No hay notas del médico</p>}
         </div>
