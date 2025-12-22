@@ -188,6 +188,7 @@ export class TreatmentService {
   async closeTreatmentByInactivity(treatmentId: number): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id: treatmentId },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -197,6 +198,11 @@ export class TreatmentService {
     treatment.status = TreatmentStatus.closed;
     treatment.closureReason = 'Cierre automático por inactividad (60 días)';
     treatment.closureDate = new Date();
+
+    if (treatment.medicalHistory) {
+      treatment.medicalHistory.currentTreatment = null;
+      await this.medicalHistoryRepo.save(treatment.medicalHistory);
+    }
 
     return this.treatmentRepo.save(treatment);
   }
