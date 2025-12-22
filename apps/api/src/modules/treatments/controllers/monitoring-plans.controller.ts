@@ -29,7 +29,7 @@ export class MonitoringPlansController {
     private readonly monitoringPlanService: MonitoringPlanService,
     private readonly appointmentsService: AppointmentsService,
     private readonly treatmentsService: TreatmentsService,
-  ) {}
+  ) { }
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequireRoles(RoleCode.DOCTOR)
@@ -87,10 +87,10 @@ export class MonitoringPlansController {
         await this.appointmentsService.bookAppointment(
           treatment.treatment.medicalHistory.patient,
           {
-            doctorId: treatment.treatment.initialDoctor.id,
             reason: ReasonForVisit.StimulationMonitoring,
             appointment: {
               id: m.appointmentId,
+              doctorId: treatment.treatment.initialDoctor.id,
               dateTime: m.appointmentDateTime,
             },
           },

@@ -15,7 +15,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   AppointmentDetail,
   ExternalBookingResponse,
@@ -25,8 +24,6 @@ import {
 import moment from 'moment';
 import { firstValueFrom, forkJoin, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { Repository } from 'typeorm';
-import { Appointment } from './appointment.entity';
 import { BookAppointmentDto, mapRawAppointments } from './dto';
 import { Appointment } from './appointment.entity';
 import { Treatment } from '@modules/treatments/entities/treatment.entity';
@@ -124,7 +121,7 @@ export class AppointmentsService {
     const externalBooking = externalBookingResponse.data.turno;
 
     const appointment = this.appointmentRepository.create({
-      externalId: externalBooking.id,
+      externalId: externalBooking.id.toString(),
       date: moment.utc(externalBooking.fecha_hora).toDate(),
       doctor: { id: dto.appointment.doctorId },
       medicalHistory: {

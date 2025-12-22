@@ -1,15 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { parseDateFromString } from '@common/utils/date.utils';
-import { PunctureRecord } from '@modules/laboratory/entities/puncture-record.entity';
-import { MedicalHistory } from '@modules/medical-history/entities/medical-history.entity';
+
 import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
-import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
+
 import { PaymentsService } from '@modules/payments/payments.service';
 import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { InitialObjective, TreatmentStatus } from '@repo/contracts';
 import { Repository } from 'typeorm';
-import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { Monitoring } from './entities/monitoring.entity';
@@ -50,7 +45,6 @@ export class TreatmentService {
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
     private readonly monitoringPlanService: MonitoringPlanService,
-  ) {}
     private readonly paymentsService: PaymentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
     @InjectRepository(Oocyte)

@@ -52,4 +52,4 @@ import { MedicalTermsService } from './services/medical-terms.service';
     BackgroundService,
   ],
 })
-export class MedicalHistoryModule {}
+export class MedicalHistoryModule { }
