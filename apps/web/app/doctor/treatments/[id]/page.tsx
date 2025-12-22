@@ -372,6 +372,83 @@ export default function TreatmentDetailPage() {
             </div>
           </div>
 
+
+          {/* Medical Orders Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Órdenes Médicas
+              </h2>
+              <div className="relative group">
+                <Button
+                  onClick={() => setCreateOrderSheetOpen(true)}
+                // disabled={!informedConsent || !informedConsent.pdfUri}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Orden Médica
+                </Button>
+                {/* {(!informedConsent || !informedConsent.pdfUri) && (
+              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                {!informedConsent
+                  ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
+                  : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
+              </div>
+            )} */}
+              </div>
+            </div>
+
+            {ordersLoading ? (
+              <div className="text-center py-8">
+                <div className="loading-spinner mx-auto"></div>
+              </div>
+            ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No hay órdenes médicas registradas</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {medicalOrdersData.map((order: any) => (
+                  <div
+                    key={order.id}
+                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">#{order.code}</p>
+                          <Badge
+                            variant="outline"
+                            className={
+                              order.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }
+                          >
+                            {order.status === "completed"
+                              ? "Completada"
+                              : "Pendiente"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {order.category}
+                        </p>
+                        <p className="text-sm">
+                          {new Date(order.issueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Link href={`/doctor/medical-orders/${order.id}`}>
+                        <Button variant="outline" size="sm">
+                          Ver Detalle
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Protocol Section */}
           {protocol ? (
             <div className="border rounded-lg p-6 bg-card">
@@ -634,83 +711,6 @@ export default function TreatmentDetailPage() {
             )}
           </div>
         </div>
-      </div>
-
-
-      {/* Medical Orders Section */}
-      <div className="border rounded-lg p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Órdenes Médicas
-          </h2>
-          <div className="relative group">
-            <Button
-              onClick={() => setCreateOrderSheetOpen(true)}
-            // disabled={!informedConsent || !informedConsent.pdfUri}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Orden Médica
-            </Button>
-            {/* {(!informedConsent || !informedConsent.pdfUri) && (
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                {!informedConsent
-                  ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
-                  : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {ordersLoading ? (
-          <div className="text-center py-8">
-            <div className="loading-spinner mx-auto"></div>
-          </div>
-        ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No hay órdenes médicas registradas</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {medicalOrdersData.map((order: any) => (
-              <div
-                key={order.id}
-                className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="font-medium">#{order.code}</p>
-                      <Badge
-                        variant="outline"
-                        className={
-                          order.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }
-                      >
-                        {order.status === "completed"
-                          ? "Completada"
-                          : "Pendiente"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {order.category}
-                    </p>
-                    <p className="text-sm">
-                      {new Date(order.issueDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Link href={`/doctor/medical-orders/${order.id}`}>
-                    <Button variant="outline" size="sm">
-                      Ver Detalle
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Forms and Dialogs */}
