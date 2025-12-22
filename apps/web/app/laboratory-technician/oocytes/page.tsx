@@ -336,6 +336,9 @@ export default function OocytesPage() {
                       value={puncture.id.toString()}
                     >
                       Punción ID: {puncture.id} -{" "}
+                      {puncture.treatment?.medicalHistory?.patient
+                        ? `${puncture.treatment.medicalHistory.patient.lastName}, ${puncture.treatment.medicalHistory.patient.firstName} (${puncture.treatment.medicalHistory.patient.dni})`
+                        : "Paciente desconocido"} -{" "}
                       {puncture.punctureDateTime
                         ? new Date(puncture.punctureDateTime).toLocaleString()
                         : "Sin fecha"}

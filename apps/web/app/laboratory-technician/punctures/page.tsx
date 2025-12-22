@@ -329,7 +329,7 @@ export default function PuncturesPage() {
                   </TableCell>
                   <TableCell>
                     {puncture.treatment?.medicalHistory?.patient
-                      ? `${puncture.treatment.medicalHistory.patient.firstName} ${puncture.treatment.medicalHistory.patient.lastName}`
+                      ? `${puncture.treatment.medicalHistory.patient.lastName}, ${puncture.treatment.medicalHistory.patient.firstName} (${puncture.treatment.medicalHistory.patient.dni})`
                       : "N/A"}
                   </TableCell>
                   <TableCell>{puncture.operatingRoomNumber || "N/A"}</TableCell>
