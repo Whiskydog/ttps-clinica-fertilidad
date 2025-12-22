@@ -32,7 +32,7 @@ import { AppointmentsService } from './appointments.service';
 export class AppointmentsController {
   private readonly logger = new Logger(AppointmentsController.name);
 
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -109,6 +109,6 @@ export class AppointmentsController {
       );
     }
     this.logger.log(`Fetching all appointments for doctorId=${id}`);
-    return this.appointmentsService.getDoctorAppointments(id);
+    return this.appointmentsService.getDoctorExternalAppointments(id);
   }
 }

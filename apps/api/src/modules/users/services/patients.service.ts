@@ -21,7 +21,7 @@ export class PatientsService {
     private medicalInsurancesService: MedicalInsurancesService,
     @Inject(forwardRef(() => AppointmentsService))
     private appointmentsService: AppointmentsService,
-  ) {}
+  ) { }
 
   async createPatient(dto: PatientCreateDto): Promise<Patient> {
     await this.userValidationService.ensurePatientUniqueness(dto);
@@ -79,12 +79,24 @@ export class PatientsService {
     // Primero obtenemos los IDs de pacientes con turnos del doctor (desde API externa)
     let patientIdsWithAppointments: number[] = [];
     try {
+      // const doctorAppointments = await this.appointmentsService.getDoctorExternalAppointments(userId);
+      // patientIdsWithAppointments = [
+      //   ...new Set(
+      //     doctorAppointments
+      //       .filter((apt) => apt.patientId !== null)
+      //       .map((apt) => apt.patientId as number),
+      //   ),
+      // ];
       const doctorAppointments = await this.appointmentsService.getDoctorAppointments(userId);
+
+      this.logger.debug(
+        `Doctor ${userId} tiene ${doctorAppointments.length} turnos agendados`,
+      );
       patientIdsWithAppointments = [
         ...new Set(
           doctorAppointments
-            .filter((apt) => apt.patientId !== null)
-            .map((apt) => apt.patientId as number),
+            .filter((apt) => apt.medicalHistory?.patient !== null)
+            .map((apt) => apt.medicalHistory?.patient?.id as number),
         ),
       ];
       this.logger.debug(
