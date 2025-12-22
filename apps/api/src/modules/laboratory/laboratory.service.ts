@@ -143,6 +143,14 @@ export class LaboratoryService {
       .innerJoin('treatment.informedConsent', 'consent', 'consent.pdfUri IS NOT NULL AND consent.signatureDate IS NOT NULL')
       .where('patient.dni LIKE :dni', { dni: `${dni}%` })
       .andWhere('medicalHistory.current_treatment_id = treatment.id')
+      .andWhere(qb => {
+        const subQuery = qb.subQuery()
+          .select('COUNT(m.id)', 'monitoring_count')
+          .from('treatment_monitorings', 'm')
+          .where('m.treatmentId = treatment.id')
+          .getQuery();
+        return `${subQuery} >= 3`;
+      })
       .getMany();
   }
 
