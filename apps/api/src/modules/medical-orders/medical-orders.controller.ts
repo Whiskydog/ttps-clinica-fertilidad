@@ -35,7 +35,7 @@ export class MedicalOrdersController {
   constructor(
     private readonly medicalOrdersService: MedicalOrdersService,
     private readonly studyResultService: StudyResultService,
-  ) {}
+  ) { }
 
   @Get()
   @UseGuards(RolesGuard)
@@ -49,6 +49,7 @@ export class MedicalOrdersController {
     @Query('doctorId') doctorId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('unassigned') unassigned?: string,
   ) {
     if (treatmentId) {
       return this.medicalOrdersService.findByTreatment(
@@ -60,6 +61,7 @@ export class MedicalOrdersController {
       return this.medicalOrdersService.findByPatient(
         Number(patientId),
         status,
+        unassigned === 'true',
       );
     }
     // Si es Director o médico y no especifica treatmentId ni patientId, devolver todas las órdenes
@@ -120,7 +122,7 @@ export class MedicalOrdersController {
   ) {
     const order = await this.medicalOrdersService.create({
       patientId: dto.patientId,
-      doctorId: dto.doctorId,
+      doctorId: dto.doctorId ?? user.id,
       treatmentId: dto.treatmentId ?? undefined,
       category: dto.category,
       description: dto.description ?? undefined,

@@ -4,7 +4,7 @@ import { MedicalHistoryService } from '@modules/medical-history/services/medical
 import { PaymentsService } from '@modules/payments/payments.service';
 import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { Monitoring } from './entities/monitoring.entity';
@@ -78,6 +78,17 @@ export class TreatmentService {
       medicalHistory.patient.id,
       medicalHistory.patient.medicalInsurance.externalId,
     );
+
+    const medicalOrderIds = (dto as any).medicalOrderIds;
+    console.log('[DEBUG] createTreatment receive dto:', JSON.stringify(dto));
+    console.log('[DEBUG] medicalOrderIds:', medicalOrderIds);
+    if (medicalOrderIds && Array.isArray(medicalOrderIds) && medicalOrderIds.length > 0) {
+      const updateResult = await this.medicalOrderRepo.update(
+        { id: In(medicalOrderIds) },
+        { treatmentId: saved.id },
+      );
+      console.log('[DEBUG] medicalOrderRepo.update result:', updateResult);
+    }
 
     return saved;
   }

@@ -120,17 +120,6 @@ export class AppointmentsService {
 
     const externalBooking = externalBookingResponse.data.turno;
 
-    this.logger.log({
-      externalId: externalBooking.id.toString(),
-      date: moment.utc(externalBooking.fecha_hora).toDate(),
-      doctor: { id: dto.appointment.doctorId },
-      medicalHistory: {
-        id: patientMedicalHistory.id,
-      },
-      treatment: { id: patientMedicalHistory.currentTreatment?.id },
-      reason: dto.reason,
-    })
-
     const appointment = this.appointmentRepository.create({
       externalId: externalBooking.id.toString(),
       date: moment.utc(externalBooking.fecha_hora).toDate(),
@@ -143,10 +132,6 @@ export class AppointmentsService {
     });
 
     const savedAppointment = await this.appointmentRepository.save(appointment);
-
-    this.logger.log({
-      savedAppointment,
-    })
 
     return this.appointmentRepository.findOne({
       where: { id: savedAppointment.id },

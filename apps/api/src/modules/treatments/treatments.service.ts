@@ -7,6 +7,7 @@ import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { TreatmentStatus, RoleCode } from '@repo/contracts';
+import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
 import { InformedConsentService } from './services/informed-consent.service';
 import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
 import { MedicalCoverageService } from './services/medical-coverage.service';
@@ -30,7 +31,9 @@ export class TreatmentsService {
     private readonly coverageService: MedicalCoverageService,
     @InjectRepository(MonitoringPlan)
     private monitoringPlanRepository: Repository<MonitoringPlan>,
-  ) {}
+    @InjectRepository(MedicalOrder)
+    private medicalOrderRepository: Repository<MedicalOrder>,
+  ) { }
 
   async getCurrentTreatmentByPatient(patientId: number) {
     const medicalHistory = await this.medicalHistoryRepository.findOne({

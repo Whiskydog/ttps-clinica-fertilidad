@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { MedicalOrder, MedicalOrderStatus, Study } from './entities/medical-order.entity';
 import { StudyResultService } from './services/study-result.service';
 import { InformedConsentService } from '@modules/treatments/services/informed-consent.service';
@@ -25,7 +25,7 @@ export class MedicalOrdersService {
     private readonly informedConsentService: InformedConsentService,
     private readonly group1StudiesService: Group1StudiesService,
     private readonly group8NoticesService: Group8NoticesService,
-  ) {}
+  ) { }
 
   async create(data: {
     patientId: number;
@@ -117,16 +117,24 @@ export class MedicalOrdersService {
     return await this.medicalOrderRepository.save(medicalOrder);
   }
 
-  async findByPatient(patientId: number, status?: MedicalOrderStatus) {
+  async findByPatient(
+    patientId: number,
+    status?: MedicalOrderStatus,
+    unassigned: boolean = false,
+  ) {
     const where: any = { patientId };
 
     if (status) {
       where.status = status;
     }
 
+    if (unassigned) {
+      where.treatmentId = IsNull();
+    }
+
     return await this.medicalOrderRepository.find({
       where,
-      relations: ['doctor', 'treatment'],
+      relations: ['doctor', 'treatment', 'studyResults'],
       order: { issueDate: 'DESC' },
     });
   }

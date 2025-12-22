@@ -20,6 +20,7 @@ export const TreatmentStatusEnum = z.enum(
 
 export const CreateTreatmentSchema = z.object({
   initial_objective: InitialObjectiveEnum,
+  medicalOrderIds: z.array(z.number()).optional(),
 });
 
 export type CreateTreatmentDtoType = z.infer<typeof CreateTreatmentSchema>;
