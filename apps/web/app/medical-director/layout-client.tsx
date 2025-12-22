@@ -9,6 +9,7 @@ import {
   FileText,
   Shield,
   PenTool,
+  CreditCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -68,6 +69,11 @@ export function MedicalDirectorLayoutClient({
       name: "Auditoría",
       path: "/medical-director/audit",
       icon: Shield,
+    },
+    {
+      name: "Pagos",
+      path: "/medical-director/pagos",
+      icon: CreditCard,
     },
   ];
 

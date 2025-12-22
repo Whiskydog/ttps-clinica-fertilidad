@@ -14,6 +14,7 @@ import { AxiosError } from 'axios';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { Repository } from 'typeorm';
 import { PaymentOrder } from './entities/payment-order.entity';
+import { Group5PaymentsService } from '../external/group5-payments/group5-payments.service';
 
 @Injectable()
 export class PaymentsService {
@@ -24,6 +25,7 @@ export class PaymentsService {
     private readonly paymentOrdersRepository: Repository<PaymentOrder>,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly group5PaymentsService: Group5PaymentsService,
   ) {
     this.apiUrl = this.configService.get<string>('PAYMENTS_API_URL');
   }
@@ -108,5 +110,25 @@ export class PaymentsService {
     });
 
     return await this.paymentOrdersRepository.save(paymentOrder);
+  }
+
+  getObrasSociales() {
+    return this.group5PaymentsService.getObrasSociales();
+  }
+
+  // Helper to get paginated payments or just all payments
+  // The external API has query params? No, only 'group' body param for list.
+  // We need to fetch payments for our group (7).
+  async getGroupPayments() {
+    return this.group5PaymentsService.getPagosGrupo(7);
+  }
+
+  async registerPayment(payload: {
+    id_grupo: number;
+    id_pago: number;
+    obra_social_pagada: boolean;
+    paciente_pagado: boolean;
+  }) {
+    return this.group5PaymentsService.registrarPago(payload);
   }
 }
