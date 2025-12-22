@@ -14,6 +14,8 @@ import { FamilyBackgroundsCard } from "@/components/doctor/medical-history/cards
 import { PartnerDataCard } from "@/components/doctor/medical-history/cards/partner-data-card";
 import { FileText, User, AlertCircle, Stethoscope } from "lucide-react";
 import Link from "next/link";
+import { UnassignedOrdersCard } from "@/components/doctor/medical-history/cards/unassigned-orders-card";
+import { getMedicalOrders } from "@/app/actions/doctor/medical-orders/get-medical-orders";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { createTreatment } from "@/app/actions/doctor/patients/create-treatment";
@@ -26,20 +28,25 @@ export default function DoctorPatientMedicalHistoryPage() {
   const queryClient = useQueryClient();
   const [showCreateTreatment, setShowCreateTreatment] = React.useState(false);
   const [initialObjective, setInitialObjective] = React.useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = React.useState<number[]>([]);
 
   const createTreatmentMutation = useMutation({
     mutationFn: async ({
       medicalHistoryId,
       initialObjective,
+      medicalOrderIds,
     }: {
       medicalHistoryId: number;
       initialObjective: string;
-    }) => await createTreatment(medicalHistoryId, initialObjective),
+      medicalOrderIds?: number[];
+    }) => await createTreatment(medicalHistoryId, initialObjective, medicalOrderIds),
     onSuccess: (response) => {
       queryClient.invalidateQueries({
         queryKey: ["patientTreatments", id],
       });
       toast.success(response.message);
+      // reload page
+      window.location.reload();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Error al crear el tratamiento");
@@ -47,6 +54,7 @@ export default function DoctorPatientMedicalHistoryPage() {
     onSettled: () => {
       setShowCreateTreatment(false);
       setInitialObjective("");
+      setSelectedOrderIds([]);
     },
   });
 
@@ -66,8 +74,31 @@ export default function DoctorPatientMedicalHistoryPage() {
     createTreatmentMutation.mutate({
       medicalHistoryId: Number(data?.id),
       initialObjective,
+      medicalOrderIds: selectedOrderIds.length > 0 ? selectedOrderIds : undefined,
     });
   }
+
+  // Get unassigned medical orders for selection
+  const { data: unassignedOrders } = useQuery({
+    queryKey: ["unassignedMedicalOrders", data?.patient?.id],
+    queryFn: async () => {
+      if (!data?.patient?.id) return [];
+      const response = await getMedicalOrders({
+        patientId: data.patient.id.toString(),
+        unassigned: "true",
+      });
+      return response?.data || [];
+    },
+    enabled: !!data?.patient?.id && showCreateTreatment,
+  });
+
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
 
   // Get patient treatments
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
@@ -159,6 +190,8 @@ export default function DoctorPatientMedicalHistoryPage() {
         </div>
       </div>
 
+
+
       {/* Medical History Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Left Column */}
@@ -243,7 +276,11 @@ export default function DoctorPatientMedicalHistoryPage() {
         </div>
         <div className="card-content">
           <div className="flex justify-end mb-4">
-            <Button onClick={() => setShowCreateTreatment(true)}>
+            <Button
+              disabled={createTreatmentMutation.isPending || unassignedOrders?.filter(
+                (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+              ).length === 0}
+              onClick={() => setShowCreateTreatment(true)}>
               Iniciar Tratamiento Nuevo
             </Button>
           </div>
@@ -319,6 +356,14 @@ export default function DoctorPatientMedicalHistoryPage() {
           )}
         </div>
       </div>
+
+      {/* Unassigned Medical Orders */}
+      {data.patient && (
+        <div className="mt-8">
+          <UnassignedOrdersCard patientId={data.patient.id} />
+        </div>
+      )}
+
       {showCreateTreatment && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-[400px]">
@@ -347,6 +392,36 @@ export default function DoctorPatientMedicalHistoryPage() {
                 Preservación de óvulos / embriones
               </option>
             </select>
+
+            {unassignedOrders && unassignedOrders.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-yellow-700 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Vincular Órdenes Médicas Existentes
+                </label>
+                <div className="border rounded-md p-2 max-h-[150px] overflow-y-auto space-y-2 bg-yellow-50/20">
+                  {unassignedOrders.filter(
+                    (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+                  ).map((order: any) => (
+                    <div key={order.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        id={`order-${order.id}`}
+                        className="mt-1"
+                        checked={selectedOrderIds.includes(order.id)}
+                        onChange={() => toggleOrderSelection(order.id)}
+                      />
+                      <label htmlFor={`order-${order.id}`} className="text-sm cursor-pointer flex-1">
+                        <div className="font-medium">{order.code} - {order.category}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(order.issueDate).toLocaleDateString()} - Dr. {order.doctor?.lastName}
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button

@@ -212,7 +212,7 @@ export type UpdateStudyResultInput = z.infer<typeof UpdateStudyResultSchema>;
 
 export const CreateMedicalOrderSchema = z.object({
   patientId: z.number(),
-  doctorId: z.number(),
+  doctorId: z.number().nullable().optional(),
   treatmentId: z.number().nullable().optional(),
   category: z.string().min(1).max(100),
   description: z.string().nullable().optional(),

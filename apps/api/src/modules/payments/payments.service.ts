@@ -89,7 +89,7 @@ export class PaymentsService {
         .post<ExternalPaymentOrderResponse>(url, {
           grupo: 7,
           id_paciente: patientId,
-          id_obra: medicalInsuranceExternalId,
+          id_obra: medicalInsuranceExternalId || 158,
           monto: 450000,
         })
         .pipe(

@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 
 export async function createTreatment(
   medicalHistoryId: number,
-  initialObjective: string
+  initialObjective: string,
+  medicalOrderIds?: number[]
 ) {
   const backendUrl = process.env.BACKEND_URL as string;
   const cookieStore = await cookies();
@@ -21,6 +22,7 @@ export async function createTreatment(
     },
     body: JSON.stringify({
       initial_objective: initialObjective,
+      medicalOrderIds,
     }),
   });
 

@@ -217,7 +217,19 @@ export class AppointmentsService {
     );
   }
 
-  async getDoctorAppointments(doctorId: number): Promise<AppointmentDetail[]> {
+  async getDoctorAppointments(doctorId: number): Promise<Appointment[]> {
+    const appointmentsAndSlots =
+      await this.appointmentRepository.find({
+        where: {
+          doctor: {
+            id: doctorId,
+          },
+        },
+        relations: ['doctor', 'medicalHistory', 'medicalHistory.patient', 'treatment'],
+      });
+    return appointmentsAndSlots;
+  }
+  async getDoctorExternalAppointments(doctorId: number): Promise<AppointmentDetail[]> {
     const appointmentsAndSlots =
       await this.getDoctorAppointmentsAndSlots(doctorId);
     return appointmentsAndSlots.filter(
