@@ -46,7 +46,7 @@ export class MedicalInsurancesService {
           };
         }),
       )
-      .orUpdate(['name', 'acronym', 'updated_at'], ['externalId'])
+      .orUpdate(['name', 'acronym', 'updated_at'], ['external_id'])
       .execute();
   }
 }

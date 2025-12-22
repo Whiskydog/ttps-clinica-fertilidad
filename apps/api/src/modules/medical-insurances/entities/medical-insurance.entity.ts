@@ -10,6 +10,6 @@ export class MedicalInsurance extends BaseEntity {
   acronym: string;
 
   @Index()
-  @Column({ nullable: true, unique: true })
+  @Column({ name: 'external_id', nullable: true, unique: true })
   externalId: number | null;
 }
