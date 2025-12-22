@@ -38,6 +38,8 @@ export class TreatmentService {
     private readonly medicalHistoryService: MedicalHistoryService,
     @InjectRepository(Oocyte)
     private readonly oocyteRepo: Repository<Oocyte>,
+    @InjectRepository(MedicalHistory)
+    private readonly medicalHistoryRepo: Repository<MedicalHistory>,
   ) { }
 
   async createTreatment(
@@ -78,6 +80,7 @@ export class TreatmentService {
   async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -110,6 +113,17 @@ export class TreatmentService {
         }
       }
       treatment.status = dto.status as TreatmentStatus;
+
+      // Si el tratamiento se cierra o completa, liberar la historia clínica (ya no es el tratamiento actual)
+      if (
+        treatment.status === TreatmentStatus.closed ||
+        treatment.status === TreatmentStatus.completed
+      ) {
+        if (treatment.medicalHistory) {
+          treatment.medicalHistory.currentTreatment = null;
+          await this.medicalHistoryRepo.save(treatment.medicalHistory);
+        }
+      }
     }
     if (dto.closureReason !== undefined) {
       treatment.closureReason = dto.closureReason;
@@ -207,6 +221,7 @@ export class TreatmentService {
   async closeTreatmentByInactivity(treatmentId: number): Promise<Treatment> {
     const treatment = await this.treatmentRepo.findOne({
       where: { id: treatmentId },
+      relations: ['medicalHistory'],
     });
 
     if (!treatment) {
@@ -216,6 +231,11 @@ export class TreatmentService {
     treatment.status = TreatmentStatus.closed;
     treatment.closureReason = 'Cierre automático por inactividad (60 días)';
     treatment.closureDate = new Date();
+
+    if (treatment.medicalHistory) {
+      treatment.medicalHistory.currentTreatment = null;
+      await this.medicalHistoryRepo.save(treatment.medicalHistory);
+    }
 
     return this.treatmentRepo.save(treatment);
   }
