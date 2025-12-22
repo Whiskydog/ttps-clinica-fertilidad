@@ -16,3 +16,27 @@ export type ExternalPatientDebtResponse = {
   numero_grupo: number;
   deuda_total: number;
 };
+
+export type ExternalMedicalInsuranceDetail = {
+  id: number;
+  nombre: string;
+  sigla: string;
+};
+
+export type ExternalMedicalInsuranceResponse = {
+  data: ExternalMedicalInsuranceDetail[];
+};
+
+export type ExternalPaymentOrder = {
+  id: number;
+  id_obra: number;
+  id_paciente: number;
+  monto_total: number;
+  monto_obra_social: number;
+  monto_paciente: number;
+};
+
+export type ExternalPaymentOrderResponse = {
+  success: boolean;
+  pago: ExternalPaymentOrder;
+};
