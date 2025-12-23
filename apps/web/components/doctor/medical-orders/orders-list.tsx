@@ -41,7 +41,7 @@ export function OrdersList() {
             </div>
 
             <div>
-              <p className="font-semibold flex items-center gap-2">
+              <div className="font-semibold flex items-center gap-2">
                 Orden #{order.code}
                 <Badge
                   variant="outline"
@@ -53,7 +53,7 @@ export function OrdersList() {
                 >
                   {order.status === "completed" ? "Completada" : "Pendiente"}
                 </Badge>
-              </p>
+              </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                 <User className="h-4 w-4" />
