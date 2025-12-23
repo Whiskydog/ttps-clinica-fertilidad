@@ -117,6 +117,8 @@ const PatientSchema = PatientEntitySchema.transform(
   })
 );
 
+export type Patient = z.infer<typeof PatientSchema>;
+
 export const PatientResponseSchema = ApiResponseSchema(PatientSchema);
 
 export type PatientResponse = z.infer<typeof PatientResponseSchema>;

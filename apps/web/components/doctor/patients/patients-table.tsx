@@ -1,15 +1,8 @@
+import { Patient } from "@repo/contracts";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { Eye, Edit } from "lucide-react";
 import Link from "next/link";
-
-interface Patient {
-  id: number;
-  firstName: string;
-  lastName: string;
-  dni: string;
-  dateOfBirth?: string;
-}
 
 interface PatientsTableProps {
   patients: Patient[];
