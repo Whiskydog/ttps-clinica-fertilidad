@@ -6,7 +6,7 @@ import {
   MilestoneResult,
 } from "./enums";
 import { UserEntitySchema } from "../users";
-import { ApiResponseSchema } from "../common/api";
+import { ApiResponse, ApiResponseSchema } from "../common/api";
 import moment from "moment";
 export type MonitoringPlan = z.infer<typeof MonitoringPlanSchema>;
 
@@ -361,5 +361,25 @@ export const UpdateTreatmentSchema = z.object({
   closureReason: z.string().nullable().optional(),
   closureDate: z.string().nullable().optional(),
 });
+export type TreatmentTimelineType =
+  | "treatment"
+  | "monitoring"
+  | "monitoring_plan"
+  | "doctor_note"
+  | "medication_protocol"
+  | "milestone"
+  | "medical_order"
+  | "puncture";
 
+export interface TreatmentTimelineItem {
+  date: string;
+  type: TreatmentTimelineType;
+  label: string;
+  description?: string;
+  entityId?: number;
+}
+
+export type TreatmentTimelineItemResponse = ApiResponse<
+  TreatmentTimelineItem[]
+>;
 export type UpdateTreatmentInput = z.infer<typeof UpdateTreatmentSchema>;

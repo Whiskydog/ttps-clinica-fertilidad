@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from 'next/link';
 import { Button } from '@repo/ui/button';
@@ -11,6 +11,8 @@ import { MonitoringList } from '@/components/patient/treatment/monitoring-list';
 import { DoctorNotes } from '@/components/patient/treatment/doctor-notes';
 import { getTreatmentDetail } from '@/app/actions/patients/treatments/get-detail';
 import type { TreatmentDetail } from '@repo/contracts';
+import { getTreatmentTimeline } from "@/app/actions/patients/treatments/get-timeline";
+import { TreatmentTimeline } from "@/components/common/TreatmentTimeLine";
 
 export default function TreatmentDetailPage() {
   const params = useParams();
@@ -19,6 +21,10 @@ export default function TreatmentDetailPage() {
   const { data: response, isLoading, error } = useQuery({
     queryKey: ["treatment-detail", id],
     queryFn: () => getTreatmentDetail(id),
+  });
+  const { data: timelineResp } = useQuery({
+    queryKey: ["treatment-timeline", id],
+    queryFn: () => getTreatmentTimeline(id),
   });
 
   if (isLoading) {
@@ -48,7 +54,7 @@ export default function TreatmentDetailPage() {
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-bold">DETALLE DEL TRATAMIENTO #{treatment.id}</h1>
       </div>
-
+      {timelineResp?.data && <TreatmentTimeline items={timelineResp.data} />}
       <Card>
         <CardHeader className="bg-slate-500">
           <CardTitle className="text-white">INFORMACIÓN GENERAL</CardTitle>
