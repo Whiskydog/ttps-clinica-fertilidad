@@ -57,7 +57,7 @@ export class TreatmentService {
     private readonly oocyteRepo: Repository<Oocyte>,
     @InjectRepository(MedicalHistory)
     private readonly medicalHistoryRepo: Repository<MedicalHistory>,
-  ) {}
+  ) { }
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -97,6 +97,27 @@ export class TreatmentService {
     }
 
     return saved;
+  }
+
+  async addMedicalOrders(treatmentId: number, medicalOrderIds: number[]) {
+    if (!medicalOrderIds || medicalOrderIds.length === 0) {
+      return;
+    }
+
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id: treatmentId },
+    });
+
+    if (!treatment) {
+      throw new NotFoundException('Tratamiento no encontrado');
+    }
+
+    await this.medicalOrderRepo.update(
+      { id: In(medicalOrderIds) },
+      { treatmentId: treatment.id },
+    );
+
+    return { success: true };
   }
 
   async findByMedicalHistoryId(medicalHistoryId: number) {

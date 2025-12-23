@@ -36,6 +36,7 @@ import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monito
 import { MonitoringFormSheet } from "@/components/doctor/treatments/forms/monitoring-form-sheet";
 import { getTreatmentTimeline } from "@/app/actions/doctor/treatments/get-timeline";
 import { TreatmentTimeline } from "@/components/common/TreatmentTimeLine";
+import { LinkMedicalOrdersSheet } from "@/components/doctor/treatments/link-medical-orders-sheet";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -398,7 +399,10 @@ export default function TreatmentDetailPage() {
                 <FileText className="h-5 w-5" />
                 Órdenes Médicas
               </h2>
-              <div className="relative group">
+              <div className="flex justify-end items-center gap-4">
+                <div className="ml-2">
+                  <LinkMedicalOrdersSheet patientId={patient.id} treatmentId={treatment.id} />
+                </div>
                 <Button
                   onClick={() => setCreateOrderSheetOpen(true)}
                 // disabled={!informedConsent || !informedConsent.pdfUri}
@@ -406,14 +410,16 @@ export default function TreatmentDetailPage() {
                   <Plus className="h-4 w-4 mr-2" />
                   Nueva Orden Médica
                 </Button>
-                {(!informedConsent || !informedConsent.pdfUri) && (
+                {/* {(!informedConsent || !informedConsent.pdfUri) && (
                   <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
                     {!informedConsent
                       ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
                       : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
                   </div>
-                )}
+                )} */}
               </div>
+
+
             </div>
 
             {ordersLoading ? (
@@ -843,17 +849,19 @@ export default function TreatmentDetailPage() {
         onSuccess={() => setTreatmentSheetOpen(false)}
       />
 
-      {noteToDelete && (
-        <DeleteNoteDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          noteId={noteToDelete}
-          onSuccess={() => {
-            setDeleteDialogOpen(false);
-            setNoteToDelete(null);
-          }}
-        />
-      )}
+      {
+        noteToDelete && (
+          <DeleteNoteDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            noteId={noteToDelete}
+            onSuccess={() => {
+              setDeleteDialogOpen(false);
+              setNoteToDelete(null);
+            }}
+          />
+        )
+      }
 
       <CreateMedicalOrderSheet
         open={createOrderSheetOpen}
@@ -875,20 +883,22 @@ export default function TreatmentDetailPage() {
         }}
       />
 
-      {protocol && (
-        <GenerateProtocolPdfSheet
-          open={protocolPdfSheetOpen}
-          onOpenChange={setProtocolPdfSheetOpen}
-          treatmentId={treatment.id}
-          existingPdfUrl={protocol.pdfUrl}
-          onSuccess={() => {
-            setProtocolPdfSheetOpen(false);
-            queryClient.invalidateQueries({
-              queryKey: ["treatmentDetail", id],
-            });
-          }}
-        />
-      )}
+      {
+        protocol && (
+          <GenerateProtocolPdfSheet
+            open={protocolPdfSheetOpen}
+            onOpenChange={setProtocolPdfSheetOpen}
+            treatmentId={treatment.id}
+            existingPdfUrl={protocol.pdfUrl}
+            onSuccess={() => {
+              setProtocolPdfSheetOpen(false);
+              queryClient.invalidateQueries({
+                queryKey: ["treatmentDetail", id],
+              });
+            }}
+          />
+        )
+      }
       <MonitoringPlanSheet
         open={monitoringPlanSheetOpen}
         onOpenChange={setMonitoringPlanSheetOpen}
@@ -910,6 +920,6 @@ export default function TreatmentDetailPage() {
           queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] })
         }
       />
-    </div>
+    </div >
   );
 }

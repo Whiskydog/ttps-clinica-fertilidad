@@ -61,7 +61,7 @@ export class TreatmentsController {
     private readonly doctorNoteService: DoctorNoteService,
     private readonly medicationProtocolService: MedicationProtocolService,
     private readonly medicationPdfService: MedicationPdfService,
-  ) {}
+  ) { }
 
   // Endpoints para pacientes
   @Get('patient/current')
@@ -514,11 +514,27 @@ export class TreatmentsController {
     @Param('id', ParseIntPipe) treatmentId: number,
     @CurrentUser() user: User,
   ) {
-   
+
     return this.treatmentService.getTimeline(
       treatmentId,
       user.role.code as RoleCode,
     );
+  }
+
+  @Post(':id/medical-orders')
+  @UseGuards(RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async addMedicalOrders(
+    @Param('id', ParseIntPipe) treatmentId: number,
+    @Body() body: { medicalOrderIds: number[] },
+  ) {
+    await this.treatmentService.addMedicalOrders(
+      treatmentId,
+      body.medicalOrderIds,
+    );
+    return {
+      message: 'Órdenes médicas vinculadas correctamente',
+    };
   }
 
   // ============================================
