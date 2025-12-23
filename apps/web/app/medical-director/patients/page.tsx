@@ -185,13 +185,13 @@ export default function MedicalDirectorPatientsPage() {
                                   Ver
                                 </Link>
                               </Button>
-                              <Button asChild size="sm" variant="default">
+                              {/* <Button asChild size="sm" variant="default">
                                 <Link
                                   href={`/medical-director/patients/${patient.id}/medical-history`}
                                 >
                                   Historia Clínica
                                 </Link>
-                              </Button>
+                              </Button> */}
                             </div>
                           </td>
                         </tr>
@@ -238,11 +238,10 @@ export default function MedicalDirectorPatientsPage() {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-200 ${
-                        pageNum === page
+                      className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-200 ${pageNum === page
                           ? "bg-blue-600 text-white border-blue-600 shadow-md"
                           : "border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>

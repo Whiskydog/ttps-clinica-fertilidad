@@ -62,7 +62,7 @@ export function MedicalDirectorLayoutClient({
     },
     {
       name: "Mi Firma",
-      path: "/doctor/signature",
+      path: "/medical-director/signature",
       icon: PenTool,
     },
     {
