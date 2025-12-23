@@ -34,6 +34,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monitoring-plan-sheet";
 import { MonitoringFormSheet } from "@/components/doctor/treatments/forms/monitoring-form-sheet";
+import { getTreatmentTimeline } from "@/app/actions/doctor/treatments/get-timeline";
+import { TreatmentTimeline } from "@/components/common/TreatmentTimeLine";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -75,7 +77,10 @@ export default function TreatmentDetailPage() {
     },
     enabled: !!id,
   });
-
+  const { data: timelineResp } = useQuery({
+    queryKey: ["treatment-timeline", id],
+    queryFn: () => getTreatmentTimeline(Number(id)),
+  });
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -298,7 +303,12 @@ export default function TreatmentDetailPage() {
           </div>
         </div>
       )}
-
+      {/* TIMELINE  */}
+      {timelineResp?.data && timelineResp.data.length > 0 && (
+        <div className="max-w-7xl  overflow-hidden">
+          <TreatmentTimeline items={timelineResp.data} />
+        </div>
+      )}
       {/* Treatment Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
