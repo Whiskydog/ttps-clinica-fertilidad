@@ -55,7 +55,7 @@ export default function DoctorDashboard() {
       </div>
 
       {/* KPIs */}
-      {kpisLoading && (
+      {/* {kpisLoading && (
         <div className="flex items-center justify-center gap-4">
           <Skeleton className="flex-1 h-[130px] rounded-md" />
           <Skeleton className="flex-1 h-[130px] rounded-md" />
@@ -63,7 +63,7 @@ export default function DoctorDashboard() {
           <Skeleton className="flex-1 h-[130px] rounded-md" />
         </div>
       )}
-      {kpisData?.data && <KPICards kpis={kpisData.data} />}
+      {kpisData?.data && <KPICards kpis={kpisData.data} />} */}
 
       {/* Accesos Rápidos */}
       <QuickActions />

@@ -3,7 +3,7 @@ import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { Eye } from "lucide-react";
 import Link from "next/link";
-import type { RecentTreatment } from "@/app/actions/doctor/dashboard/get-recent-treatments";
+import { RecentTreatment } from "@repo/contracts";
 
 interface RecentTreatmentsProps {
   treatments: RecentTreatment[];
@@ -37,7 +37,7 @@ export function RecentTreatments({ treatments }: RecentTreatmentsProps) {
             No hay tratamientos recientes
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {treatments.map((treatment) => (
               <div
                 key={treatment.id}

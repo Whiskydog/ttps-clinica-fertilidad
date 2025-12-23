@@ -1,35 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 import { Button } from "@repo/ui/button";
-import { UserPlus, FileText, Activity, Search } from "lucide-react";
+import { UserPlus, FileText, Activity, Search, PenTool, Users } from "lucide-react";
 import Link from "next/link";
 
 export function QuickActions() {
   const actions = [
     {
-      label: "NUEVO PACIENTE",
-      href: "/doctor/patients/new",
-      icon: UserPlus,
+      label: "MI FIRMA",
+      href: "/doctor/signature",
+      icon: PenTool,
       variant: "default" as const,
       className: "bg-green-600 hover:bg-green-700",
     },
     {
-      label: "NUEVA ORDEN",
-      href: "/doctor/orders/new",
+      label: "ORDENES",
+      href: "/doctor/orders",
       icon: FileText,
       variant: "default" as const,
       className: "bg-blue-600 hover:bg-blue-700",
     },
+    // {
+    //   label: "SEGUIMIENTO",
+    //   href: "/doctor/follow-ups",
+    //   icon: Activity,
+    //   variant: "default" as const,
+    //   className: "bg-orange-600 hover:bg-orange-700",
+    // },
     {
-      label: "SEGUIMIENTO",
-      href: "/doctor/follow-ups",
-      icon: Activity,
-      variant: "default" as const,
-      className: "bg-orange-600 hover:bg-orange-700",
-    },
-    {
-      label: "BUSCAR PACIENTE",
+      label: "PACIENTES",
       href: "/doctor/patients",
-      icon: Search,
+      icon: Users,
       variant: "default" as const,
       className: "bg-pink-600 hover:bg-pink-700",
     },
@@ -41,7 +41,7 @@ export function QuickActions() {
         <CardTitle>Accesos Rápidos</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {actions.map((action) => {
             const Icon = action.icon;
             return (
