@@ -1,6 +1,6 @@
 import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
 
-// import { PaymentsService } from '@modules/payments/payments.service';
+import { PaymentsService } from '@modules/payments/payments.service';
 import {
   Injectable,
   NotFoundException,
@@ -51,7 +51,7 @@ export class TreatmentService {
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
     private readonly monitoringPlanService: MonitoringPlanService,
-    // private readonly paymentsService: PaymentsService,
+    private readonly paymentsService: PaymentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
     @InjectRepository(Oocyte)
     private readonly oocyteRepo: Repository<Oocyte>,
@@ -79,11 +79,11 @@ export class TreatmentService {
     medicalHistory.currentTreatment = saved;
     await this.medicalHistoryService.save(medicalHistory);
 
-    // await this.paymentsService.registerPaymentOrder(
-    //   saved.id,
-    //   medicalHistory.patient.id,
-    //   medicalHistory.patient.medicalInsurance.externalId,
-    // );
+    await this.paymentsService.registerPaymentOrder(
+      saved.id,
+      medicalHistory.patient.id,
+      medicalHistory.patient.medicalInsurance.externalId,
+    );
 
     return saved;
   }
