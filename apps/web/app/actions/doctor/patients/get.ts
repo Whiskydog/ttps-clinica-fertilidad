@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 interface GetPatientsParams {
   page?: number;
   limit?: number;
-  dni?: string;
+  q?: string;
 }
 
 export async function getPatients(params: GetPatientsParams = {}) {
@@ -16,7 +16,7 @@ export async function getPatients(params: GetPatientsParams = {}) {
   const url = new URL(`${backendUrl}/patients`);
   if (params.page) url.searchParams.set("page", params.page.toString());
   if (params.limit) url.searchParams.set("limit", params.limit.toString());
-  if (params.dni) url.searchParams.set("dni", params.dni);
+  if (params.q) url.searchParams.set("q", params.q);
 
   if (!sessionToken) throw new Error("No se encontró el token de sesión");
 

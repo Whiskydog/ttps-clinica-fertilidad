@@ -2,18 +2,14 @@ import { Search } from "lucide-react";
 import { Button } from "@repo/ui/button";
 
 interface PatientFiltersProps {
-  dniSearch: string;
-  setDniSearch: (value: string) => void;
-  statusFilter: "all" | "active" | "closed";
-  setStatusFilter: (value: "all" | "active" | "closed") => void;
+  search: string;
+  setSearch: (value: string) => void;
   onSearch: () => void;
 }
 
 export function PatientFilters({
-  dniSearch,
-  setDniSearch,
-  statusFilter,
-  setStatusFilter,
+  search,
+  setSearch,
   onSearch,
 }: PatientFiltersProps) {
   return (
@@ -29,17 +25,17 @@ export function PatientFilters({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <input
               type="text"
-              value={dniSearch}
-              onChange={(e) => setDniSearch(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              placeholder="DNI o nombre del paciente..."
+              placeholder="DNI, email, nombre o apellido del paciente..."
               className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
         {/* Filtros de estado */}
-        <div>
+        {/* <div>
           <label className="text-sm font-medium mb-2 block">
             Filtrar por tratamiento
           </label>
@@ -75,13 +71,13 @@ export function PatientFilters({
               Cerrados
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Botón de búsqueda */}
-        <Button onClick={onSearch} className="w-full">
+        {/* <Button onClick={onSearch} className="w-full">
           <Search className="h-4 w-4 mr-2" />
           Buscar
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

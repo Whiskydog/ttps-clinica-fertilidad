@@ -13,7 +13,7 @@ import { Button } from "@repo/ui/button";
 export default function MedicalDirectorPatientsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [dniSearch, setDniSearch] = useState("");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">(
     "all"
   );
@@ -23,12 +23,12 @@ export default function MedicalDirectorPatientsPage() {
     isLoading,
     error,
   } = useQuery<PatientsPaginatedResponse>({
-    queryKey: ["medical-director", "patients", page, limit, dniSearch],
+    queryKey: ["medical-director", "patients", page, limit, search],
     queryFn: async () => {
       const payload = await getPatients({
         page,
         limit,
-        dni: dniSearch || undefined,
+        q: search || undefined,
       });
       return payload;
     },
@@ -98,10 +98,10 @@ export default function MedicalDirectorPatientsPage() {
         <div className="space-y-6">
           {/* Filtros y búsqueda */}
           <PatientFilters
-            dniSearch={dniSearch}
-            setDniSearch={setDniSearch}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
+            search={search}
+            setSearch={setSearch}
+            // statusFilter={statusFilter}
+            // setStatusFilter={setStatusFilter}
             onSearch={handleSearch}
           />
 
@@ -155,6 +155,15 @@ export default function MedicalDirectorPatientsPage() {
                       </tr>
                     </thead>
                     <tbody>
+                      {
+                        patients.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="h-24 text-center">
+                              No se encontraron resultados
+                            </td>
+                          </tr>
+                        )
+                      }
                       {patients.map((patient: any) => (
                         <tr
                           key={patient.id}
@@ -239,8 +248,8 @@ export default function MedicalDirectorPatientsPage() {
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
                       className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all duration-200 ${pageNum === page
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                        : "border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
                         }`}
                     >
                       {pageNum}

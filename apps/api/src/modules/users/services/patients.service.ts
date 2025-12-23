@@ -53,7 +53,7 @@ export class PatientsService {
   }
 
   async getPatients(query: PatientsQuery, userId: number, userRole?: RoleCode) {
-    const { page, limit, dni } = query;
+    const { page, limit, q } = query;
     const skip = (page - 1) * limit;
 
     // Para Director: mostrar todos los pacientes
@@ -63,8 +63,8 @@ export class PatientsService {
         .leftJoinAndSelect('patient.medicalInsurance', 'medicalInsurance')
         .leftJoinAndSelect('patient.role', 'role');
 
-      if (dni) {
-        queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });
+      if (q) {
+        queryBuilder.andWhere('patient.dni LIKE :q OR patient.firstName LIKE :q OR patient.lastName LIKE :q OR patient.email LIKE :q', { q: `%${q}%` });
       }
 
       const [patients, total] = await queryBuilder
@@ -126,8 +126,8 @@ export class PatientsService {
       queryBuilder.where('t.initial_doctor_id = :doctorId', { doctorId: userId });
     }
 
-    if (dni) {
-      queryBuilder.andWhere('patient.dni LIKE :dni', { dni: `%${dni}%` });
+    if (q) {
+      queryBuilder.andWhere('patient.dni LIKE :q OR patient.name LIKE :q OR patient.lastName LIKE :q OR patient.email LIKE :q', { q: `%${q}%` });
     }
 
     const [patients, total] = await queryBuilder
