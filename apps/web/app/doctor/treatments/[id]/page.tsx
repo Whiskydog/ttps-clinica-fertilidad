@@ -305,7 +305,7 @@ export default function TreatmentDetailPage() {
       )}
       {/* TIMELINE  */}
       {timelineResp?.data && timelineResp.data.length > 0 && (
-        <div className="max-w-7xl  overflow-hidden">
+        <div className="max-w-7xl overflow-hidden">
           <TreatmentTimeline items={timelineResp.data} />
         </div>
       )}

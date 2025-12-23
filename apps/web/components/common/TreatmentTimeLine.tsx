@@ -62,11 +62,8 @@ export function TreatmentTimeline({ items }: { items: TimelineItem[] }) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-start gap-8 ">
         <CardTitle>Timeline del tratamiento</CardTitle>
-      </CardHeader>
-
-      <CardContent className="relative max-w-full overflow-hidden">
         <div className="flex gap-2">
           <button
             onClick={() => scroll("left")}
@@ -81,6 +78,10 @@ export function TreatmentTimeline({ items }: { items: TimelineItem[] }) {
             <ChevronRight size={18} />
           </button>
         </div>
+      </CardHeader>
+
+      <CardContent className="relative max-w-full overflow-hidden">
+
         {/* Línea */}
         <div className="absolute top-10 left-0 right-0 h-[2px] bg-muted" />
 
