@@ -10,7 +10,7 @@ export async function updateInformedConsent(payload: unknown) {
   if (!validationResult.success) {
     return {
       success: false,
-      error: validationResult.error.errors[0]?.message || "Datos inválidos",
+      error: validationResult.error.issues[0]?.message || "Datos inválidos",
     };
   }
 

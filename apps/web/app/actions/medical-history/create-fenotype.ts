@@ -9,7 +9,7 @@ export async function createFenotype(payload: unknown) {
     return {
       success: false,
       error:
-        validationResult.error.errors[0]?.message ||
+        validationResult.error.issues[0]?.message ||
         "Datos de fenotipo inválidos",
     };
   }
