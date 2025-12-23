@@ -785,18 +785,18 @@ export default function TreatmentDetailPage() {
                 variant="default"
                 className="w-full justify-start"
                 onClick={() => setCreateOrderSheetOpen(true)}
-                disabled={!informedConsent || !informedConsent.pdfUri}
+              // disabled={!informedConsent || !informedConsent.pdfUri}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 NUEVA ORDEN MÉDICA
               </Button>
-              {(!informedConsent || !informedConsent.pdfUri) && (
+              {/* {(!informedConsent || !informedConsent.pdfUri) && (
                 <div className="absolute left-0 ml-2 top-full hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
                   {!informedConsent
                     ? "Se requiere un consentimiento informado con PDF firmado"
                     : "El consentimiento debe tener un PDF asociado"}
                 </div>
-              )}
+              )} */}
             </div>
             <Button
               variant="outline"
