@@ -7,7 +7,8 @@ import {
   CheckCircle,
   Bell,
 } from "lucide-react";
-import type { DoctorAlert } from "@/app/actions/doctor/dashboard/get-alerts";
+import { DoctorAlert } from "@repo/contracts";
+
 
 interface AlertsPanelProps {
   alerts: DoctorAlert[];

@@ -33,11 +33,11 @@ export default function DoctorDashboard() {
     refetchOnMount: 'always',
   });
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ["doctor-monthly-stats"],
-    queryFn: () => getMonthlyStats(),
-    refetchOnMount: 'always',
-  });
+  // const { data: statsData, isLoading: statsLoading } = useQuery({
+  //   queryKey: ["doctor-monthly-stats"],
+  //   queryFn: () => getMonthlyStats(),
+  //   refetchOnMount: 'always',
+  // });
 
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
     queryKey: ["doctor-recent-treatments"],
@@ -82,8 +82,8 @@ export default function DoctorDashboard() {
       </div>
 
       {/* Estadísticas del Mes */}
-      {statsLoading && <Skeleton className="h-[290px] rounded-md" />}
-      {statsData?.data && <MonthlyStatsPanel stats={statsData.data} />}
+      {/* {statsLoading && <Skeleton className="h-[290px] rounded-md" />}
+      {statsData?.data && <MonthlyStatsPanel stats={statsData.data} />} */}
 
       {/* Tratamientos Recientes */}
       {treatmentsLoading && <Skeleton className="h-[192px] rounded-md" />}

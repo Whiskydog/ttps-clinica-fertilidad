@@ -39,7 +39,7 @@ export class DoctorService {
     private readonly embryoRepo: Repository<Embryo>,
     @InjectRepository(Oocyte)
     private readonly oocyteRepo: Repository<Oocyte>,
-  ) {}
+  ) { }
 
   async getDashboardKPIs(doctorId: number): Promise<DashboardKPIs> {
     // 1. Pacientes activos: pacientes con tratamientos vigentes del doctor
@@ -246,26 +246,37 @@ export class DoctorService {
     }
 
     // 2. Consentimientos pendientes de firma
-    const treatmentsWithoutConsent = await this.treatmentRepo
-      .createQueryBuilder('t')
-      .innerJoin('t.medicalHistory', 'mh')
-      .innerJoin('mh.patient', 'p')
-      .leftJoin('t.informedConsent', 'ic')
-      .where('t.initialDoctor.id = :doctorId', { doctorId })
-      .andWhere('t.status = :status', { status: TreatmentStatus.vigente })
-      .andWhere('ic.id IS NULL')
-      .select(['t.id', 't.createdAt', 'p.id', 'p.firstName', 'p.lastName'])
-      .getMany();
+    const treatmentsSinConsentimiento = await this.treatmentRepo.find({
+      where: {
+        initialDoctor: { id: doctorId },
+        status: TreatmentStatus.vigente,
+        informedConsent: null,
+      },
+      relations: ['medicalHistory', 'medicalHistory.patient', 'informedConsent'],
+      order: {
+        updatedAt: 'DESC',
+      },
+      take: 20,
+    });
+    // const treatmentsWithoutConsent = await this.treatmentRepo
+    //   .createQueryBuilder('t')
+    //   .innerJoin('t.medicalHistory', 'mh')
+    //   .innerJoin('mh.patient', 'p')
+    //   .leftJoin('t.informedConsent', 'ic')
+    //   .where('t.initialDoctor.id = :doctorId', { doctorId })
+    //   .andWhere('t.status = :status', { status: TreatmentStatus.vigente })
+    //   .andWhere('ic.id IS NULL')
+    //   .select(['t.id', 't.createdAt', 'p.id', 'p.firstName', 'p.lastName'])
+    //   .getMany();
 
-    for (const treatment of treatmentsWithoutConsent) {
-      const patient = treatment.medicalHistory.patient;
+    for (const treatment of treatmentsSinConsentimiento) {
       alerts.push({
         id: alertId++,
         type: 'warning',
         title: 'Consentimiento pendiente',
         message: 'Firma de documentación requerida',
-        patientId: patient.id,
-        patientName: `${patient.firstName} ${patient.lastName}`,
+        patientId: treatment.medicalHistory.patient.id,
+        patientName: `${treatment.medicalHistory.patient.firstName} ${treatment.medicalHistory.patient.lastName}`,
         treatmentId: treatment.id,
         createdAt: treatment.createdAt.toISOString(),
       });
