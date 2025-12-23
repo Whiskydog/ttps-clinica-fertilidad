@@ -1,8 +1,13 @@
-
 import { MedicalHistoryService } from '@modules/medical-history/services/medical-history.service';
 
-import { PaymentsService } from '@modules/payments/payments.service';
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+// import { PaymentsService } from '@modules/payments/payments.service';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DoctorNote } from './entities/doctor-note.entity';
@@ -11,7 +16,7 @@ import { Monitoring } from './entities/monitoring.entity';
 import { PostTransferMilestone } from './entities/post-transfer-milestone.entity';
 import { MedicalOrder } from '../medical-orders/entities/medical-order.entity';
 import { PunctureRecord } from '../laboratory/entities/puncture-record.entity';
-import { TreatmentStatus, InitialObjective } from '@repo/contracts';
+import { TreatmentStatus, InitialObjective, RoleCode } from '@repo/contracts';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
 import { CreateTreatmentDto, UpdateTreatmentDto } from './dto';
 import { parseDateFromString } from '@common/utils/date.utils';
@@ -24,6 +29,7 @@ import { CreateMonitoringDto } from './dto/create-monitoring.dto';
 import { Treatment } from './entities/treatment.entity';
 import { OocyteState } from '@repo/contracts';
 import { Oocyte } from '../laboratory/entities/oocyte.entity';
+import { TreatmentTimelineItemDto } from './dto/treatment-timeline-item.dto';
 
 @Injectable()
 export class TreatmentService {
@@ -45,13 +51,13 @@ export class TreatmentService {
     @InjectRepository(PunctureRecord)
     private readonly punctureRepo: Repository<PunctureRecord>,
     private readonly monitoringPlanService: MonitoringPlanService,
-    private readonly paymentsService: PaymentsService,
+    // private readonly paymentsService: PaymentsService,
     private readonly medicalHistoryService: MedicalHistoryService,
     @InjectRepository(Oocyte)
     private readonly oocyteRepo: Repository<Oocyte>,
     @InjectRepository(MedicalHistory)
     private readonly medicalHistoryRepo: Repository<MedicalHistory>,
-  ) { }
+  ) {}
 
   async createTreatment(
     medicalHistory: MedicalHistory,
@@ -73,11 +79,11 @@ export class TreatmentService {
     medicalHistory.currentTreatment = saved;
     await this.medicalHistoryService.save(medicalHistory);
 
-    await this.paymentsService.registerPaymentOrder(
-      saved.id,
-      medicalHistory.patient.id,
-      medicalHistory.patient.medicalInsurance.externalId,
-    );
+    // await this.paymentsService.registerPaymentOrder(
+    //   saved.id,
+    //   medicalHistory.patient.id,
+    //   medicalHistory.patient.medicalInsurance.externalId,
+    // );
 
     return saved;
   }
@@ -105,7 +111,10 @@ export class TreatmentService {
       treatment.startDate = parseDateFromString(dto.startDate);
     }
     if (dto.status !== undefined) {
-      if (dto.status === TreatmentStatus.closed && treatment.status !== TreatmentStatus.closed) {
+      if (
+        dto.status === TreatmentStatus.closed &&
+        treatment.status !== TreatmentStatus.closed
+      ) {
         const pendingOocytes = await this.oocyteRepo.find({
           where: {
             puncture: { treatment: { id: treatment.id } },
@@ -356,5 +365,163 @@ export class TreatmentService {
       throw new NotFoundException('Tratamiento no encontrado');
     }
     return treatment;
+  }
+
+  async getTimeline(
+    treatmentId: number,
+    role: RoleCode,
+  ): Promise<TreatmentTimelineItemDto[]> {
+    const timeline: TreatmentTimelineItemDto[] = [];
+
+    // ===============================
+    // TREATMENT (inicio / cierre)
+    // ===============================
+    const treatment = await this.treatmentRepo.findOne({
+      where: { id: treatmentId },
+    });
+
+    if (treatment?.startDate) {
+      timeline.push({
+        date: treatment.startDate,
+        type: 'treatment',
+        label: 'Inicio del tratamiento',
+        entityId: treatment.id,
+      });
+    }
+
+    if (treatment?.closureDate) {
+      timeline.push({
+        date: treatment.closureDate,
+        type: 'treatment',
+        label: 'Cierre del tratamiento',
+        description: treatment.closureReason ?? undefined,
+        entityId: treatment.id,
+      });
+    }
+
+    // ===============================
+    // MONITORINGS
+    // ===============================
+    const monitorings = await this.monitoringRepo.find({
+      where: { treatment: { id: treatmentId } },
+    });
+
+    for (const m of monitorings) {
+      timeline.push({
+        date: m.monitoringDate,
+        type: 'monitoring',
+        label: 'Monitoreo',
+        entityId: m.id,
+      });
+    }
+
+    // ===============================
+    // MONITORING PLANS (turnos)
+    // ===============================
+    const plans = await this.monitoringPlanRepo.find({
+      where: { treatment: { id: treatmentId } },
+      relations: ['appointment'],
+    });
+
+    for (const p of plans) {
+      timeline.push({
+        date: p.appointment.date,
+        type: 'monitoring_plan',
+        label: 'Planificación de monitoreo',
+        entityId: p.id,
+      });
+    }
+
+    // ===============================
+    // DOCTOR NOTES (solo médico)
+    // ===============================
+    if (role !== RoleCode.PATIENT) {
+      const notes = await this.doctorNoteRepo.find({
+        where: { treatment: { id: treatmentId } },
+      });
+
+      for (const n of notes) {
+        timeline.push({
+          date: n.noteDate ?? n.createdAt,
+          type: 'doctor_note',
+          label: 'Nota médica',
+          description: n.note?.slice(0, 80),
+          entityId: n.id,
+        });
+      }
+      // ===============================
+      // MEDICATION PROTOCOLS
+      // ===============================
+
+      const protocols = await this.medicationProtocolRepo.find({
+        where: { treatment: { id: treatmentId } },
+      });
+
+      for (const p of protocols) {
+        timeline.push({
+          date: p.updatedAt ?? p.startDate,
+          type: 'medication_protocol',
+          label: 'Protocolo de medicación',
+          description: p.drugName,
+          entityId: p.id,
+        });
+      }
+
+      // ===============================
+      // MILESTONES
+      // ===============================
+      const milestones = await this.milestoneRepo.find({
+        where: { treatment: { id: treatmentId } },
+      });
+
+      for (const m of milestones) {
+        timeline.push({
+          date: m.milestoneDate ?? m.createdAt,
+          type: 'milestone',
+          label: m.milestoneType,
+          description: m.milestoneType,
+          entityId: m.id,
+        });
+      }
+
+      // ===============================
+      // MEDICAL ORDERS
+      // ===============================
+      const orders = await this.medicalOrderRepo.find({
+        where: { treatment: { id: treatmentId } },
+      });
+
+      for (const o of orders) {
+        timeline.push({
+          date: o.createdAt,
+          type: 'medical_order',
+          label: 'Orden médica',
+          entityId: o.id,
+        });
+      }
+    }
+
+    // ===============================
+    // PUNCTURES
+    // ===============================
+    const punctures = await this.punctureRepo.find({
+      where: { treatment: { id: treatmentId } },
+    });
+
+    for (const p of punctures) {
+      timeline.push({
+        date: p.punctureDateTime,
+        type: 'puncture',
+        label: 'Punción',
+        entityId: p.id,
+      });
+    }
+
+    // ===============================
+    // ORDEN FINAL
+    // ===============================
+    return timeline.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
   }
 }

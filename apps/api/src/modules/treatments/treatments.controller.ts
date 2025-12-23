@@ -83,7 +83,11 @@ export class TreatmentsController {
     if (isNaN(treatmentId)) {
       throw new NotFoundException('Invalid treatment ID');
     }
-    return this.treatmentsService.getTreatmentDetail(treatmentId, user.id, user.role.code as RoleCode);
+    return this.treatmentsService.getTreatmentDetail(
+      treatmentId,
+      user.id,
+      user.role.code as RoleCode,
+    );
   }
 
   // ============================================
@@ -111,7 +115,9 @@ export class TreatmentsController {
 
     // Validar que sea una imagen
     if (!doctorSignature.mimetype.startsWith('image/')) {
-      throw new BadRequestException('El archivo debe ser una imagen (PNG, JPG)');
+      throw new BadRequestException(
+        'El archivo debe ser una imagen (PNG, JPG)',
+      );
     }
 
     // Validar tamaño máximo (500KB)
@@ -198,7 +204,10 @@ export class TreatmentsController {
       updateData.signatureDate = parseDateFromString(dto.signatureDate);
     }
 
-    const updated = await this.informedConsentService.update(consentId, updateData);
+    const updated = await this.informedConsentService.update(
+      consentId,
+      updateData,
+    );
 
     return {
       message: 'Consentimiento informado actualizado correctamente',
@@ -491,13 +500,25 @@ export class TreatmentsController {
     const treatmentId = Number(id);
     const updated = await this.treatmentService.update(treatmentId, {
       ...dto,
-      startDate: (dto.startDate) ?? undefined,
-      closureDate: (dto.closureDate) ?? undefined,
+      startDate: dto.startDate ?? undefined,
+      closureDate: dto.closureDate ?? undefined,
     });
     return {
       message: 'Tratamiento actualizado correctamente',
       id: updated.id,
     };
+  }
+  @Get(':id/timeline')
+  @RequireRoles(RoleCode.PATIENT, RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async getTimeline(
+    @Param('id', ParseIntPipe) treatmentId: number,
+    @CurrentUser() user: User,
+  ) {
+   
+    return this.treatmentService.getTimeline(
+      treatmentId,
+      user.role.code as RoleCode,
+    );
   }
 
   // ============================================
@@ -512,7 +533,10 @@ export class TreatmentsController {
     @Body() dto: { newDoctorId: number },
   ) {
     const treatmentId = Number(id);
-    const updated = await this.treatmentService.reassignDoctor(treatmentId, dto.newDoctorId);
+    const updated = await this.treatmentService.reassignDoctor(
+      treatmentId,
+      dto.newDoctorId,
+    );
     return {
       message: 'Médico reasignado correctamente',
       treatmentId: updated.id,
