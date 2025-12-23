@@ -49,6 +49,7 @@ export type ExternalPaymentRequest = {
 };
 
 export type ExternalPaymentResponse = {
+  status?: number;
   success: boolean;
   message: string;
   actualizado: {

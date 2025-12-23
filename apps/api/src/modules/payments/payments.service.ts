@@ -22,8 +22,8 @@ import {
   of,
 } from 'rxjs';
 import { Repository } from 'typeorm';
-import { PaymentOrder } from './entities/payment-order.entity';
 import { Group5PaymentsService } from '../external/group5-payments/group5-payments.service';
+import { PaymentOrder } from './entities/payment-order.entity';
 
 @Injectable()
 export class PaymentsService {
@@ -156,7 +156,7 @@ export class PaymentsService {
     for (const order of patientPaymentOrders) {
       order.patientDue = 0;
     }
-    
+
     this.paymentOrdersRepository.save(patientPaymentOrders);
   }
 
@@ -177,6 +177,28 @@ export class PaymentsService {
     obra_social_pagada: boolean;
     paciente_pagado: boolean;
   }) {
-    return this.group5PaymentsService.registrarPago(payload);
+    const payed: ExternalPaymentResponse =
+      await this.group5PaymentsService.registrarPago(payload);
+
+    if (payed.status === 200 || payed.success) {
+      const paymentOrder = await this.paymentOrdersRepository.findOne({
+        where: {
+          externalId: payload.id_pago,
+        },
+      });
+
+      if (paymentOrder) {
+        if (payed.actualizado.estado_obra_social === 'pagado') {
+          paymentOrder.insuranceDue = 0;
+        }
+        if (payed.actualizado.estado_paciente === 'pagado') {
+          paymentOrder.patientDue = 0;
+        }
+
+        await this.paymentOrdersRepository.save(paymentOrder);
+      }
+    }
+
+    return;
   }
 }
