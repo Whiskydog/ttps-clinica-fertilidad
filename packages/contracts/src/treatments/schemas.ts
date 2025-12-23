@@ -1,27 +1,41 @@
 import { z } from "zod";
-import { InitialObjective, TreatmentStatus, MilestoneType, MilestoneResult } from "./enums";
+import {
+  InitialObjective,
+  TreatmentStatus,
+  MilestoneType,
+  MilestoneResult,
+} from "./enums";
 import { UserEntitySchema } from "../users";
+import { ApiResponse, ApiResponseSchema } from "../common/api";
+import moment from "moment";
+export type MonitoringPlan = z.infer<typeof MonitoringPlanSchema>;
 
 export const InitialObjectiveEnum = z.enum(
-  Object.values(InitialObjective) as [string, ...string[]],
+  Object.values(InitialObjective) as [string, ...string[]]
 );
 
 export const TreatmentStatusEnum = z.enum(
-  Object.values(TreatmentStatus) as [string, ...string[]],
+  Object.values(TreatmentStatus) as [string, ...string[]]
 );
 
 export const CreateTreatmentSchema = z.object({
   initial_objective: InitialObjectiveEnum,
+  medicalOrderIds: z.array(z.number()).optional(),
 });
 
 export type CreateTreatmentDtoType = z.infer<typeof CreateTreatmentSchema>;
 
-export const CreateTreatmentResponseSchema = z.object({
-  id: z.number(),
-  initialObjective: InitialObjectiveEnum,
-  status: TreatmentStatusEnum,
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
+export const CreateTreatmentResponseSchema = ApiResponseSchema(
+  z.object({
+    id: z.number(),
+    initialObjective: InitialObjectiveEnum,
+    status: TreatmentStatusEnum,
+    startDate: z
+      .date()
+      .transform((date) => moment.utc(date).format("YYYY-MM-DD"))
+      .nullable(),
+  })
+);
 
 export type CreateTreatmentResponseDtoType = z.infer<
   typeof CreateTreatmentResponseSchema
@@ -62,6 +76,56 @@ export const MonitoringSchema = z.object({
 
 export type Monitoring = z.infer<typeof MonitoringSchema>;
 
+export const MonitoringPlanStatusEnum = z.enum([
+  "PLANNED",
+  "RESERVED",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+export const CreateMonitoringPlanSchema = z.object({
+  treatmentId: z.number(),
+  sequence: z.number().min(1),
+  plannedDay: z.number().nullable().optional(),
+  minDate: z.string(), // YYYY-MM-DD
+  maxDate: z.string(), // YYYY-MM-DD
+});
+export const CreateMonitoringPlansSchema = z.object({
+  treatmentId: z.number(),
+  rows: z
+    .array(
+      z.object({
+        sequence: z.number().min(1),
+        plannedDay: z.number().min(1).max(31),
+      })
+    )
+    .min(1),
+});
+export const UpdateMonitoringPlanSchema = z.object({
+  id: z.number(),
+  status: MonitoringPlanStatusEnum.optional(),
+  appointmentId: z.number().nullable().optional(),
+});
+
+export type CreateMonitoringPlanDto = z.infer<
+  typeof CreateMonitoringPlanSchema
+>;
+export type UpdateMonitoringPlanDto = z.infer<
+  typeof UpdateMonitoringPlanSchema
+>;
+export const MonitoringPlanSchema = z.object({
+  id: z.number(),
+  treatmentId: z.number(),
+  sequence: z.number(),
+  plannedDay: z.number().nullable(),
+  minDate: z.string(),
+  maxDate: z.string(),
+  status: MonitoringPlanStatusEnum,
+  appointmentId: z.number().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 // Protocolo de medicación
 export const MedicationProtocolSchema = z.object({
   id: z.number(),
@@ -75,6 +139,8 @@ export const MedicationProtocolSchema = z.object({
   additionalMedication: z.array(z.string()).nullable(),
   consentSigned: z.boolean().optional(),
   consentDate: z.string().nullable().optional(),
+  pdfUrl: z.string().nullable().optional(),
+  pdfGeneratedAt: z.string().nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -135,10 +201,12 @@ export const MedicalCoverageSchema = z.object({
   coveragePercentage: z.number().nullable(), // decimal 5,2
   patientDue: z.number().nullable(), // decimal 10,2
   insuranceDue: z.number().nullable(), // decimal 10,2
-  medicalInsurance: z.object({
-    id: z.number(),
-    name: z.string(),
-  }).optional(),
+  medicalInsurance: z
+    .object({
+      id: z.number(),
+      name: z.string(),
+    })
+    .optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -154,6 +222,7 @@ export const TreatmentDetailSchema = z.object({
   informedConsent: InformedConsentSchema.nullable().optional(),
   milestones: z.array(PostTransferMilestoneSchema).optional(),
   medicalCoverage: MedicalCoverageSchema.nullable().optional(),
+  monitoringPlans: z.array(MonitoringPlanSchema).optional(),
 });
 
 export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
@@ -164,18 +233,23 @@ export type TreatmentDetail = z.infer<typeof TreatmentDetailSchema>;
 
 // Informed Consent Input Schemas
 export const CreateInformedConsentSchema = z.object({
-  treatmentId: z.number(),
+  treatmentId: z.coerce.number(),
   pdfUri: z.string().nullable().optional(),
   signatureDate: z.string().nullable().optional(),
-  uploadedByUserId: z.number().nullable().optional(),
+  uploadedByUserId: z.coerce.number().nullable().optional(),
 });
 
-export const UpdateInformedConsentSchema = CreateInformedConsentSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateInformedConsentSchema =
+  CreateInformedConsentSchema.partial().extend({
+    id: z.coerce.number(),
+  });
 
-export type CreateInformedConsentInput = z.infer<typeof CreateInformedConsentSchema>;
-export type UpdateInformedConsentInput = z.infer<typeof UpdateInformedConsentSchema>;
+export type CreateInformedConsentInput = z.infer<
+  typeof CreateInformedConsentSchema
+>;
+export type UpdateInformedConsentInput = z.infer<
+  typeof UpdateInformedConsentSchema
+>;
 
 // Post Transfer Milestone Input Schemas
 export const CreatePostTransferMilestoneSchema = z.object({
@@ -186,12 +260,17 @@ export const CreatePostTransferMilestoneSchema = z.object({
   registeredByDoctorId: z.number().nullable().optional(),
 });
 
-export const UpdatePostTransferMilestoneSchema = CreatePostTransferMilestoneSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdatePostTransferMilestoneSchema =
+  CreatePostTransferMilestoneSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreatePostTransferMilestoneInput = z.infer<typeof CreatePostTransferMilestoneSchema>;
-export type UpdatePostTransferMilestoneInput = z.infer<typeof UpdatePostTransferMilestoneSchema>;
+export type CreatePostTransferMilestoneInput = z.infer<
+  typeof CreatePostTransferMilestoneSchema
+>;
+export type UpdatePostTransferMilestoneInput = z.infer<
+  typeof UpdatePostTransferMilestoneSchema
+>;
 
 // Medical Coverage Input Schemas
 export const CreateMedicalCoverageSchema = z.object({
@@ -202,12 +281,17 @@ export const CreateMedicalCoverageSchema = z.object({
   insuranceDue: z.number().nullable().optional(),
 });
 
-export const UpdateMedicalCoverageSchema = CreateMedicalCoverageSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateMedicalCoverageSchema =
+  CreateMedicalCoverageSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreateMedicalCoverageInput = z.infer<typeof CreateMedicalCoverageSchema>;
-export type UpdateMedicalCoverageInput = z.infer<typeof UpdateMedicalCoverageSchema>;
+export type CreateMedicalCoverageInput = z.infer<
+  typeof CreateMedicalCoverageSchema
+>;
+export type UpdateMedicalCoverageInput = z.infer<
+  typeof UpdateMedicalCoverageSchema
+>;
 
 // Doctor Note Input Schemas
 export const CreateDoctorNoteSchema = z.object({
@@ -231,26 +315,35 @@ export const CreateMedicationProtocolSchema = z.object({
   dose: z.string(),
   administrationRoute: z.string(),
   duration: z.string().nullable().optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
   additionalMedication: z.array(z.string()).nullable().optional(),
 });
 
-export const UpdateMedicationProtocolSchema = CreateMedicationProtocolSchema.partial().extend({
-  id: z.number(),
-});
+export const UpdateMedicationProtocolSchema =
+  CreateMedicationProtocolSchema.partial().extend({
+    id: z.number(),
+  });
 
-export type CreateMedicationProtocolInput = z.infer<typeof CreateMedicationProtocolSchema>;
-export type UpdateMedicationProtocolInput = z.infer<typeof UpdateMedicationProtocolSchema>;
+export type CreateMedicationProtocolInput = z.infer<
+  typeof CreateMedicationProtocolSchema
+>;
+export type UpdateMedicationProtocolInput = z.infer<
+  typeof UpdateMedicationProtocolSchema
+>;
 
 // Monitoring Input Schemas
 export const CreateMonitoringSchema = z.object({
-  treatmentId: z.number(),
   monitoringDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  dayNumber: z.number().nullable().optional(),
-  follicleCount: z.number().nullable().optional(),
+  dayNumber: z.coerce.number().nullable().optional(),
+  follicleCount: z.coerce.number().nullable().optional(),
   follicleSize: z.string().nullable().optional(),
-  estradiolLevel: z.number().nullable().optional(),
+  estradiolLevel: z.coerce.number().nullable().optional(),
   observations: z.string().nullable().optional(),
+  monitoringPlanId: z.coerce.number().nullable().optional(),
 });
 
 export const UpdateMonitoringSchema = CreateMonitoringSchema.partial().extend({
@@ -269,5 +362,25 @@ export const UpdateTreatmentSchema = z.object({
   closureReason: z.string().nullable().optional(),
   closureDate: z.string().nullable().optional(),
 });
+export type TreatmentTimelineType =
+  | "treatment"
+  | "monitoring"
+  | "monitoring_plan"
+  | "doctor_note"
+  | "medication_protocol"
+  | "milestone"
+  | "medical_order"
+  | "puncture";
 
+export interface TreatmentTimelineItem {
+  date: string;
+  type: TreatmentTimelineType;
+  label: string;
+  description?: string;
+  entityId?: number;
+}
+
+export type TreatmentTimelineItemResponse = ApiResponse<
+  TreatmentTimelineItem[]
+>;
 export type UpdateTreatmentInput = z.infer<typeof UpdateTreatmentSchema>;

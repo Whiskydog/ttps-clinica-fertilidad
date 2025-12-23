@@ -1,23 +1,20 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
 import {
   AppointmentDetail,
-  ConfirmAppointmentSchema,
+  AppointmentResponseSchema,
+  AppointmentsResponseSchema,
+  BookAppointmentSchema,
   PostTurnosSchema,
   TurnoRaw,
 } from '@repo/contracts';
+import { createZodDto } from 'nestjs-zod';
 
-export class ConfirmAppointmentDto extends createZodDto(
-  ConfirmAppointmentSchema,
-) {}
+export class BookAppointmentDto extends createZodDto(BookAppointmentSchema) {}
+
+export class AppointmentResponseDto extends createZodDto(AppointmentResponseSchema) {}
+
+export class AppointmentsResponseDto extends createZodDto(AppointmentsResponseSchema) {}
 
 export class PostTurnosDto extends createZodDto(PostTurnosSchema) {}
-
-// Local helper types inferred from schemas (to aid TS types in controllers/services)
-export type ConfirmAppointmentDtoType = z.infer<
-  typeof ConfirmAppointmentSchema
->;
-export type PostTurnosDtoType = z.infer<typeof PostTurnosSchema>;
 
 export function mapRawAppointments(
   appointments: TurnoRaw[],

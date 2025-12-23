@@ -51,7 +51,7 @@ export class MedicalHistoryController {
 
   @Get('terms')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async searchMedicalTerms(
     @Query('q') q: string,
     @Query('page') page?: string,
@@ -64,7 +64,7 @@ export class MedicalHistoryController {
 
   @Post('update')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async update(
     @Body() dto: UpdateMedicalHistoryDto,
     @CurrentUser() user: User,
@@ -85,7 +85,7 @@ export class MedicalHistoryController {
 
   @Get('patient/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async getByPatientId(@Param('id') id: string) {
     const patientId = Number(id);
     const mh = await this.medicalHistoryService.findByUserId(patientId);
@@ -95,9 +95,21 @@ export class MedicalHistoryController {
     return mh;
   }
 
+  @Post('patient/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
+  async createForPatient(@Param('id') id: string) {
+    const patientId = Number(id);
+    const mh = await this.medicalHistoryService.createForPatient(patientId);
+    return {
+      message: 'Historia clínica creada exitosamente',
+      medicalHistory: mh,
+    };
+  }
+
   @Post('partner')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async upsertPartner(
     @Body() dto: PartnerDataUpsertDto,
     @CurrentUser() user: User,
@@ -116,7 +128,7 @@ export class MedicalHistoryController {
 
   @Post('gynecological')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async upsertGynecological(
     @Body() dto: GynecologicalUpsertDto,
     @CurrentUser() user: User,
@@ -150,7 +162,7 @@ export class MedicalHistoryController {
   // endpoints para hábitos
   @Post('habits')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createHabits(@Body() dto: CreateHabitsDto) {
     const habits = await this.habitsService.create({
       medicalHistory: { id: dto.medicalHistoryId } as any,
@@ -168,7 +180,7 @@ export class MedicalHistoryController {
 
   @Patch('habits/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateHabits(@Param('id') id: string, @Body() dto: UpdateHabitsDto) {
     const habitsId = Number(id);
     const updated = await this.habitsService.update(habitsId, {
@@ -186,7 +198,7 @@ export class MedicalHistoryController {
 
   @Delete('habits/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteHabits(@Param('id') id: string) {
     const habitsId = Number(id);
     await this.habitsService.remove(habitsId);
@@ -199,7 +211,7 @@ export class MedicalHistoryController {
 
   @Post('fenotype')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createFenotype(@Body() dto: CreateFenotypeDto) {
     const fenotype = await this.fenotypeService.create({
       medicalHistory: { id: dto.medicalHistoryId } as any,
@@ -221,7 +233,7 @@ export class MedicalHistoryController {
 
   @Patch('fenotype/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateFenotype(
     @Param('id') id: string,
     @Body() dto: UpdateFenotypeDto,
@@ -243,7 +255,7 @@ export class MedicalHistoryController {
 
   @Delete('fenotype/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteFenotype(@Param('id') id: string) {
     const fenotypeId = Number(id);
     await this.fenotypeService.remove(fenotypeId);
@@ -256,7 +268,7 @@ export class MedicalHistoryController {
 
   @Post('background')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async createBackground(@Body() dto: CreateBackgroundDto) {
     const background = await this.backgroundService.create({
       medicalHistory: { id: dto.medicalHistoryId } as any,
@@ -271,7 +283,7 @@ export class MedicalHistoryController {
 
   @Patch('background/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async updateBackground(
     @Param('id') id: string,
     @Body() dto: UpdateBackgroundDto,
@@ -289,7 +301,7 @@ export class MedicalHistoryController {
 
   @Delete('background/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @RequireRoles(RoleCode.DOCTOR)
+  @RequireRoles(RoleCode.DOCTOR, RoleCode.DIRECTOR)
   async deleteBackground(@Param('id') id: string) {
     const backgroundId = Number(id);
     await this.backgroundService.remove(backgroundId);

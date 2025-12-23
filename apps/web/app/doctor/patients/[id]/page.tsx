@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicalHistory } from "@/app/actions/medical-history/get";
 import { getPatientTreatments } from "@/app/actions/doctor/patients/get-treatments";
 import { MedicalHistoryResponse } from "@repo/contracts";
@@ -12,21 +12,51 @@ import { GynecologicalCard } from "@/components/doctor/medical-history/cards/gyn
 import { PhysicalExamCard } from "@/components/doctor/medical-history/cards/physical-exam-card";
 import { FamilyBackgroundsCard } from "@/components/doctor/medical-history/cards/family-backgrounds-card";
 import { PartnerDataCard } from "@/components/doctor/medical-history/cards/partner-data-card";
-import {
-  FileText,
-  User,
-  Calendar,
-  AlertCircle,
-  Stethoscope,
-} from "lucide-react";
+import { FileText, User, AlertCircle, Stethoscope } from "lucide-react";
 import Link from "next/link";
+import { UnassignedOrdersCard } from "@/components/doctor/medical-history/cards/unassigned-orders-card";
+import { getMedicalOrders } from "@/app/actions/doctor/medical-orders/get-medical-orders";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
+import { createTreatment } from "@/app/actions/doctor/patients/create-treatment";
+import { toast } from "@repo/ui";
+import { Spinner } from "@repo/ui/spinner";
 
 export default function DoctorPatientMedicalHistoryPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
   const queryClient = useQueryClient();
+  const [showCreateTreatment, setShowCreateTreatment] = React.useState(false);
+  const [initialObjective, setInitialObjective] = React.useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = React.useState<number[]>([]);
+
+  const createTreatmentMutation = useMutation({
+    mutationFn: async ({
+      medicalHistoryId,
+      initialObjective,
+      medicalOrderIds,
+    }: {
+      medicalHistoryId: number;
+      initialObjective: string;
+      medicalOrderIds?: number[];
+    }) => await createTreatment(medicalHistoryId, initialObjective, medicalOrderIds),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ["patientTreatments", id],
+      });
+      toast.success(response.message);
+      // reload page
+      window.location.reload();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al crear el tratamiento");
+    },
+    onSettled: () => {
+      setShowCreateTreatment(false);
+      setInitialObjective("");
+      setSelectedOrderIds([]);
+    },
+  });
 
   const { data, isLoading, error } = useQuery<MedicalHistoryResponse | null>({
     queryKey: ["medicalHistory", id],
@@ -37,6 +67,38 @@ export default function DoctorPatientMedicalHistoryPage() {
     },
     enabled: !!id,
   });
+
+  async function handleCreateTreatment() {
+    if (!initialObjective) return;
+
+    createTreatmentMutation.mutate({
+      medicalHistoryId: Number(data?.id),
+      initialObjective,
+      medicalOrderIds: selectedOrderIds.length > 0 ? selectedOrderIds : undefined,
+    });
+  }
+
+  // Get unassigned medical orders for selection
+  const { data: unassignedOrders } = useQuery({
+    queryKey: ["unassignedMedicalOrders", data?.patient?.id],
+    queryFn: async () => {
+      if (!data?.patient?.id) return [];
+      const response = await getMedicalOrders({
+        patientId: data.patient.id.toString(),
+        unassigned: "true",
+      });
+      return response?.data || [];
+    },
+    enabled: !!data?.patient?.id && showCreateTreatment,
+  });
+
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
 
   // Get patient treatments
   const { data: treatmentsData, isLoading: treatmentsLoading } = useQuery({
@@ -128,6 +190,8 @@ export default function DoctorPatientMedicalHistoryPage() {
         </div>
       </div>
 
+
+
       {/* Medical History Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Left Column */}
@@ -211,6 +275,16 @@ export default function DoctorPatientMedicalHistoryPage() {
           </div>
         </div>
         <div className="card-content">
+          <div className="flex justify-end mb-4">
+            <Button
+              disabled={createTreatmentMutation.isPending || unassignedOrders?.filter(
+                (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+              ).length === 0}
+              onClick={() => setShowCreateTreatment(true)}>
+              Iniciar Tratamiento Nuevo
+            </Button>
+          </div>
+
           {treatmentsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="loading-spinner"></div>
@@ -282,6 +356,96 @@ export default function DoctorPatientMedicalHistoryPage() {
           )}
         </div>
       </div>
+
+      {/* Unassigned Medical Orders */}
+      {data.patient && (
+        <div className="mt-8">
+          <UnassignedOrdersCard patientId={data.patient.id} />
+        </div>
+      )}
+
+      {showCreateTreatment && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-[400px]">
+            <h2 className="text-xl font-semibold mb-4">Crear Tratamiento</h2>
+
+            <label className="block text-sm font-medium mb-2">
+              Objetivo Inicial
+            </label>
+
+            <select
+              className="w-full border rounded px-3 py-2 mb-4"
+              value={initialObjective}
+              onChange={(e) => setInitialObjective(e.target.value)}
+            >
+              <option value="">Seleccione...</option>
+
+              <option value="gametos_propios">Gametos propios</option>
+
+              <option value="couple_female">Pareja femenina</option>
+
+              <option value="method_ropa">Método ROPA</option>
+
+              <option value="woman_single">Mujer sola</option>
+
+              <option value="preservation_ovocytes_embryos">
+                Preservación de óvulos / embriones
+              </option>
+            </select>
+
+            {unassignedOrders && unassignedOrders.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-yellow-700 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Vincular Órdenes Médicas Existentes
+                </label>
+                <div className="border rounded-md p-2 max-h-[150px] overflow-y-auto space-y-2 bg-yellow-50/20">
+                  {unassignedOrders.filter(
+                    (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+                  ).map((order: any) => (
+                    <div key={order.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded">
+                      <input
+                        type="checkbox"
+                        id={`order-${order.id}`}
+                        className="mt-1"
+                        checked={selectedOrderIds.includes(order.id)}
+                        onChange={() => toggleOrderSelection(order.id)}
+                      />
+                      <label htmlFor={`order-${order.id}`} className="text-sm cursor-pointer flex-1">
+                        <div className="font-medium">{order.code} - {order.category}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(order.issueDate).toLocaleDateString()} - Dr. {order.doctor?.lastName}
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateTreatment(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={createTreatmentMutation.isPending}
+                onClick={handleCreateTreatment}
+              >
+                {createTreatmentMutation.isPending ? (
+                  <>
+                    Creando <Spinner />
+                  </>
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

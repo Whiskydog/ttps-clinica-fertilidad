@@ -27,6 +27,9 @@ export default function StaffLoginPage() {
         toast.error(res.message);
       } else {
         toast.success("Inicio de sesión exitoso");
+        if ("data" in res) {
+          localStorage.setItem("token", res.data.accessToken);
+        }
         // La redirección será manejada por el middleware según el rol
         window.location.href = "/admin";
       }

@@ -1,5 +1,9 @@
+import { AppointmentsModule } from '@modules/appointments/appointments.module';
+import { Group3TurneroModule } from '@modules/external/group3-turnero/group3-turnero.module';
+import { Group8NoticesModule } from '@modules/external/group8-notices/group8-notices.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
-import { Module } from '@nestjs/common';
+import { Treatment } from '@modules/treatments/entities/treatment.entity';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoctorsController } from './controllers/doctors.controller';
 import { PatientsController } from './controllers/patients.controller';
@@ -12,7 +16,6 @@ import { LabTechnician } from './entities/lab-technician.entity';
 import { Patient } from './entities/patient.entity';
 import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
-import { Treatment } from '@modules/treatments/entities/treatment.entity';
 import { DoctorsService } from './services/doctors.service';
 import { PatientsService } from './services/patients.service';
 import { StaffUsersService } from './services/staff-users.service';
@@ -32,6 +35,9 @@ import { UsersService } from './services/users.service';
       Treatment,
     ]),
     MedicalInsurancesModule,
+    Group3TurneroModule,
+    Group8NoticesModule,
+    forwardRef(() => AppointmentsModule),
   ],
   controllers: [
     UsersController,
@@ -46,6 +52,6 @@ import { UsersService } from './services/users.service';
     UserValidationService,
     StaffUsersService,
   ],
-  exports: [UsersService, PatientsService],
+  exports: [UsersService, PatientsService, DoctorsService],
 })
 export class UsersModule {}

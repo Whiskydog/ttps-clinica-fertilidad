@@ -4,21 +4,17 @@ import { UpdateInformedConsentSchema } from "@repo/contracts";
 import { cookies } from "next/headers";
 
 export async function updateInformedConsent(payload: unknown) {
-  console.log('[DEBUG SERVER ACTION] updateInformedConsent - payload recibido:', JSON.stringify(payload));
-
   // Validate payload with Zod schema
   const validationResult = UpdateInformedConsentSchema.safeParse(payload);
 
   if (!validationResult.success) {
-    console.log('[DEBUG SERVER ACTION] Validación falló:', validationResult.error);
     return {
       success: false,
-      error: validationResult.error.errors[0]?.message || "Datos inválidos",
+      error: validationResult.error.issues[0]?.message || "Datos inválidos",
     };
   }
 
   const data = validationResult.data;
-  console.log('[DEBUG SERVER ACTION] Data validada:', JSON.stringify(data));
 
   const backendUrl = process.env.BACKEND_URL;
   const cookieStore = await cookies();

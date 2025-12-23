@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   Edit,
   Trash2,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
@@ -28,8 +29,14 @@ import { TreatmentFormSheet } from "@/components/doctor/treatments/forms/treatme
 import { DeleteNoteDialog } from "@/components/doctor/treatments/forms/delete-note-dialog";
 import { CreateMedicalOrderSheet } from "@/components/doctor/treatments/forms/create-medical-order-sheet";
 import { InformedConsentFormSheet } from "@/components/doctor/treatments/forms/informed-consent-form-sheet";
+import { GenerateProtocolPdfSheet } from "@/components/doctor/treatments/forms/generate-protocol-pdf-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
+import { MonitoringPlanSheet } from "@/components/doctor/treatments/forms/monitoring-plan-sheet";
+import { MonitoringFormSheet } from "@/components/doctor/treatments/forms/monitoring-form-sheet";
+import { getTreatmentTimeline } from "@/app/actions/doctor/treatments/get-timeline";
+import { TreatmentTimeline } from "@/components/common/TreatmentTimeLine";
+import { LinkMedicalOrdersSheet } from "@/components/doctor/treatments/link-medical-orders-sheet";
 
 export default function TreatmentDetailPage() {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -40,6 +47,12 @@ export default function TreatmentDetailPage() {
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const [createOrderSheetOpen, setCreateOrderSheetOpen] = useState(false);
   const [consentSheetOpen, setConsentSheetOpen] = useState(false);
+  const [protocolPdfSheetOpen, setProtocolPdfSheetOpen] = useState(false);
+  const [monitoringPlanSheetOpen, setMonitoringPlanSheetOpen] = useState(false);
+  const [monitoringFormOpen, setMonitoringFormOpen] = useState(false);
+  const [selectedMonitoringPlan, setSelectedMonitoringPlan] =
+    useState<any>(null);
+
   const queryClient = useQueryClient();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -65,7 +78,10 @@ export default function TreatmentDetailPage() {
     },
     enabled: !!id,
   });
-
+  const { data: timelineResp } = useQuery({
+    queryKey: ["treatment-timeline", id],
+    queryFn: () => getTreatmentTimeline(Number(id)),
+  });
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -110,6 +126,12 @@ export default function TreatmentDetailPage() {
   const informedConsent = treatmentData.informedConsent;
   const milestones = treatmentData.milestones || [];
   const medicalCoverage = treatmentData.medicalCoverage;
+  const canPlanMonitoring =
+    !!protocol && !!informedConsent && !!informedConsent.pdfUri;
+
+  const hasCompletedOrderWithResults = medicalOrdersData?.some(
+    (order: any) => order.status === 'completed' && order.studyResults?.length > 0
+  ) ?? false;
 
   const handleAddNote = () => {
     setSelectedNote(null);
@@ -127,9 +149,11 @@ export default function TreatmentDetailPage() {
   };
 
   const handleEditProtocol = () => {
-    if (protocol) {
-      setProtocolSheetOpen(true);
-    }
+    setProtocolSheetOpen(true);
+  };
+
+  const handleCreateProtocol = () => {
+    setProtocolSheetOpen(true);
   };
 
   const handleEditTreatment = () => {
@@ -280,7 +304,12 @@ export default function TreatmentDetailPage() {
           </div>
         </div>
       )}
-
+      {/* TIMELINE  */}
+      {timelineResp?.data && timelineResp.data.length > 0 && (
+        <div className="max-w-7xl overflow-hidden">
+          <TreatmentTimeline items={timelineResp.data} />
+        </div>
+      )}
       {/* Treatment Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -362,19 +391,145 @@ export default function TreatmentDetailPage() {
             </div>
           </div>
 
+
+          {/* Medical Orders Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Órdenes Médicas
+              </h2>
+              <div className="flex justify-end items-center gap-4">
+                <div className="ml-2">
+                  <LinkMedicalOrdersSheet patientId={patient.id} treatmentId={treatment.id} />
+                </div>
+                <Button
+                  onClick={() => setCreateOrderSheetOpen(true)}
+                // disabled={!informedConsent || !informedConsent.pdfUri}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Orden Médica
+                </Button>
+                {/* {(!informedConsent || !informedConsent.pdfUri) && (
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                    {!informedConsent
+                      ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
+                      : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
+                  </div>
+                )} */}
+              </div>
+
+
+            </div>
+
+            {ordersLoading ? (
+              <div className="text-center py-8">
+                <div className="loading-spinner mx-auto"></div>
+              </div>
+            ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No hay órdenes médicas registradas</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {medicalOrdersData.map((order: any) => (
+                  <div
+                    key={order.id}
+                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">#{order.code}</p>
+                          <Badge
+                            variant="outline"
+                            className={
+                              order.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }
+                          >
+                            {order.status === "completed"
+                              ? "Completada"
+                              : "Pendiente"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {order.category}
+                        </p>
+                        <p className="text-sm">
+                          {new Date(order.issueDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Link href={`/doctor/medical-orders/${order.id}`}>
+                        <Button variant="outline" size="sm">
+                          Ver Detalle
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Protocol Section */}
-          {protocol && (
+          {protocol ? (
             <div className="border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Pill className="h-5 w-5 text-primary" />
                   <h2 className="text-xl font-semibold">
-                    Protocolo de Medicación
+                    Protocolo de Medicacion
                   </h2>
+                  {protocol.pdfUrl && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-700"
+                    >
+                      PDF Generado
+                    </Badge>
+                  )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleEditProtocol}>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2 relative group">
+                  {protocol.pdfUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const url = getFileUrl(protocol.pdfUrl);
+                        if (url) window.open(url, "_blank");
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Descargar
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setProtocolPdfSheetOpen(true)}
+                    disabled={!informedConsent || !informedConsent.pdfUri}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    {protocol.pdfUrl ? "Regenerar PDF" : "Generar PDF"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditProtocol}
+                    disabled={!informedConsent || !informedConsent.pdfUri}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  {(!informedConsent || !informedConsent.pdfUri) && (
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                      {!informedConsent
+                        ? "Se requiere un consentimiento informado con PDF firmado para editar el protocolo"
+                        : "El consentimiento debe tener un PDF asociado para editar el protocolo"}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-3 text-sm">
                 <p>
@@ -389,11 +544,11 @@ export default function TreatmentDetailPage() {
                   <span className="font-medium">Dosis:</span> {protocol.dose}
                 </p>
                 <p>
-                  <span className="font-medium">Vía:</span>{" "}
+                  <span className="font-medium">Via:</span>{" "}
                   {protocol.administrationRoute}
                 </p>
                 <p>
-                  <span className="font-medium">Duración:</span>{" "}
+                  <span className="font-medium">Duracion:</span>{" "}
                   {protocol.duration}
                 </p>
                 {protocol.startDate && (
@@ -405,7 +560,7 @@ export default function TreatmentDetailPage() {
                 {protocol.additionalMedication &&
                   protocol.additionalMedication.length > 0 && (
                     <div>
-                      <span className="font-medium">Medicación adicional:</span>
+                      <span className="font-medium">Medicacion adicional:</span>
                       <ul className="list-disc list-inside ml-4 mt-1">
                         {protocol.additionalMedication.map(
                           (med: string, idx: number) => (
@@ -417,14 +572,107 @@ export default function TreatmentDetailPage() {
                   )}
               </div>
             </div>
-          )}
+          ) : informedConsent && informedConsent.pdfUri ? (
+            <div className="border rounded-lg p-6 bg-card">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">
+                    Protocolo de Medicacion
+                  </h2>
+                </div>
+              </div>
+              <div className="text-center py-8">
+                <Pill className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  No se ha establecido un protocolo de medicacion para este
+                  tratamiento
+                </p>
+                <Button onClick={handleCreateProtocol}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Establecer Protocolo
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          {/* Monitoring Plans Section */}
+          <div className="border rounded-lg p-6 bg-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Monitoreos Planificados</h2>
+            </div>
 
+            {!treatmentData.monitoringPlans ||
+              treatmentData.monitoringPlans.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p>No hay días de monitoreo planificados</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {treatmentData.monitoringPlans.map((plan: any, idx: number) => (
+                  <div
+                    key={plan.id}
+                    className="flex justify-between items-center border rounded-lg p-4"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        Monitoreo #{idx + 1} — Día {plan.plannedDay}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Rango permitido: {formatDateForDisplay(plan.minDate)} –{" "}
+                        {formatDateForDisplay(plan.maxDate)}
+                      </p>
+                    </div>
+                    {!plan.deletedAt && plan.status !== "COMPLETED" && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedMonitoringPlan(plan);
+                          setMonitoringFormOpen(true);
+                        }}
+                      >
+                        <Activity className="h-4 w-4 mr-2" />
+                        Realizar monitoreo
+                      </Button>
+                    )}
+
+                    {plan.deletedAt ? (
+                      <Badge className="bg-red-100 text-red-800 border-red-300">
+                        CANCELADO
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={
+                          plan.status === "PENDING"
+                            ? "bg-blue-100 text-blue-800 border-blue-300"
+                            : plan.status === "RESERVED"
+                              ? "bg-blue-100 text-blue-800 border-blue-300"
+                              : plan.status === "COMPLETED"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : "bg-blue-100 text-blue-800 border-blue-300"
+                        }
+                      >
+                        {plan.status === "PENDING"
+                          ? "RESERVADO"
+                          : plan.status === "RESERVED"
+                            ? "RESERVADO"
+                            : plan.status === "COMPLETED"
+                              ? "COMPLETADO"
+                              : "RESERVADO"}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {/* Monitorings Section */}
           {monitorings.length > 0 && (
             <div className="border rounded-lg p-6 bg-card">
               <div className="flex items-center gap-2 mb-4">
                 <Activity className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Monitoreos</h2>
+                <h2 className="text-xl font-semibold">Monitoreos Realizados</h2>
               </div>
               <div className="space-y-4">
                 {monitorings.map((monitoring: any) => (
@@ -510,81 +758,6 @@ export default function TreatmentDetailPage() {
             )}
           </div>
 
-          {/* Medical Orders Section */}
-          <div className="border rounded-lg p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Órdenes Médicas
-              </h2>
-              <div className="relative group">
-                <Button
-                  onClick={() => setCreateOrderSheetOpen(true)}
-                  disabled={!informedConsent || !informedConsent.pdfUri}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Orden Médica
-                </Button>
-                {(!informedConsent || !informedConsent.pdfUri) && (
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                    {!informedConsent
-                      ? "Se requiere un consentimiento informado con PDF firmado para crear órdenes médicas"
-                      : "El consentimiento debe tener un PDF asociado para crear órdenes médicas"}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {ordersLoading ? (
-              <div className="text-center py-8">
-                <div className="loading-spinner mx-auto"></div>
-              </div>
-            ) : !medicalOrdersData || medicalOrdersData.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No hay órdenes médicas registradas</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {medicalOrdersData.map((order: any) => (
-                  <div
-                    key={order.id}
-                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <p className="font-medium">#{order.code}</p>
-                          <Badge
-                            variant="outline"
-                            className={
-                              order.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }
-                          >
-                            {order.status === "completed"
-                              ? "Completada"
-                              : "Pendiente"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {order.category}
-                        </p>
-                        <p className="text-sm">
-                          {new Date(order.issueDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Link href={`/doctor/medical-orders/${order.id}`}>
-                        <Button variant="outline" size="sm">
-                          Ver Detalle
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Sidebar - Quick Actions */}
@@ -595,19 +768,41 @@ export default function TreatmentDetailPage() {
               <Button
                 variant="default"
                 className="w-full justify-start"
+                disabled={!canPlanMonitoring}
+                onClick={() => setMonitoringPlanSheetOpen(true)}
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                PLANIFICAR MONITOREOS
+              </Button>
+
+              {!canPlanMonitoring && (
+                <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-72 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                  {!informedConsent
+                    ? "Se requiere consentimiento informado firmado"
+                    : !informedConsent.pdfUri
+                      ? "El consentimiento debe tener un PDF cargado"
+                      : "Debe existir un protocolo de estimulación activo"}
+                </div>
+              )}
+            </div>
+
+            <div className="relative group">
+              <Button
+                variant="default"
+                className="w-full justify-start"
                 onClick={() => setCreateOrderSheetOpen(true)}
-                disabled={!informedConsent || !informedConsent.pdfUri}
+              // disabled={!informedConsent || !informedConsent.pdfUri}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 NUEVA ORDEN MÉDICA
               </Button>
-              {(!informedConsent || !informedConsent.pdfUri) && (
+              {/* {(!informedConsent || !informedConsent.pdfUri) && (
                 <div className="absolute left-0 ml-2 top-full hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
                   {!informedConsent
                     ? "Se requiere un consentimiento informado con PDF firmado"
                     : "El consentimiento debe tener un PDF asociado"}
                 </div>
-              )}
+              )} */}
             </div>
             <Button
               variant="outline"
@@ -638,15 +833,14 @@ export default function TreatmentDetailPage() {
         onSuccess={() => setNoteSheetOpen(false)}
       />
 
-      {protocol && (
-        <ProtocolFormSheet
-          open={protocolSheetOpen}
-          onOpenChange={setProtocolSheetOpen}
-          treatmentId={treatment.id}
-          protocol={protocol}
-          onSuccess={() => setProtocolSheetOpen(false)}
-        />
-      )}
+      <ProtocolFormSheet
+        open={protocolSheetOpen}
+        onOpenChange={setProtocolSheetOpen}
+        treatmentId={treatment.id}
+        protocol={protocol || null}
+        hasCompletedOrderWithResults={hasCompletedOrderWithResults}
+        onSuccess={() => setProtocolSheetOpen(false)}
+      />
 
       <TreatmentFormSheet
         open={treatmentSheetOpen}
@@ -655,17 +849,19 @@ export default function TreatmentDetailPage() {
         onSuccess={() => setTreatmentSheetOpen(false)}
       />
 
-      {noteToDelete && (
-        <DeleteNoteDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          noteId={noteToDelete}
-          onSuccess={() => {
-            setDeleteDialogOpen(false);
-            setNoteToDelete(null);
-          }}
-        />
-      )}
+      {
+        noteToDelete && (
+          <DeleteNoteDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            noteId={noteToDelete}
+            onSuccess={() => {
+              setDeleteDialogOpen(false);
+              setNoteToDelete(null);
+            }}
+          />
+        )
+      }
 
       <CreateMedicalOrderSheet
         open={createOrderSheetOpen}
@@ -686,6 +882,44 @@ export default function TreatmentDetailPage() {
           queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
         }}
       />
-    </div>
+
+      {
+        protocol && (
+          <GenerateProtocolPdfSheet
+            open={protocolPdfSheetOpen}
+            onOpenChange={setProtocolPdfSheetOpen}
+            treatmentId={treatment.id}
+            existingPdfUrl={protocol.pdfUrl}
+            onSuccess={() => {
+              setProtocolPdfSheetOpen(false);
+              queryClient.invalidateQueries({
+                queryKey: ["treatmentDetail", id],
+              });
+            }}
+          />
+        )
+      }
+      <MonitoringPlanSheet
+        open={monitoringPlanSheetOpen}
+        onOpenChange={setMonitoringPlanSheetOpen}
+        treatmentId={treatment.id}
+        protocol={protocol}
+        doctorId={treatment.initialDoctor?.id}
+        onSuccess={() => {
+          setMonitoringPlanSheetOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] });
+        }}
+      />
+
+      <MonitoringFormSheet
+        open={monitoringFormOpen}
+        onOpenChange={setMonitoringFormOpen}
+        monitoringPlan={selectedMonitoringPlan}
+        treatmentId={treatment.id}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["treatmentDetail", id] })
+        }
+      />
+    </div >
   );
 }

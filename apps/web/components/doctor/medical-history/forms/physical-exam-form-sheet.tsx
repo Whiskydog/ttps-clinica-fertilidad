@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,6 +38,32 @@ import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateMedicalHistory } from "@/app/actions/medical-history/update";
 import { updateFenotype } from "@/app/actions/medical-history/update-fenotype";
+import {
+  getPhenotypeEnums,
+  PhenotypeEnumsResponse,
+} from "@/app/actions/medical-history/get-phenotype-enums";
+
+// Función para formatear valores de enum a labels legibles
+function formatEnumLabel(value: string): string {
+  return value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+    .replace("Castanio", "Castaño");
+}
+
+// Función para renderizar opciones del Select solo con valores del API externa
+function renderSelectOptions(
+  enumValues: string[] | undefined
+): React.ReactNode {
+  if (!enumValues) return null;
+
+  return enumValues.map((value) => (
+    <SelectItem key={value} value={value}>
+      {formatEnumLabel(value)}
+    </SelectItem>
+  ));
+}
 
 interface PhysicalExamFormSheetProps {
   open: boolean;
@@ -59,6 +85,27 @@ export function PhysicalExamFormSheet({
   onSuccess,
 }: PhysicalExamFormSheetProps) {
   const queryClient = useQueryClient();
+  const [phenotypeEnums, setPhenotypeEnums] =
+    useState<PhenotypeEnumsResponse | null>(null);
+  const [loadingEnums, setLoadingEnums] = useState(false);
+
+  // Cargar enums de fenotipos al abrir el formulario
+  useEffect(() => {
+    if (open && !phenotypeEnums) {
+      setLoadingEnums(true);
+      getPhenotypeEnums()
+        .then((result) => {
+          if (result.success && result.data) {
+            setPhenotypeEnums(result.data);
+          } else {
+            toast.error(
+              result.error || "Error al cargar opciones de fenotipo"
+            );
+          }
+        })
+        .finally(() => setLoadingEnums(false));
+    }
+  }, [open, phenotypeEnums]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateMedicalHistorySchema),
@@ -184,19 +231,25 @@ export function PhysicalExamFormSheet({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || undefined}
+                        disabled={loadingEnums}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccione color" />
+                            {field.value ? (
+                              <span>{formatEnumLabel(field.value)}</span>
+                            ) : (
+                              <SelectValue
+                                placeholder={
+                                  loadingEnums ? "Cargando..." : "Seleccione color"
+                                }
+                              />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Marrón">Marrón</SelectItem>
-                          <SelectItem value="Verde">Verde</SelectItem>
-                          <SelectItem value="Azul">Azul</SelectItem>
-                          <SelectItem value="Avellana">Avellana</SelectItem>
-                          <SelectItem value="Gris">Gris</SelectItem>
-                          <SelectItem value="Negro">Negro</SelectItem>
+                          {renderSelectOptions(
+                            phenotypeEnums?.enums?.eye_color?.values
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -213,21 +266,25 @@ export function PhysicalExamFormSheet({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || undefined}
+                        disabled={loadingEnums}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccione color" />
+                            {field.value ? (
+                              <span>{formatEnumLabel(field.value)}</span>
+                            ) : (
+                              <SelectValue
+                                placeholder={
+                                  loadingEnums ? "Cargando..." : "Seleccione color"
+                                }
+                              />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Negro">Negro</SelectItem>
-                          <SelectItem value="Castaño oscuro">Castaño oscuro</SelectItem>
-                          <SelectItem value="Castaño">Castaño</SelectItem>
-                          <SelectItem value="Castaño claro">Castaño claro</SelectItem>
-                          <SelectItem value="Rubio">Rubio</SelectItem>
-                          <SelectItem value="Rubio cenizo">Rubio cenizo</SelectItem>
-                          <SelectItem value="Pelirrojo">Pelirrojo</SelectItem>
-                          <SelectItem value="Canoso">Canoso</SelectItem>
+                          {renderSelectOptions(
+                            phenotypeEnums?.enums?.hair_color?.values
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -244,17 +301,25 @@ export function PhysicalExamFormSheet({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || undefined}
+                        disabled={loadingEnums}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccione tipo" />
+                            {field.value ? (
+                              <span>{formatEnumLabel(field.value)}</span>
+                            ) : (
+                              <SelectValue
+                                placeholder={
+                                  loadingEnums ? "Cargando..." : "Seleccione tipo"
+                                }
+                              />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Liso">Liso</SelectItem>
-                          <SelectItem value="Ondulado">Ondulado</SelectItem>
-                          <SelectItem value="Rizado">Rizado</SelectItem>
-                          <SelectItem value="Crespo">Crespo</SelectItem>
+                          {renderSelectOptions(
+                            phenotypeEnums?.enums?.hair_type?.values
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -298,17 +363,27 @@ export function PhysicalExamFormSheet({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || undefined}
+                        disabled={loadingEnums}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccione complexión" />
+                            {field.value ? (
+                              <span>{formatEnumLabel(field.value)}</span>
+                            ) : (
+                              <SelectValue
+                                placeholder={
+                                  loadingEnums
+                                    ? "Cargando..."
+                                    : "Seleccione complexión"
+                                }
+                              />
+                            )}
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Delgada">Delgada</SelectItem>
-                          <SelectItem value="Mediana">Mediana</SelectItem>
-                          <SelectItem value="Atlética">Atlética</SelectItem>
-                          <SelectItem value="Robusta">Robusta</SelectItem>
+                          {renderSelectOptions(
+                            phenotypeEnums?.enums?.complexion?.values
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -322,13 +397,30 @@ export function PhysicalExamFormSheet({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Etnia</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ""}
-                          placeholder="Ej: Caucásico, Latino, etc."
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || undefined}
+                        disabled={loadingEnums}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            {field.value ? (
+                              <span>{formatEnumLabel(field.value)}</span>
+                            ) : (
+                              <SelectValue
+                                placeholder={
+                                  loadingEnums ? "Cargando..." : "Seleccione etnia"
+                                }
+                              />
+                            )}
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {renderSelectOptions(
+                            phenotypeEnums?.enums?.ethnicity?.values
+                          )}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

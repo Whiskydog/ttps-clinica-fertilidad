@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function useDoctorAvailableAppointments(doctorId: number) {
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["doctors", doctorId],
+    queryKey: ["doctor-available-slots", doctorId],
     queryFn: () => getDoctorAvailableSlots(doctorId),
     staleTime: 1000 * 60, // 1 min
   });

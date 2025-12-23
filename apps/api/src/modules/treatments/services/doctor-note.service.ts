@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DoctorNote } from '../entities/doctor-note.entity';
 import { Treatment } from '../entities/treatment.entity';
 import { User } from '@users/entities/user.entity';
+import { InformedConsentService } from './informed-consent.service';
 import { parseDateFromString } from '@common/utils/date.utils';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class DoctorNoteService {
   constructor(
     @InjectRepository(DoctorNote)
     private doctorNoteRepository: Repository<DoctorNote>,
+    private readonly informedConsentService: InformedConsentService,
   ) {}
 
   async create(data: {
@@ -19,6 +21,15 @@ export class DoctorNoteService {
     note: string;
     doctorId: number;
   }): Promise<DoctorNote> {
+    // Verificar consentimiento informado
+    const hasConsent = await this.informedConsentService.hasValidConsent(data.treatmentId);
+    if (!hasConsent) {
+      throw new ForbiddenException(
+        'No se puede crear una nota del doctor sin consentimiento informado firmado. ' +
+        'Por favor, suba el consentimiento firmado antes de continuar.'
+      );
+    }
+
     const doctorNote = this.doctorNoteRepository.create({
       treatment: { id: data.treatmentId } as Treatment,
       doctor: { id: data.doctorId } as User,

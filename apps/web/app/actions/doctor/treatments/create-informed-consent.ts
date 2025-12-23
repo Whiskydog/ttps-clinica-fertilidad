@@ -4,13 +4,15 @@ import { CreateInformedConsentSchema } from "@repo/contracts";
 import { cookies } from "next/headers";
 
 export async function createInformedConsent(payload: unknown) {
+  console.log("Payload received:", JSON.stringify(payload, null, 2));
   // Validate payload with Zod schema
   const validationResult = CreateInformedConsentSchema.safeParse(payload);
 
   if (!validationResult.success) {
+    console.error("Validation errors:", JSON.stringify(validationResult.error.flatten(), null, 2));
     return {
       success: false,
-      error: validationResult.error.errors[0]?.message || "Datos inválidos",
+      error: validationResult.error.flatten().fieldErrors,
     };
   }
 

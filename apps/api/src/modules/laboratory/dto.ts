@@ -8,6 +8,8 @@ import {
   UpdateOocyteStateHistorySchema,
   CreateEmbryoSchema,
   UpdateEmbryoSchema,
+  UpdateEmbryoPgtSchema,
+  PgtResult,
 } from '@repo/contracts';
 
 // ============================================
@@ -49,3 +51,5 @@ export class UpdateOocyteStateHistoryDto extends createZodDto(
 export class CreateEmbryoDto extends createZodDto(CreateEmbryoSchema) {}
 
 export class UpdateEmbryoDto extends createZodDto(UpdateEmbryoSchema) {}
+
+export class UpdateEmbryoPgtDto extends createZodDto(UpdateEmbryoPgtSchema) {}

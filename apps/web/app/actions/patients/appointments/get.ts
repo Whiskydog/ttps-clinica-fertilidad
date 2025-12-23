@@ -1,13 +1,12 @@
 "use server";
 
+import {
+  Appointment,
+  AppointmentsResponse
+} from "@repo/contracts";
 import { cookies } from "next/headers";
 
-export type AppointmentsResponse = {
-  data: unknown;
-  message?: string;
-};
-
-export async function getAppointments(): Promise<AppointmentsResponse> {
+export async function getAppointments(): Promise<Appointment[]> {
   const backendUrl = process.env.BACKEND_URL;
   if (!backendUrl) throw new Error("BACKEND_URL no está definido");
 
@@ -25,15 +24,12 @@ export async function getAppointments(): Promise<AppointmentsResponse> {
     cache: "no-store",
   });
 
-  const payload = await resp.json().catch(() => null);
+  const payload: AppointmentsResponse = await resp.json().catch(() => null);
 
   if (!resp.ok) {
-    const message = payload?.message || `Request failed: ${resp.status}`;
+    const message = payload.message || `Request failed: ${payload.statusCode}`;
     throw new Error(message);
   }
 
-  return {
-    data: payload?.data ?? null,
-    message: payload?.message,
-  };
+  return payload.data;
 }

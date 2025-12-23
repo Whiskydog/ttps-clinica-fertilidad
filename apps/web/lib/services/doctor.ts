@@ -7,7 +7,7 @@ import {
   DoctorsResponse,
 } from "@repo/contracts";
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
+const backendUrl = process.env.NEXT_PUBLIC_API_URL as string;
 
 export async function getDoctors() {
   const url = new URL(`${backendUrl}/doctors`);

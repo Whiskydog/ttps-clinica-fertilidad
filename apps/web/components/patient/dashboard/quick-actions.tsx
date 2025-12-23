@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/button';
-import Link from 'next/link';
+import { Button } from "@repo/ui/button";
+import Link from "next/link";
 
 export function QuickActions() {
   return (
@@ -31,7 +31,7 @@ export function QuickActions() {
       </Link>
       <Link href="/patient/cryopreserved">
         <Button className="w-full bg-green-500 hover:bg-green-600 text-black">
-          Mis Productos Criopreservados
+          Ver ovocitos y embriones
         </Button>
       </Link>
     </div>

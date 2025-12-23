@@ -11,6 +11,7 @@ import {
   Beaker,
   BarChart3,
   Settings,
+  PenTool,
 } from "lucide-react";
 import {
   Sidebar,
@@ -58,29 +59,34 @@ export function DoctorLayoutClient({
     },
     {
       name: "Órdenes Médicas",
-      path: "/doctor/orders",
+      path: "/doctor/medical-orders",
       icon: FileText,
     },
     {
-      name: "Seguimientos",
-      path: "/doctor/follow-ups",
-      icon: Activity,
+      name: "Mi Firma",
+      path: "/doctor/signature",
+      icon: PenTool,
     },
-    {
-      name: "Laboratorio",
-      path: "/doctor/laboratory",
-      icon: Beaker,
-    },
-    {
-      name: "Estadísticas",
-      path: "/doctor/statistics",
-      icon: BarChart3,
-    },
-    {
-      name: "Configuración",
-      path: "/doctor/settings",
-      icon: Settings,
-    },
+    // {
+    //   name: "Seguimientos",
+    //   path: "/doctor/follow-ups",
+    //   icon: Activity,
+    // },
+    // {
+    //   name: "Laboratorio",
+    //   path: "/doctor/laboratory",
+    //   icon: Beaker,
+    // },
+    // {
+    //   name: "Estadísticas",
+    //   path: "/doctor/statistics",
+    //   icon: BarChart3,
+    // },
+    // {
+    //   name: "Configuración",
+    //   path: "/doctor/settings",
+    //   icon: Settings,
+    // },
   ];
 
   return (
@@ -125,9 +131,7 @@ export function DoctorLayoutClient({
             <div className="text-right hidden md:block">
               <p className="font-medium">
                 Dr.{" "}
-                {user
-                  ? `${user.firstName} ${user.lastName}`
-                  : "Cargando..."}
+                {user ? `${user.firstName} ${user.lastName}` : "Cargando..."}
               </p>
               <p className="text-sm text-green-100">
                 {user?.specialty || "Medicina Reproductiva"}

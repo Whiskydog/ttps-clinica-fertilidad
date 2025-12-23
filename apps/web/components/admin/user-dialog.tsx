@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AdminUserCreate,
   AdminUserCreateSchema,
+  TurnoHorario,
 } from "@repo/contracts";
 import { Button } from "@repo/ui/button";
 import {
@@ -26,7 +27,7 @@ import {
 import { toast } from "@repo/ui";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Plus, Trash2 } from "lucide-react";
 
 interface UserDialogProps {
   open: boolean;
@@ -34,8 +35,19 @@ interface UserDialogProps {
   onSave: (data: AdminUserCreate) => void;
 }
 
+const DIAS_SEMANA = [
+  { value: 1, label: "Lunes" },
+  { value: 2, label: "Martes" },
+  { value: 3, label: "Miércoles" },
+  { value: 4, label: "Jueves" },
+  { value: 5, label: "Viernes" },
+  { value: 6, label: "Sábado" },
+  { value: 0, label: "Domingo" },
+];
+
 export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
   const [selectedUserType, setSelectedUserType] = useState<string>("");
+  const [turnos, setTurnos] = useState<TurnoHorario[]>([]);
 
   const form = useForm<AdminUserCreate>({
     resolver: zodResolver(AdminUserCreateSchema),
@@ -67,14 +79,34 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
     } else {
       form.reset();
       setSelectedUserType("");
+      setTurnos([]);
     }
   }, [open]);
 
   const onSubmit = (data: AdminUserCreate) => {
-    onSave(data);
+    // Incluir turnos solo si es médico
+    const dataWithTurnos = data.userType === "doctor" && turnos.length > 0
+      ? { ...data, turnos }
+      : data;
+    onSave(dataWithTurnos);
     form.reset();
     setSelectedUserType("");
+    setTurnos([]);
     onOpenChange(false);
+  };
+
+  const agregarTurno = () => {
+    setTurnos([...turnos, { dia_semana: 1, hora_inicio: "08:00", hora_fin: "12:00" }]);
+  };
+
+  const actualizarTurno = (index: number, campo: keyof TurnoHorario, valor: string | number) => {
+    const nuevosTurnos = [...turnos];
+    nuevosTurnos[index] = { ...nuevosTurnos[index], [campo]: valor };
+    setTurnos(nuevosTurnos);
+  };
+
+  const eliminarTurno = (index: number) => {
+    setTurnos(turnos.filter((_, i) => i !== index));
   };
 
   const generateRandomPassword = () => {
@@ -137,7 +169,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="firstName">Nombre</FieldLabel>
+                        <FieldLabel htmlFor="firstName">Nombre 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -158,7 +190,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="lastName">Apellido</FieldLabel>
+                        <FieldLabel htmlFor="lastName">Apellido 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -182,7 +214,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="email">Email (login)</FieldLabel>
+                        <FieldLabel htmlFor="email">Email (login) 🞲</FieldLabel>
                         <Input
                           {...field}
                           type="email"
@@ -204,7 +236,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="phone">Teléfono</FieldLabel>
+                        <FieldLabel htmlFor="phone">Teléfono 🞲</FieldLabel>
                         <Input
                           {...field}
                           aria-invalid={fieldState.invalid}
@@ -261,7 +293,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="userType">
-                          Tipo de usuario
+                          Tipo de usuario 🞲
                         </FieldLabel>
                         <Select
                           value={field.value}
@@ -297,7 +329,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="password">
-                          Contraseña temporal
+                          Contraseña temporal 🞲
                         </FieldLabel>
                         <div className="flex gap-2">
                           <Input
@@ -399,8 +431,83 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                       )}
                     />
                   </div>
+                </div>
 
-                  
+                {/* CONFIGURACIÓN DE TURNOS */}
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Configuración de Turnos (opcional)
+                    </h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={agregarTurno}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Agregar turno
+                    </Button>
+                  </div>
+
+                  {turnos.length === 0 && (
+                    <p className="text-sm text-gray-500 italic">
+                      No hay turnos configurados. Los turnos se crearán automáticamente en el sistema del turnero.
+                    </p>
+                  )}
+
+                  {turnos.map((turno, index) => (
+                    <div key={index} className="flex items-end gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1 space-y-1">
+                        <label className="text-xs text-gray-600">Día</label>
+                        <Select
+                          value={String(turno.dia_semana)}
+                          onValueChange={(value) => actualizarTurno(index, "dia_semana", parseInt(value))}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DIAS_SEMANA.map((dia) => (
+                              <SelectItem key={dia.value} value={String(dia.value)}>
+                                {dia.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="w-28 space-y-1">
+                        <label className="text-xs text-gray-600">Inicio</label>
+                        <Input
+                          type="time"
+                          value={turno.hora_inicio}
+                          onChange={(e) => actualizarTurno(index, "hora_inicio", e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+
+                      <div className="w-28 space-y-1">
+                        <label className="text-xs text-gray-600">Fin</label>
+                        <Input
+                          type="time"
+                          value={turno.hora_fin}
+                          onChange={(e) => actualizarTurno(index, "hora_fin", e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => eliminarTurno(index)}
+                        className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -451,7 +558,7 @@ export function UserDialog({ open, onOpenChange, onSave }: UserDialogProps) {
                     />
                   </div>
 
-                
+
                 </div>
               </div>
             )}

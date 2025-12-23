@@ -29,6 +29,15 @@ export class User extends BaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  @Column({ name: 'failed_login_attempts', type: 'int', default: 0 })
+  failedLoginAttempts: number;
+
+  @Column({ name: 'locked_until', type: 'timestamp', nullable: true })
+  lockedUntil: Date | null;
+
+  @Column({ name: 'last_failed_login', type: 'timestamp', nullable: true })
+  lastFailedLogin: Date | null;
+
   @ManyToOne(() => Role, { eager: true })
   @JoinColumn({ name: 'role', referencedColumnName: 'code' })
   role: Role;

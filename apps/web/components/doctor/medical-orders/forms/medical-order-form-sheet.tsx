@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { UpdateMedicalOrderSchema, Study } from "@repo/contracts";
+import { getStudyLists, StudyLists } from "@/app/actions/doctor/external/get-study-lists";
 import {
   Sheet,
   SheetContent,
@@ -31,7 +32,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@repo/ui/form";
-import { Checkbox } from "@repo/ui/checkbox";
 import { X } from "lucide-react";
 import { toast } from "@repo/ui";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,7 +68,25 @@ export function MedicalOrderFormSheet({
 }: MedicalOrderFormSheetProps) {
   const queryClient = useQueryClient();
   const [studies, setStudies] = useState<Study[]>([]);
-  const [newStudy, setNewStudy] = useState("");
+  const [studyLists, setStudyLists] = useState<StudyLists>({
+    semen: [],
+    hormonales: [],
+    ginecologicos: [],
+    prequirurgicos: [],
+  });
+
+  // Fetch study lists from external module
+  useEffect(() => {
+    const fetchStudyLists = async () => {
+      try {
+        const { data } = await getStudyLists();
+        setStudyLists(data);
+      } catch (error) {
+        console.error("Error fetching study lists:", error);
+      }
+    };
+    fetchStudyLists();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateMedicalOrderSchema),
@@ -100,23 +118,36 @@ export function MedicalOrderFormSheet({
 
   const status = form.watch("status");
 
-  const handleAddStudy = () => {
-    if (newStudy.trim()) {
-      setStudies([...studies, { name: newStudy.trim(), checked: false }]);
-      setNewStudy("");
+  // Watch category to filter available studies
+  const selectedCategory = useWatch({
+    control: form.control,
+    name: "category",
+  });
+
+  // Get available studies based on selected category
+  const getAvailableStudies = (): string[] => {
+    const categoryToStudies: Record<string, string[]> = {
+      'Estudios Hormonales': studyLists.hormonales,
+      'Estudios Ginecológicos': studyLists.ginecologicos,
+      'Estudios de Semen': studyLists.semen,
+      'Estudios Prequirúrgicos': studyLists.prequirurgicos,
+    };
+
+    const availableStudies = categoryToStudies[selectedCategory] || [];
+    const selectedStudyNames = studies.map(s => s.name);
+
+    // Filter out already selected studies
+    return availableStudies.filter(study => !selectedStudyNames.includes(study));
+  };
+
+  const handleAddStudy = (studyName: string) => {
+    if (studyName) {
+      setStudies([...studies, { name: studyName, checked: false }]);
     }
   };
 
   const handleRemoveStudy = (index: number) => {
     setStudies(studies.filter((_, i) => i !== index));
-  };
-
-  const handleToggleStudy = (index: number) => {
-    setStudies(
-      studies.map((study, i) =>
-        i === index ? { ...study, checked: !study.checked } : study
-      )
-    );
   };
 
   const onSubmit = async (data: FormValues) => {
@@ -164,13 +195,20 @@ export function MedicalOrderFormSheet({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categoría *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ej: Laboratorio, Ecografía, etc."
-                    />
-                  </FormControl>
+                  <FormLabel>Tipo de Estudio 🞲</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione tipo de estudio" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Estudios Hormonales">Estudios Hormonales</SelectItem>
+                      <SelectItem value="Estudios Ginecológicos">Estudios Ginecológicos</SelectItem>
+                      <SelectItem value="Estudios de Semen">Estudios de Semen</SelectItem>
+                      <SelectItem value="Estudios Prequirúrgicos">Estudios Prequirúrgicos</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -233,23 +271,33 @@ export function MedicalOrderFormSheet({
             />
 
             <div className="space-y-2">
-              <Label>Estudios</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newStudy}
-                  onChange={(e) => setNewStudy(e.target.value)}
-                  placeholder="Agregar estudio"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddStudy();
-                    }
-                  }}
-                />
-                <Button type="button" onClick={handleAddStudy} variant="outline">
-                  Agregar
-                </Button>
-              </div>
+              <Label>Estudios Solicitados</Label>
+              {!selectedCategory ? (
+                <p className="text-sm text-muted-foreground">
+                  Seleccione primero un tipo de estudio
+                </p>
+              ) : getAvailableStudies().length === 0 && studies.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No hay estudios disponibles para esta categoría
+                </p>
+              ) : (
+                <>
+                  {getAvailableStudies().length > 0 && (
+                    <Select onValueChange={handleAddStudy}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Agregar estudio..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableStudies().map((study) => (
+                          <SelectItem key={study} value={study}>
+                            {study}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </>
+              )}
               {studies.length > 0 && (
                 <div className="space-y-2 mt-2 border rounded-lg p-3">
                   {studies.map((study, idx) => (
@@ -257,19 +305,7 @@ export function MedicalOrderFormSheet({
                       key={idx}
                       className="flex items-center justify-between gap-2"
                     >
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={study.checked}
-                          onCheckedChange={() => handleToggleStudy(idx)}
-                        />
-                        <span
-                          className={
-                            study.checked ? "line-through text-muted-foreground" : ""
-                          }
-                        >
-                          {study.name}
-                        </span>
-                      </div>
+                      <span>{study.name}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveStudy(idx)}

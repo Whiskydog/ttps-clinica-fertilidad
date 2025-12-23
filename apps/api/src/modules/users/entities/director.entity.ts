@@ -6,4 +6,7 @@ import { User } from './user.entity';
 export class Director extends User {
   @Column({ name: 'license_number', unique: true })
   licenseNumber: string;
+
+  @Column({ name: 'signature_uri', type: 'text', nullable: true })
+  signatureUri?: string | null;
 }

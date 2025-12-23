@@ -1,6 +1,7 @@
 "use server";
 
 import { UpdateFenotypeSchema } from "@repo/contracts";
+import { cookies } from "next/headers";
 
 export async function updateFenotype(payload: unknown) {
   const validationResult = UpdateFenotypeSchema.safeParse(payload);
@@ -9,7 +10,7 @@ export async function updateFenotype(payload: unknown) {
     return {
       success: false,
       error:
-        validationResult.error.errors[0]?.message ||
+        validationResult.error.issues[0]?.message ||
         "Datos de fenotipo inválidos",
     };
   }
@@ -17,14 +18,31 @@ export async function updateFenotype(payload: unknown) {
   const data = validationResult.data;
 
   try {
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      return {
+        success: false,
+        error: "BACKEND_URL no está definido",
+      };
+    }
+
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("session")?.value;
+    if (!sessionToken) {
+      return {
+        success: false,
+        error: "No se encontró el token de sesión",
+      };
+    }
+
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/medical-history/fenotype/${data.id}`,
+      `${backendUrl}/medical-history/fenotype/${data.id}`,
       {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionToken}`,
         },
-        credentials: "include",
         body: JSON.stringify(data),
       }
     );

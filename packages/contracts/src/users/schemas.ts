@@ -21,13 +21,16 @@ export const UserResponseSchema = ApiResponseSchema(UserEntitySchema);
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 
 export const DoctorEntitySchema = UserEntitySchema.extend({
-  specialty: z.string().max(100),
-  licenseNumber: z.string().max(50),
+  specialty: z.string().max(100).nullable(),
+  licenseNumber: z.string().max(50).nullable(),
+  signatureUri: z.string().nullable().optional(),
 });
 export type Doctor = z.infer<typeof DoctorEntitySchema>;
 
 export const DoctorResponseSchema = ApiResponseSchema(DoctorEntitySchema);
-export const DoctorsResponseSchema = ApiResponseSchema(z.array(DoctorEntitySchema));
+export const DoctorsResponseSchema = ApiResponseSchema(
+  z.array(DoctorEntitySchema)
+);
 export type DoctorResponse = z.infer<typeof DoctorResponseSchema>;
 export type DoctorsResponse = z.infer<typeof DoctorsResponseSchema>;
 
@@ -114,6 +117,8 @@ const PatientSchema = PatientEntitySchema.transform(
   })
 );
 
+export type Patient = z.infer<typeof PatientSchema>;
+
 export const PatientResponseSchema = ApiResponseSchema(PatientSchema);
 
 export type PatientResponse = z.infer<typeof PatientResponseSchema>;
@@ -121,7 +126,7 @@ export type PatientResponse = z.infer<typeof PatientResponseSchema>;
 export const PatientsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  dni: z.string().optional(),
+  q: z.string().optional(),
 });
 
 export type PatientsQuery = z.infer<typeof PatientsQuerySchema>;
@@ -135,7 +140,16 @@ export type PatientsPaginatedResponse = z.infer<
 
 // =====================
 
-const UserType = ['admin', 'doctor', 'director', 'lab_technician'] as const;
+const UserType = ["admin", "doctor", "director", "lab_technician"] as const;
+
+// Schema para horarios de turnos (usado al crear médicos)
+export const TurnoHorarioSchema = z.object({
+  dia_semana: z.number().int().min(0).max(6), // 0=Dom, 1=Lun, ..., 6=Sab
+  hora_inicio: z.string().regex(/^\d{2}:\d{2}$/, "Formato debe ser HH:MM"),
+  hora_fin: z.string().regex(/^\d{2}:\d{2}$/, "Formato debe ser HH:MM"),
+});
+
+export type TurnoHorario = z.infer<typeof TurnoHorarioSchema>;
 
 export const AdminUserCreateSchema = z.object({
   firstName: z.string().min(1).max(100),
@@ -151,6 +165,8 @@ export const AdminUserCreateSchema = z.object({
   licenseNumber: z.string().max(50).optional(),
   // Lab Technician fields
   labArea: z.string().max(100).optional(),
+  // Turnos para médicos (opcional)
+  turnos: z.array(TurnoHorarioSchema).optional(),
 });
 
 export type AdminUserCreate = z.infer<typeof AdminUserCreateSchema>;
@@ -201,7 +217,9 @@ export const StaffUsersPaginationMetaSchema = z.object({
   totalPages: z.number().int().min(0),
 });
 
-export type StaffUsersPaginationMeta = z.infer<typeof StaffUsersPaginationMetaSchema>;
+export type StaffUsersPaginationMeta = z.infer<
+  typeof StaffUsersPaginationMetaSchema
+>;
 
 export const StaffUsersListDataSchema = z.object({
   data: z.array(StaffUserEntitySchema),
@@ -210,6 +228,10 @@ export const StaffUsersListDataSchema = z.object({
 
 export type StaffUsersListData = z.infer<typeof StaffUsersListDataSchema>;
 
-export const StaffUsersListResponseSchema = ApiResponseSchema(StaffUsersListDataSchema);
+export const StaffUsersListResponseSchema = ApiResponseSchema(
+  StaffUsersListDataSchema
+);
 
-export type StaffUsersListResponse = z.infer<typeof StaffUsersListResponseSchema>;
+export type StaffUsersListResponse = z.infer<
+  typeof StaffUsersListResponseSchema
+>;

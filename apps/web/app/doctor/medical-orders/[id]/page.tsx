@@ -15,17 +15,20 @@ import {
   Stethoscope,
   CheckCircle2,
   Clock,
+  FilePlus2,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { MedicalOrderFormSheet } from "@/components/doctor/medical-orders/forms/medical-order-form-sheet";
 import { StudyResultFormSheet } from "@/components/doctor/medical-orders/forms/study-result-form-sheet";
+import { GeneratePdfSheet } from "@/components/doctor/medical-orders/forms/generate-pdf-sheet";
 import { getFileUrl, formatDateForDisplay } from "@/lib/upload-utils";
 
 export default function MedicalOrderDetailPage() {
   const [orderSheetOpen, setOrderSheetOpen] = useState(false);
   const [resultSheetOpen, setResultSheetOpen] = useState(false);
+  const [pdfSheetOpen, setPdfSheetOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any>(null);
 
   const params = useParams();
@@ -99,13 +102,8 @@ export default function MedicalOrderDetailPage() {
 
   const handleDownloadPdf = (pdfUri: string, studyName: string) => {
     const fileUrl = getFileUrl(pdfUri);
-    // For now, just open in new tab
     if (fileUrl) {
       window.open(fileUrl, "_blank");
-    } else {
-      // If it's a relative path, prepend the backend URL
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-      window.open(`${backendUrl}${fileUrl || ""}`, "_blank");
     }
   };
 
@@ -122,10 +120,30 @@ export default function MedicalOrderDetailPage() {
             Detalle completo de la orden médica
           </p>
         </div>
-        <Button onClick={() => setOrderSheetOpen(true)}>
-          <Edit className="h-4 w-4 mr-2" />
-          Editar Orden
-        </Button>
+        <div className="flex gap-2">
+          {orderData.pdfUrl && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                const url = getFileUrl(orderData.pdfUrl);
+                if (url) window.open(url, "_blank");
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Ver PDF
+            </Button>
+          )}
+          {orderData.status !== "completed" && (
+            <Button variant="outline" onClick={() => setPdfSheetOpen(true)}>
+              <FilePlus2 className="h-4 w-4 mr-2" />
+              {orderData.pdfUrl ? "Regenerar PDF" : "Generar PDF"}
+            </Button>
+          )}
+          <Button onClick={() => setOrderSheetOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Editar Orden
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -413,6 +431,18 @@ export default function MedicalOrderDetailPage() {
         onSuccess={() => {
           setResultSheetOpen(false);
           setSelectedResult(null);
+        }}
+      />
+
+      <GeneratePdfSheet
+        open={pdfSheetOpen}
+        onOpenChange={setPdfSheetOpen}
+        orderId={orderData.id}
+        orderCode={orderData.code}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["medicalOrderDetail", id],
+          });
         }}
       />
     </div>

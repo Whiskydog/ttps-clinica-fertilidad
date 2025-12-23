@@ -2,6 +2,7 @@ import { StudyResult } from "@repo/contracts";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@repo/ui/button";
+import { getFileUrl } from "@/lib/upload-utils";
 
 interface StudyResultsSectionProps {
   studyResults: StudyResult[];
@@ -44,7 +45,7 @@ export function StudyResultsSection({ studyResults }: StudyResultsSectionProps) 
                 </div>
                 {result.originalPdfUri && (
                   <a
-                    href={result.originalPdfUri}
+                    href={getFileUrl(result.originalPdfUri) || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
                     download

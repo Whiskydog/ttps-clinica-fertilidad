@@ -1,27 +1,25 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
-import { Checkbox } from '@repo/ui/checkbox';
-
-interface Appointment {
-  id: number;
-  date: string;
-  time: string;
-  type: string;
-  doctor: string;
-  operatingRoom: string;
-}
+import { getDisplayName } from "@/utils/appointment-utils";
+import { Appointment } from "@repo/contracts";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Checkbox } from "@repo/ui/checkbox";
+import moment from "moment";
 
 interface UpcomingAppointmentsProps {
   appointments: Appointment[];
 }
 
-export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps) {
+export function UpcomingAppointments({
+  appointments,
+}: UpcomingAppointmentsProps) {
   return (
     <Card>
       <CardHeader className="bg-slate-500">
-        <CardTitle className="text-white text-center">PRÓXIMOS TURNOS</CardTitle>
+        <CardTitle className="text-white text-center">
+          PRÓXIMOS TURNOS
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-4">
@@ -34,14 +32,17 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                 <Checkbox />
                 <div className="text-sm text-gray-900">
                   <div className="font-semibold mb-1">
-                    Jueves {new Date(appointment.date).getDate()} de{' '}
-                    {new Date(appointment.date).toLocaleDateString('es-AR', {
-                      month: 'long',
-                    })}{' '}
-                    - {appointment.time} hs
+                    <span className="capitalize">
+                      {moment.utc(appointment.date).format("dddd")}
+                    </span>
+                    ,{" "}
+                    {moment
+                      .utc(appointment.date)
+                      .format("DD [de] MMMM [de] YYYY HH:mm")}
                   </div>
                   <div>
-                    {appointment.type} - {appointment.doctor} - {appointment.operatingRoom}
+                    {getDisplayName(appointment.reason)} -{" "}
+                    {`${appointment.doctor.firstName} ${appointment.doctor.lastName}`}
                   </div>
                 </div>
               </div>
@@ -49,7 +50,11 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                 <Button size="sm" variant="outline">
                   Modificar
                 </Button>
-                <Button size="sm" variant="destructive" className="bg-rose-400 hover:bg-rose-500">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="bg-rose-400 hover:bg-rose-500"
+                >
                   Cancelar
                 </Button>
               </div>

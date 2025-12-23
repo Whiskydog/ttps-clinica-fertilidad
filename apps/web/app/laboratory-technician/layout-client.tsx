@@ -75,7 +75,7 @@ export function LabTechnicianLayoutClient({
     <SidebarProvider>
       <Sidebar
         variant="sidebar"
-        className="bg-white border-gray-200 md:w-64 w-[80vw]"
+        className="bg-blue-800 border-blue-700 md:w-64 w-[80vw]"
         collapsible="icon"
       >
         <SidebarContent>
@@ -87,7 +87,7 @@ export function LabTechnicianLayoutClient({
                   <SidebarMenuButton asChild>
                     <Link
                       href={item.path}
-                      className="flex items-center gap-3 text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-3 text-blue-100 hover:text-white hover:bg-blue-700"
                     >
                       <Icon className="w-5 h-5" />
                       <span className="text-sm">{item.name}</span>
@@ -102,16 +102,16 @@ export function LabTechnicianLayoutClient({
 
       <SidebarInset>
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 shadow-sm flex items-center justify-between">
+        <header className="bg-blue-600 text-white px-4 md:px-8 py-4 shadow-md flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
-            <SidebarTrigger />
-            <h1 className="text-base md:text-xl font-bold text-gray-900">
+            <SidebarTrigger className="text-white hover:bg-blue-700" />
+            <h1 className="text-base md:text-xl font-bold">
               Panel de Laboratorio
             </h1>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <div className="text-right hidden md:block">
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-white">
                 {user
                   ? `${user.firstName} ${user.lastName}`
                   : "Cargando..."}
@@ -121,7 +121,7 @@ export function LabTechnicianLayoutClient({
               onClick={handleLogout}
               disabled={isPending}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm md:text-base"
+              className="bg-transparent border-white text-white hover:bg-blue-700 text-sm md:text-base"
             >
               {isPending ? "Cerrando..." : "Cerrar Sesión"}
             </Button>

@@ -1,0 +1,204 @@
+import { getHttpExceptionFromAxiosError } from '@common/utils/errors.utils';
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import {
+  ExternalMedicalInsuranceDetail,
+  ExternalMedicalInsuranceResponse,
+  ExternalPatientDebtResponse,
+  ExternalPaymentOrderResponse,
+  ExternalPaymentRequest,
+  ExternalPaymentResponse,
+  PatientDebt,
+} from '@repo/contracts';
+import { AxiosError, AxiosResponse } from 'axios';
+import {
+  catchError,
+  firstValueFrom,
+  forkJoin,
+  map,
+  Observable,
+  of,
+} from 'rxjs';
+import { Repository } from 'typeorm';
+import { Group5PaymentsService } from '../external/group5-payments/group5-payments.service';
+import { PaymentOrder } from './entities/payment-order.entity';
+
+@Injectable()
+export class PaymentsService {
+  private readonly apiUrl: string;
+
+  constructor(
+    @InjectRepository(PaymentOrder)
+    private readonly paymentOrdersRepository: Repository<PaymentOrder>,
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
+    private readonly group5PaymentsService: Group5PaymentsService,
+  ) {
+    this.apiUrl = this.configService.get<string>('PAYMENTS_API_URL');
+  }
+
+  async getExternalMedicalInsurances(): Promise<
+    ExternalMedicalInsuranceDetail[]
+  > {
+    const url = `${this.apiUrl}/getObrasSociales`;
+
+    const medicalInsurances = await firstValueFrom(
+      this.httpService.get<ExternalMedicalInsuranceResponse>(url).pipe(
+        map((res) => res.data),
+        catchError((error: AxiosError) => {
+          throw getHttpExceptionFromAxiosError(error);
+        }),
+      ),
+    );
+
+    return medicalInsurances.data;
+  }
+
+  async getOwnDebt(patientId: number): Promise<PatientDebt> {
+    const url = `${this.apiUrl}/deuda-paciente`;
+
+    const externalPatientDebtDetail = await firstValueFrom(
+      this.httpService
+        .post<ExternalPatientDebtResponse>(url, {
+          id_paciente: patientId,
+          numero_grupo: 7,
+        })
+        .pipe(
+          map((res) => res.data),
+          catchError((error: AxiosError) => {
+            if (error.status === 404) {
+              return of({
+                id_paciente: patientId,
+                numero_grupo: 7,
+                deuda_total: 0,
+              });
+            } else {
+              throw getHttpExceptionFromAxiosError(error);
+            }
+          }),
+        ),
+    );
+
+    return {
+      debt: externalPatientDebtDetail.deuda_total,
+    };
+  }
+
+  async registerPaymentOrder(
+    treatmentId: number,
+    patientId: number,
+    medicalInsuranceExternalId: number,
+  ): Promise<PaymentOrder> {
+    const url = `${this.apiUrl}/registrar-orden-pago`;
+
+    const response = await firstValueFrom(
+      this.httpService
+        .post<ExternalPaymentOrderResponse>(url, {
+          grupo: 7,
+          id_paciente: patientId,
+          id_obra: medicalInsuranceExternalId || 158,
+          monto: 450000,
+        })
+        .pipe(
+          map((res) => res.data),
+          catchError((error: AxiosError) => {
+            throw getHttpExceptionFromAxiosError(error);
+          }),
+        ),
+    );
+
+    const paymentOrder = this.paymentOrdersRepository.create({
+      externalId: response.pago.id,
+      treatment: { id: treatmentId },
+      patient: { id: patientId },
+      medicalInsurance: { externalId: medicalInsuranceExternalId },
+      insuranceDue: response.pago.monto_obra_social,
+      patientDue: response.pago.monto_paciente,
+    });
+
+    return await this.paymentOrdersRepository.save(paymentOrder);
+  }
+
+  async settlePatientDebt(patientId: number) {
+    const patientPaymentOrders = await this.paymentOrdersRepository.find({
+      where: {
+        patient: { id: patientId },
+      },
+    });
+
+    const observables: Observable<
+      AxiosResponse<ExternalPaymentResponse, ExternalPaymentRequest>
+    >[] = [];
+
+    for (const order of patientPaymentOrders) {
+      observables.push(
+        this.httpService.post<ExternalPaymentResponse, ExternalPaymentRequest>(
+          `${this.apiUrl}/registrar-pago-obra-social`,
+          {
+            id_grupo: 7,
+            id_pago: order.externalId,
+            paciente_pagado: true,
+          },
+        ),
+      );
+    }
+
+    await firstValueFrom(
+      forkJoin(observables).pipe(
+        catchError((error: AxiosError) => {
+          throw getHttpExceptionFromAxiosError(error);
+        }),
+      ),
+    );
+
+    for (const order of patientPaymentOrders) {
+      order.patientDue = 0;
+    }
+
+    this.paymentOrdersRepository.save(patientPaymentOrders);
+  }
+
+  getObrasSociales() {
+    return this.group5PaymentsService.getObrasSociales();
+  }
+
+  // Helper to get paginated payments or just all payments
+  // The external API has query params? No, only 'group' body param for list.
+  // We need to fetch payments for our group (7).
+  async getGroupPayments() {
+    return this.group5PaymentsService.getPagosGrupo(7);
+  }
+
+  async registerPayment(payload: {
+    id_grupo: number;
+    id_pago: number;
+    obra_social_pagada: boolean;
+    paciente_pagado: boolean;
+  }) {
+    const payed: ExternalPaymentResponse =
+      await this.group5PaymentsService.registrarPago(payload);
+
+    if (payed.status === 200 || payed.success) {
+      const paymentOrder = await this.paymentOrdersRepository.findOne({
+        where: {
+          externalId: payload.id_pago,
+        },
+      });
+
+      if (paymentOrder) {
+        if (payed.actualizado.estado_obra_social === 'pagado') {
+          paymentOrder.insuranceDue = 0;
+        }
+        if (payed.actualizado.estado_paciente === 'pagado') {
+          paymentOrder.patientDue = 0;
+        }
+
+        await this.paymentOrdersRepository.save(paymentOrder);
+      }
+    }
+
+    return;
+  }
+}

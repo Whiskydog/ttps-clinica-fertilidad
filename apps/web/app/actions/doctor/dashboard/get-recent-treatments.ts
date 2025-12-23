@@ -1,68 +1,34 @@
 "use server";
 
-export type RecentTreatment = {
-  id: number;
-  patientId: number;
-  patientName: string;
-  status: string;
-  lastMovement: string;
-  lastMovementDate: string;
-};
+import { cookies } from "next/headers";
+import { RecentTreatment } from "@repo/contracts";
 
 export async function getRecentTreatments(): Promise<{
   data: RecentTreatment[];
 }> {
-  // Simular delay de red
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  const backendUrl = process.env.BACKEND_URL as string;
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session")?.value;
 
-  const data: RecentTreatment[] = [
-    {
-      id: 1,
-      patientId: 101,
-      patientName: "María González",
-      status: "Estimulación",
-      lastMovement: "Monitoreo día 7 - Respuesta adecuada",
-      lastMovementDate: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      patientId: 102,
-      patientName: "Ana Martínez",
-      status: "Resultados",
-      lastMovement: "Estudios hormonales completados",
-      lastMovementDate: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      patientId: 103,
-      patientName: "Laura Fernández",
-      status: "Transferencia",
-      lastMovement: "Programada para próxima semana",
-      lastMovementDate: new Date(Date.now() - 172800000).toISOString(),
-    },
-    {
-      id: 4,
-      patientId: 104,
-      patientName: "Carolina Pérez",
-      status: "Punción",
-      lastMovement: "Recuperación de 12 oocitos",
-      lastMovementDate: new Date(Date.now() - 259200000).toISOString(),
-    },
-    {
-      id: 5,
-      patientId: 105,
-      patientName: "Sofía Rodríguez",
-      status: "Completado",
-      lastMovement: "Beta positiva confirmada",
-      lastMovementDate: new Date(Date.now() - 345600000).toISOString(),
-    },
-  ];
+  if (!sessionToken) {
+    throw new Error("No se encontró el token de sesión");
+  }
 
-  console.log(
-    "[DOCTOR] GET Recent Treatments:",
-    data.length,
-    "treatments"
-  );
+  const resp = await fetch(`${backendUrl}/doctor/dashboard/recent-treatments`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${sessionToken}`,
+    },
+    cache: "no-store",
+  });
 
-  return { data };
+  const payload = await resp.json().catch(() => null);
+
+  if (!resp.ok) {
+    const message = payload?.message || `Request failed: ${resp.status}`;
+    throw new Error(message);
+  }
+
+  return { data: payload.data || payload };
 }

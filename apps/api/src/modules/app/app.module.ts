@@ -4,17 +4,21 @@ import { AppointmentsModule } from '@modules/appointments/appointments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { ConfigModule } from '@modules/config/config.module';
+import { DoctorModule } from '@modules/doctor/doctor.module';
+import { ExternalModule } from '@modules/external/external.module';
 import { LaboratoryModule } from '@modules/laboratory/laboratory.module';
 import { MedicalHistoryModule } from '@modules/medical-history/medical-history.module';
 import { MedicalInsurancesModule } from '@modules/medical-insurances/medical-insurances.module';
 import { MedicalOrdersModule } from '@modules/medical-orders/medical-orders.module';
+import { MigrationsModule } from '@modules/migrations/migrations.module';
+import { PaymentsModule } from '@modules/payments/payments.module';
+import { SchedulerModule } from '@modules/scheduler/scheduler.module';
 import { TreatmentsModule } from '@modules/treatments/treatments.module';
 import { UploadsModule } from '@modules/uploads/uploads.module';
 import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
-import { ExternalModule } from '@external/external.module';
 
 @Module({
   imports: [
@@ -28,7 +32,11 @@ import { ExternalModule } from '@external/external.module';
     AppointmentsModule,
     MedicalInsurancesModule,
     UploadsModule,
+    DoctorModule,
+    SchedulerModule,
     ExternalModule,
+    PaymentsModule,
+    MigrationsModule,
   ],
   controllers: [],
   providers: [

@@ -1,15 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Treatment } from './entities/treatment.entity';
 import { Monitoring } from './entities/monitoring.entity';
 import { MedicationProtocol } from './entities/medication-protocol.entity';
 import { DoctorNote } from './entities/doctor-note.entity';
 import { MedicalHistory } from '../medical-history/entities/medical-history.entity';
-import { TreatmentStatus } from '@repo/contracts';
+import { TreatmentStatus, RoleCode } from '@repo/contracts';
+import { MedicalOrder } from '@modules/medical-orders/entities/medical-order.entity';
 import { InformedConsentService } from './services/informed-consent.service';
 import { PostTransferMilestoneService } from './services/post-transfer-milestone.service';
 import { MedicalCoverageService } from './services/medical-coverage.service';
+import { MonitoringPlan } from './entities/monitoring-plan.entity';
 
 @Injectable()
 export class TreatmentsService {
@@ -27,7 +29,11 @@ export class TreatmentsService {
     private readonly informedConsentService: InformedConsentService,
     private readonly milestoneService: PostTransferMilestoneService,
     private readonly coverageService: MedicalCoverageService,
-  ) {}
+    @InjectRepository(MonitoringPlan)
+    private monitoringPlanRepository: Repository<MonitoringPlan>,
+    @InjectRepository(MedicalOrder)
+    private medicalOrderRepository: Repository<MedicalOrder>,
+  ) { }
 
   async getCurrentTreatmentByPatient(patientId: number) {
     const medicalHistory = await this.medicalHistoryRepository.findOne({
@@ -49,7 +55,11 @@ export class TreatmentsService {
     return treatment;
   }
 
-  async getTreatmentDetail(treatmentId: number, userId: number) {
+  async getTreatmentDetail(
+    treatmentId: number,
+    userId: number,
+    userRole?: RoleCode,
+  ) {
     // First, try to find the treatment with all its relations
     const treatment = await this.treatmentRepository.findOne({
       where: { id: treatmentId },
@@ -60,17 +70,24 @@ export class TreatmentsService {
       throw new NotFoundException('Treatment not found');
     }
 
-    // Verify access: user must be either the patient or the doctor of this treatment
+    // Verify access: user must be the patient, the doctor, or a director
     const isPatient = treatment.medicalHistory?.patient?.id === userId;
     const isDoctor = treatment.initialDoctor?.id === userId;
+    const isDirector = userRole === RoleCode.DIRECTOR;
 
-    if (!isPatient && !isDoctor) {
+    if (!isPatient && !isDoctor && !isDirector) {
       throw new NotFoundException('Treatment not found'); // Don't reveal existence
     }
 
     const monitorings = await this.monitoringRepository.find({
       where: { treatment: { id: treatmentId } },
       order: { monitoringDate: 'ASC' },
+    });
+
+    const monitoringPlans = await this.monitoringPlanRepository.find({
+      where: { treatmentId },
+      withDeleted: true,
+      order: { sequence: 'ASC' },
     });
 
     const protocol = await this.protocolRepository.findOne({
@@ -95,6 +112,7 @@ export class TreatmentsService {
     return {
       treatment,
       monitorings,
+      monitoringPlans,
       protocol,
       doctorNotes,
       informedConsent,
@@ -115,7 +133,7 @@ export class TreatmentsService {
     const treatments = await this.treatmentRepository.find({
       where: {
         medicalHistory: { id: medicalHistory.id },
-        status: TreatmentStatus.closed,
+        status: In([TreatmentStatus.closed, TreatmentStatus.completed]),
       },
       relations: ['initialDoctor'],
       order: { createdAt: 'DESC' },

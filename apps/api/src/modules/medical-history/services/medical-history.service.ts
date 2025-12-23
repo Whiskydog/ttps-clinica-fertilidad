@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalHistory } from '../entities/medical-history.entity';
@@ -64,6 +64,7 @@ export class MedicalHistoryService {
     private readonly medicalHistoryRepo: Repository<MedicalHistory>,
     @InjectRepository(GynecologicalHistory)
     private readonly gyneRepo: Repository<GynecologicalHistory>,
+    @Inject(forwardRef(() => PatientsService))
     private readonly patientsService: PatientsService,
     private readonly auditService: MedicalHistoryAuditService,
     private readonly partnerDataService: PartnerDataService,
@@ -71,7 +72,7 @@ export class MedicalHistoryService {
     private readonly habitsService: HabitsService,
     private readonly fenotypeService: FenotypeService,
     private readonly backgroundService: BackgroundService,
-  ) {}
+  ) { }
 
   async findByUserId(userId: number) {
 
@@ -79,15 +80,15 @@ export class MedicalHistoryService {
     const patient = await this.patientsService.findPatientById(userId);
     this.logger.log(`Patient found: ${JSON.stringify(patient)}`);
     if (!patient) return null;
-    
+
     // historia clínica
     const mh = await this.medicalHistoryRepo.findOne({
       where: { patient: { id: patient.id } },
-      relations: ['patient'],
+      relations: ['patient', 'currentTreatment'],
     });
     this.logger.log(`MH found: ${JSON.stringify(mh)}`);
     if (!mh) return null;
-    
+
     // traer datos de la pareja
     const partners = await this.partnerDataService.findByMedicalHistory(mh.id);
     this.logger.log(`Partners found: ${JSON.stringify(partners)}`);
@@ -109,7 +110,7 @@ export class MedicalHistoryService {
     // antecedentes
     const backgrounds = await this.backgroundService.findByMedicalHistoryId(mh.id);
     this.logger.log(`Backgrounds found: ${JSON.stringify(backgrounds)}`);
-    
+
     // adjuntar la pareja más relevante (la última) y la lista de historiales ginecológicos
     return {
       ...mh,
@@ -122,7 +123,10 @@ export class MedicalHistoryService {
   }
 
   async findById(id: number) {
-    return this.medicalHistoryRepo.findOne({ where: { id } });
+    return this.medicalHistoryRepo.findOne({
+      where: { id },
+      relations: ['currentTreatment', 'patient', 'patient.medicalInsurance'],
+    });
   }
 
   async createForPatient(patientId: number) {
@@ -193,5 +197,9 @@ export class MedicalHistoryService {
       gyneDto,
       doctorId,
     );
+  }
+
+  async save(medicalHistory: MedicalHistory): Promise<MedicalHistory> {
+    return this.medicalHistoryRepo.save(medicalHistory);
   }
 }
